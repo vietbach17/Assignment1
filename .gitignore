@@ -1,0 +1,30 @@
+## Thư mục Build và Kết quả biên dịch (Rác)
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+## Thư mục Cache và cấu hình cá nhân của Visual Studio / VS Code
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.dbmdl
+*.jfm
+
+## Tệp tin cấu hình môi trường bảo mật (Không được đưa lên Git)
+appsettings.Development.json
+appsettings.local.json
+.env
+.env.*
+
+## Thư mục rác của Hệ điều hành
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

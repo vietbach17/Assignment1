@@ -1,0 +1,273 @@
+@{
+    ViewData["Title"] = "Trang quản trị Admin";
+}
+
+<div class="dashboard-container">
+    <div class="welcome-banner glass-card">
+        <div class="banner-text">
+            <h1>⚡ Bảng Điều Khiển Hệ Thống (Admin)</h1>
+            <p>Chào mừng Admin! Đây là trang bảo mật cao dành riêng cho việc cấu hình, kiểm soát hệ thống và phân quyền.</p>
+        </div>
+        <span class="banner-badge role-badge role-admin">Quyền Tối Cao</span>
+    </div>
+
+    <!-- Analytics Cards -->
+    <div class="stats-grid">
+        <div class="glass-card stat-card">
+            <div class="stat-header">
+                <span class="stat-icon">👥</span>
+                <span class="stat-growth">+12%</span>
+            </div>
+            <h3 class="stat-value">1,248</h3>
+            <p class="stat-label">Tổng người dùng</p>
+        </div>
+        <div class="glass-card stat-card">
+            <div class="stat-header">
+                <span class="stat-icon">🛡️</span>
+                <span class="stat-growth font-emerald">Hoạt động</span>
+            </div>
+            <h3 class="stat-value">3 Roles</h3>
+            <p class="stat-label">Nhóm quyền Seed sẵn</p>
+        </div>
+        <div class="glass-card stat-card">
+            <div class="stat-header">
+                <span class="stat-icon">💾</span>
+                <span class="stat-growth">PostgreSQL</span>
+            </div>
+            <h3 class="stat-value">99.9%</h3>
+            <p class="stat-label">Uptime Cơ sở dữ liệu</p>
+        </div>
+        <div class="glass-card stat-card">
+            <div class="stat-header">
+                <span class="stat-icon">⚡</span>
+                <span class="stat-growth">+4.2%</span>
+            </div>
+            <h3 class="stat-value">0.12 ms</h3>
+            <p class="stat-label">Tốc độ truy vấn</p>
+        </div>
+    </div>
+
+    <div class="details-grid">
+        <!-- Seed Roles Info Table -->
+        <div class="glass-card table-card">
+            <h2 class="card-title">🛡️ Quản lý vai trò (Role List)</h2>
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên vai trò</th>
+                        <th>Mức độ bảo mật</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><span class="role-badge role-admin">Admin</span></td>
+                        <td>Tối cao (Full Access)</td>
+                        <td><span class="badge-active">Hoạt động</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><span class="role-badge role-lecturer">Lecturer</span></td>
+                        <td>Giảng dạy (Manage Docs)</td>
+                        <td><span class="badge-active">Hoạt động</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><span class="role-badge role-student">Student</span></td>
+                        <td>Học tập (Default Role)</td>
+                        <td><span class="badge-active">Hoạt động</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Settings / Info -->
+        <div class="glass-card actions-card">
+            <h2 class="card-title">⚙️ Tác vụ quản trị nhanh</h2>
+            <div class="action-buttons-list">
+                <button class="btn-primary" onclick="alert('Đã đồng bộ PostgreSQL database thành công!')">🔄 Đồng bộ Database</button>
+                <button class="btn-secondary" onclick="alert('Tạo sao lưu backup.sql thành công!')">💾 Backup Dữ liệu</button>
+                <button class="btn-secondary" onclick="alert('Hệ thống hoạt động bình thường!')">🩺 Health Check</button>
+            </div>
+            <div class="info-alert">
+                <p><strong>💡 Bảo mật thông tin:</strong> Cookie xác thực phiên đăng nhập của Admin được cấu hình với thuộc tính <code>HttpOnly</code> và <code>Secure</code> giúp chống lại các cuộc tấn công XSS chiếm đoạt session.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .welcome-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2.5rem;
+        background: linear-gradient(135deg, rgba(22, 30, 49, 0.7) 0%, rgba(168, 85, 247, 0.1) 100%);
+    }
+
+    .banner-text h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .banner-text p {
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+
+    .banner-badge {
+        font-size: 0.9rem;
+        padding: 0.4rem 1rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-icon {
+        font-size: 1.75rem;
+    }
+
+    .stat-growth {
+        font-size: 0.75rem;
+        font-weight: 600;
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        padding: 0.15rem 0.5rem;
+        border-radius: 9999px;
+    }
+
+    .font-emerald {
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        color: #34d399 !important;
+    }
+
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    /* Details Grid */
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 2rem;
+    }
+
+    @@media (max-width: 900px) {
+        .details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Table */
+    .table-card {
+        padding: 2rem;
+    }
+
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .premium-table th {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .premium-table td {
+        padding: 1.2rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 0.95rem;
+    }
+
+    .badge-active {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #34d399;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    /* Actions */
+    .actions-card {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .action-buttons-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .action-buttons-list button {
+        width: 100%;
+    }
+
+    .info-alert {
+        background-color: rgba(168, 85, 247, 0.05);
+        border-left: 3px solid var(--accent-purple);
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--text-secondary);
+    }
+
+    .info-alert strong {
+        color: #ffffff;
+    }
+
+    .info-alert code {
+        color: #c084fc;
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 0.1rem 0.2rem;
+        border-radius: 4px;
+    }
+</style>

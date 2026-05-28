@@ -1,0 +1,180 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Đăng ký tài khoản mới";
+}
+
+<div class="auth-wrapper">
+    <div class="glass-card auth-card">
+        <h2 class="form-title">Đăng Ký Tài Khoản</h2>
+        <p class="form-subtitle">Tạo tài khoản học viên (Student) để truy cập giao diện trò chuyện.</p>
+
+        <form asp-controller="Auth" asp-action="Register" method="post" class="auth-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="form-group">
+                <label asp-for="Username"></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input asp-for="Username" class="form-control" placeholder="Nhập tên đăng nhập muốn tạo..." autocomplete="username" />
+                </div>
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔑</span>
+                    <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)..." autocomplete="new-password" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ConfirmPassword"></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu..." autocomplete="new-password" />
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-primary btn-block">
+                <span>Tạo Tài Khoản Học Viên</span> ➜
+            </button>
+        </form>
+
+        <div class="form-footer">
+            Đã có tài khoản? <a asp-action="Login">Đăng nhập ngay</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    .auth-wrapper {
+        max-width: 500px;
+        margin: 2rem auto;
+        width: 100%;
+    }
+
+    .auth-card {
+        padding: 3rem 2.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-align: center;
+        background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        font-size: 1rem;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .form-control {
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: #ffffff;
+        padding: 0.85rem 1rem 0.85rem 2.5rem;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: var(--transition-smooth);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        background-color: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-block {
+        width: 100%;
+        padding: 0.9rem;
+        margin-top: 1rem;
+    }
+
+    .validation-summary {
+        color: var(--danger);
+        background-color: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .validation-summary ul {
+        list-style-position: inside;
+    }
+
+    .text-danger {
+        color: var(--danger);
+        font-size: 0.8rem;
+        margin-top: 0.2rem;
+    }
+
+    .form-footer {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .form-footer a {
+        color: var(--accent-purple);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition-smooth);
+    }
+
+    .form-footer a:hover {
+        color: #ffffff;
+        text-decoration: underline;
+    }
+</style>

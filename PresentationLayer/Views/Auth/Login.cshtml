@@ -1,0 +1,301 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập hệ thống";
+}
+
+<div class="login-wrapper">
+    <div class="glass-card login-card">
+        <h2 class="form-title">Đăng Nhập</h2>
+        <p class="form-subtitle">Chào mừng trở lại! Vui lòng nhập thông tin tài khoản.</p>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-controller="Auth" asp-action="Login" method="post" class="auth-form">
+            <input type="hidden" asp-for="ReturnUrl" />
+            
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="form-group">
+                <label asp-for="Username"></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input asp-for="Username" class="form-control" placeholder="Nhập tên đăng nhập..." autocomplete="username" />
+                </div>
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔑</span>
+                    <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu..." autocomplete="current-password" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-primary btn-block">
+                <span>Đăng Nhập Hệ Thống</span> ➜
+            </button>
+        </form>
+
+        <div class="form-footer">
+            Chưa có tài khoản? <a asp-action="Register">Đăng ký ngay làm Student</a>
+        </div>
+    </div>
+
+    <!-- Quick Seed Accounts Help for Reviewer/User -->
+    <div class="glass-card seed-accounts-card">
+        <h3 class="seed-title">🔑 Tài khoản dùng thử (Seed Data)</h3>
+        <p class="seed-desc">Các tài khoản này được băm mật khẩu sẵn bằng BCrypt trong cơ sở dữ liệu:</p>
+        <div class="seed-grid">
+            <div class="seed-item" onclick="quickFill('admin', 'admin123')">
+                <span class="seed-role role-badge role-admin">Admin</span>
+                <p>Username: <strong>admin</strong></p>
+                <p>Password: <code>admin123</code></p>
+            </div>
+            <div class="seed-item" onclick="quickFill('lecturer', 'lecturer123')">
+                <span class="seed-role role-badge role-lecturer">Lecturer</span>
+                <p>Username: <strong>lecturer</strong></p>
+                <p>Password: <code>lecturer123</code></p>
+            </div>
+            <div class="seed-item" onclick="quickFill('student', 'student123')">
+                <span class="seed-role role-badge role-student">Student</span>
+                <p>Username: <strong>student</strong></p>
+                <p>Password: <code>student123</code></p>
+            </div>
+        </div>
+        <p class="seed-tip">💡 Nhấp trực tiếp vào thẻ bất kỳ để tự động điền nhanh dữ liệu.</p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function quickFill(user, pass) {
+            document.getElementById('Username').value = user;
+            document.getElementById('Password').value = pass;
+        }
+    </script>
+}
+
+<style>
+    .login-wrapper {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 2rem;
+        align-items: center;
+        max-width: 1000px;
+        margin: 2rem auto;
+    }
+
+    @@media (max-width: 768px) {
+        .login-wrapper {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .login-card {
+        padding: 3rem 2.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-align: center;
+        background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        font-size: 1rem;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .form-control {
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: #ffffff;
+        padding: 0.85rem 1rem 0.85rem 2.5rem;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: var(--transition-smooth);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        background-color: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-block {
+        width: 100%;
+        padding: 0.9rem;
+        margin-top: 1rem;
+    }
+
+    .validation-summary {
+        color: var(--danger);
+        background-color: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .validation-summary ul {
+        list-style-position: inside;
+    }
+
+    .text-danger {
+        color: var(--danger);
+        font-size: 0.8rem;
+        margin-top: 0.2rem;
+    }
+
+    .alert-success {
+        color: var(--accent-emerald);
+        background-color: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-footer {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .form-footer a {
+        color: var(--accent-purple);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition-smooth);
+    }
+
+    .form-footer a:hover {
+        color: #ffffff;
+        text-decoration: underline;
+    }
+
+    /* Seed Cards */
+    .seed-accounts-card {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .seed-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .seed-desc {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .seed-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .seed-item {
+        background-color: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        border-radius: 12px;
+        transition: var(--transition-smooth);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .seed-item:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .seed-role {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+
+    .seed-item p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 0.2rem;
+    }
+
+    .seed-item strong, .seed-item code {
+        color: #ffffff;
+    }
+
+    .seed-item code {
+        background-color: rgba(255, 255, 255, 0.08);
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .seed-tip {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-style: italic;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+</style>

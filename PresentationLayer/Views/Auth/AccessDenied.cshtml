@@ -1,0 +1,113 @@
+@{
+    ViewData["Title"] = "Từ chối truy cập";
+}
+
+<div class="denied-wrapper">
+    <div class="glass-card denied-card">
+        <div class="denied-icon">🛑</div>
+        <h1 class="denied-code">403</h1>
+        <h2 class="denied-title">Truy Cập Bị Từ Chối</h2>
+        <p class="denied-message">
+            Tài khoản hiện tại của bạn không có đủ đặc quyền truy cập vào tài nguyên hoặc trang mà bạn vừa yêu cầu.
+        </p>
+
+        <div class="user-status">
+            <p>Đang đăng nhập bằng: <strong>@User.Identity?.Name</strong></p>
+            <p>Quyền hiện tại: <span class="role-badge role-student">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</span></p>
+        </div>
+
+        <div class="denied-actions">
+            <a href="/" class="btn-primary">Quay về trang chủ</a>
+            <a asp-controller="Auth" asp-action="Logout" class="btn-secondary">Đăng xuất & Đổi tài khoản</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .denied-wrapper {
+        max-width: 600px;
+        margin: 4rem auto;
+        width: 100%;
+        text-align: center;
+    }
+
+    .denied-card {
+        padding: 4rem 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .denied-icon {
+        font-size: 4rem;
+        animation: pulse 2s infinite ease-in-out;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.4)); }
+    }
+
+    .denied-code {
+        font-size: 5rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.05em;
+        background: linear-gradient(135deg, var(--danger) 0%, var(--accent-orange) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .denied-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .denied-message {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        max-width: 400px;
+    }
+
+    .user-status {
+        background-color: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 350px;
+        font-size: 0.9rem;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .user-status p {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-secondary);
+    }
+
+    .user-status strong {
+        color: #ffffff;
+    }
+
+    .denied-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    @@media (max-width: 480px) {
+        .denied-actions {
+            flex-direction: column;
+        }
+    }
+</style>
