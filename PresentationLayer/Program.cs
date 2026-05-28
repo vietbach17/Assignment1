@@ -21,6 +21,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// ------- Subscription Management -------
+builder.Services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>(); // Repository giả lập dữ liệu,
+                                                                                  // nên dùng Singleton để giữ nguyên trạng thái
+                                                                                  // trong suốt vòng đời ứng dụng
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();    
+
 // --- 3. CẤU HÌNH COOKIE AUTHENTICATION ---
 // Đăng ký và cấu hình cơ chế xác thực bằng Cookie (Cookie Authentication)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
