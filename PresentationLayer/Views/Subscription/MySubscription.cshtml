@@ -1,0 +1,38 @@
+﻿@model DataAccessLayer.Models.StudentSubscription
+
+@{
+    ViewData["Title"] = "Gói Của Tôi";
+}
+
+<div class="container mt-5" style="max-width: 600px;">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+            ⚡ @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="card shadow border-0 rounded-3 overflow-hidden">
+        <div class="card-header bg-gradient bg-primary text-white text-center py-4">
+            <h4 class="mb-0 fw-bold">TÀI KHOẢN HỘI VIÊN CHATBOT</h4>
+        </div>
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <span class="badge bg-success px-4 py-2 fs-6 mb-2">Gói Hiện Tại: @Model.SubscriptionPlan.Name</span>
+                <p class="text-muted small">Thời gian hiệu lực: @Model.StartDate.ToString("dd/MM/yyyy") - @Model.EndDate.ToString("dd/MM/yyyy")</p>
+            </div>
+
+            <div class="bg-light rounded p-4 text-center border">
+                <h5 class="text-secondary fw-semibold">Số lượt đặt câu hỏi còn lại trong tháng</h5>
+                <div class="display-3 fw-bold text-primary my-2">
+                    @(Model.RemainingQuestions >= 9999 ? "∞" : Model.RemainingQuestions)
+                </div>
+                <p class="mb-0 text-muted small">Trên tổng số @(Model.SubscriptionPlan.QuestionLimit >= 9999 ? "không giới hạn" : Model.SubscriptionPlan.QuestionLimit) câu của gói.</p>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-outline-primary py-2 fw-bold">Nâng Cấp / Đổi Gói Dịch Vụ</a>
+            </div>
+        </div>
+    </div>
+</div>

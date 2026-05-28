@@ -1,0 +1,61 @@
+﻿@model IEnumerable<DataAccessLayer.Models.SubscriptionPlan>
+
+@{
+    ViewData["Title"] = "Gói Hội Viên Chatbot";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-primary">Nâng Cấp Gói Chatbot Trợ Lý Học Tập</h1>
+        <p class="lead text-muted">Lựa chọn gói hội viên phù hợp để không bị gián đoạn trải nghiệm học tập môn PRN222</p>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger text-center">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-2 @(item.Name == "Basic" ? "border-primary" : "")">
+                    @if (item.Name == "Basic")
+                    {
+                        <div class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-primary px-3 py-2">Khuyên Dùng</div>
+                    }
+                    <div class="card-body text-center d-flex flex-column">
+                        <h3 class="card-title fw-bold mt-2">@item.Name</h3>
+                        <p class="text-muted small">@item.Description</p>
+                        <hr />
+                        <div class="my-3">
+                            <span class="display-6 fw-bold">@item.Price.ToString("#,##0")</span>
+                            <span class="text-muted"> VNĐ / tháng</span>
+                        </div>
+                        <ul class="list-unstyled mb-4 text-start bg-light p-3 rounded">
+                            <li class="mb-2">🔹 <strong>Giới hạn:</strong> @(item.QuestionLimit >= 9999 ? "Không giới hạn" : item.QuestionLimit + " câu hỏi / tháng")</li>
+                            <li class="mb-2">🔹 Phản hồi siêu tốc từ AI</li>
+                            <li class="mb-2">🔹 Trích dẫn tài liệu chính xác</li>
+                        </ul>
+
+                        <div class="mt-auto">
+                            @if (User.IsInRole("Student") || !User.Identity?.IsAuthenticated == true)
+                            {
+                                <form asp-action="BuyPlan" method="post">
+                                    <input type="hidden" name="planId" value="@item.Id" />
+                                    <button type="submit" class="btn w-100 @(item.Name == "Basic" ? "btn-primary" : "btn-outline-primary") py-2 fw-bold">
+                                        @(item.Price == 0 ? "Sử Dụng Miễn Phí" : "Mua Ngay (Demo)")
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100 disabled py-2">Dành Cho Sinh Viên</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
