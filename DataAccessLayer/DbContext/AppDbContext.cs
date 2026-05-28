@@ -37,13 +37,13 @@ namespace DataAccessLayer.DbContexts
 
             modelBuilder.Entity<Role>().HasData(adminRole, lecturerRole, studentRole);
 
-            // Seed Data cho 3 Users mẫu ứng với 3 Roles (mật khẩu băm bằng BCrypt)
+            // Seed Data cho 3 Users mẫu ứng với 3 Roles (mật khẩu băm tĩnh bằng BCrypt để tránh trôi migrations)
             // LƯU Ý: Ở dự án thực tế, mật khẩu seed nên được lưu trữ cấu hình bảo mật hoặc dùng biến môi trường.
             var adminUser = new User
             {
                 Id = 1,
                 Username = "admin",
-                PasswordHash = BCryptNet.HashPassword("admin123"), // Mật khẩu gốc: admin123
+                PasswordHash = "$2a$11$p7e/dWqp3/H5V2hA8gfj4egjrUGPAPfbZqBqMcSvnBcc/Qc8qpjcq", // Mật khẩu gốc: admin123
                 RoleId = 1
             };
 
@@ -51,7 +51,7 @@ namespace DataAccessLayer.DbContexts
             {
                 Id = 2,
                 Username = "lecturer",
-                PasswordHash = BCryptNet.HashPassword("lecturer123"), // Mật khẩu gốc: lecturer123
+                PasswordHash = "$2a$11$.V0CPaW.aVn4ajd6qwur7eF84ysDgtwM6iTNNiVTUaC77F2nMaNji", // Mật khẩu gốc: lecturer123
                 RoleId = 2
             };
 
@@ -59,7 +59,7 @@ namespace DataAccessLayer.DbContexts
             {
                 Id = 3,
                 Username = "student",
-                PasswordHash = BCryptNet.HashPassword("student123"), // Mật khẩu gốc: student123
+                PasswordHash = "$2a$11$9Eg5STUA/KUfGzB3ubcC0OGv7Mph4h14Lj3lSBPgznmpJ4Sh73oAi", // Mật khẩu gốc: student123
                 RoleId = 3
             };
 

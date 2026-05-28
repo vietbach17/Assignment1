@@ -1,5 +1,6 @@
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
+using BussinessLayer.DTOs;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace BussinessLayer.Services
@@ -17,7 +18,7 @@ namespace BussinessLayer.Services
             _roleRepository = roleRepository;
         }
 
-        public async Task<User?> LoginAsync(string username, string password)
+        public async Task<UserDto?> LoginAsync(string username, string password)
         {
             // Tìm kiếm người dùng theo username
             var user = await _userRepository.GetByUsernameAsync(username);
@@ -34,7 +35,13 @@ namespace BussinessLayer.Services
                 return null; // Mật khẩu không chính xác
             }
 
-            return user; // Đăng nhập thành công, trả về thực thể User (đã bao gồm Role)
+            // Đăng nhập thành công, chuyển đổi và trả về DTO an toàn (che giấu PasswordHash)
+            return new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                RoleName = user.Role.RoleName
+            };
         }
 
         public async Task<bool> RegisterAsync(string username, string password)

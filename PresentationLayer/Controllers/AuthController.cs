@@ -55,7 +55,7 @@ namespace PresentationLayer.Controllers
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role.RoleName), // Cực kỳ quan trọng để dùng attribute [Authorize(Roles = "...")]
+                new Claim(ClaimTypes.Role, user.RoleName), // Cực kỳ quan trọng để dùng attribute [Authorize(Roles = "...")]
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
