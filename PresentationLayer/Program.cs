@@ -1,25 +1,18 @@
-using DataAccessLayer.DbContexts;
-using DataAccessLayer.Repositories;
-using BussinessLayer.Services;
+using BussinessLayer;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// --- 1. ĐĂNG KÝ DBCONTEXT KẾT NỐI POSTGRESQL ---
-// EF Core DbContext quản lý kết nối và các truy vấn tới DB PostgreSQL
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("DataAccessLayer")));
+// Register IHttpContextAccessor for accessing HttpContext in controllers and services
+builder.Services.AddHttpContextAccessor();
 
-// --- 2. ĐĂNG KÝ DEPENDENCY INJECTION (DI) ---
-// Đăng ký các Repository và Service vào hệ thống DI Container dưới dạng Scoped (Khởi tạo lại trên mỗi Request)
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+// --- 1 & 2. ĐĂNG KÝ CÁC DỊCH VỤ TẦNG NGHIỆP VỤ & DỮ LIỆU ---
+// Gọi phương thức mở rộng từ BussinessLayer để tự đăng ký DbContext, Repositories và Services
+// Điều này giúp tầng PresentationLayer KHÔNG cần tham chiếu trực tiếp tới DataAccessLayer
+builder.Services.AddBusinessAndDataServices(builder.Configuration);
 
 // --- 3. CẤU HÌNH COOKIE AUTHENTICATION ---
 // Đăng ký và cấu hình cơ chế xác thực bằng Cookie (Cookie Authentication)

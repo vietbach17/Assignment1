@@ -75,8 +75,8 @@ namespace PresentationLayer.Controllers
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
-            // Chuyển hướng người dùng dựa theo vai trò (Role) sau khi đăng nhập thành công
-            return RedirectUserByRole();
+            // Chuyển hướng người dùng dựa theo vai trò (Role) của DTO vừa đăng nhập để tránh lỗi trễ HttpContext
+            return RedirectUserByRole(user.RoleName);
         }
 
         [HttpGet]
@@ -127,19 +127,38 @@ namespace PresentationLayer.Controllers
             return View();
         }
 
-        // Hàm helper điều hướng chuyển trang dựa trên Role của người dùng hiện hành
-        private IActionResult RedirectUserByRole()
+        // Hàm helper điều hướng chuyển trang dựa trên Role của người dùng (nhận trực tiếp hoặc trích xuất từ Claims)
+        private IActionResult RedirectUserByRole(string? roleName = null)
         {
+            // Trường hợp 1: Có truyền trực tiếp RoleName (Ví dụ: Vừa đăng nhập thành công ở POST Login)
+            if (!string.IsNullOrEmpty(roleName))
+            {
+                if (string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Dashboard", "Admin");
+                }
+                if (string.Equals(roleName, "Lecturer", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Index", "Document");
+                }
+                if (string.Equals(roleName, "Student", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Chat", "Home");
+                }
+            }
+
+            // Trường hợp 2: Không truyền RoleName (Ví dụ: Đã có sẵn Cookie ở GET Login)
             if (User.IsInRole("Admin"))
             {
                 return RedirectToAction("Dashboard", "Admin");
             }
-            else if (User.IsInRole("Lecturer"))
+            if (User.IsInRole("Lecturer"))
             {
                 return RedirectToAction("Index", "Document");
             }
-            else if (User.IsInRole("Student"))
+            if (User.IsInRole("Student"))
             {
+                // Học viên -> Phòng chat
                 return RedirectToAction("Chat", "Home");
             }
 
