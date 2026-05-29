@@ -21,6 +21,8 @@ namespace BussinessLayer
             // 2. Đăng ký Repositories thuộc tầng DataAccessLayer (DAL)
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<ISubjectRepository, SubjectRepository>();
+            services.AddScoped<IChapterRepository, ChapterRepository>();
 
             services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>(); // Repository giả lập dữ liệu,
                                                                                       // nên dùng Singleton để giữ nguyên trạng thái
@@ -29,6 +31,8 @@ namespace BussinessLayer
 
             // 3. Đăng ký Services thuộc tầng BussinessLayer (BLL)
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ISubjectService, SubjectService>();
+            services.AddScoped<IChapterService, ChapterService>();
 
                     // ------- Subscription Management -------
             services.AddScoped<ISubscriptionService, SubscriptionService>();
