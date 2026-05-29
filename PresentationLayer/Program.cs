@@ -6,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Register IHttpContextAccessor for accessing HttpContext in controllers and services
+builder.Services.AddHttpContextAccessor();
+
 // --- 1 & 2. ĐĂNG KÝ CÁC DỊCH VỤ TẦNG NGHIỆP VỤ & DỮ LIỆU ---
 // Gọi phương thức mở rộng từ BussinessLayer để tự đăng ký DbContext, Repositories và Services
 // Điều này giúp tầng PresentationLayer KHÔNG cần tham chiếu trực tiếp tới DataAccessLayer

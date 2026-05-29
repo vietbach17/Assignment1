@@ -1,0 +1,273 @@
+@model BussinessLayer.DTOs.SubjectDto
+
+@{
+    ViewData["Title"] = "Delete Subject";
+    var hasChapters = Model.Chapters != null && Model.Chapters.Any();
+}
+
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+
+    .breadcrumb {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+
+    .breadcrumb a:hover {
+        color: var(--accent-purple);
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+    }
+
+    .warning-card {
+        background: rgba(239, 68, 68, 0.1);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .warning-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+
+    .warning-content h3 {
+        color: var(--danger);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .warning-content p {
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .details-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-row {
+        display: flex;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        width: 200px;
+        flex-shrink: 0;
+    }
+
+    .detail-value {
+        color: var(--text-secondary);
+        flex: 1;
+    }
+
+    .subject-code-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .chapters-warning {
+        background: rgba(249, 115, 22, 0.1);
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .chapters-warning-title {
+        color: var(--accent-orange);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chapters-list {
+        margin-top: 0.75rem;
+        padding-left: 1.5rem;
+    }
+
+    .chapters-list li {
+        color: var(--text-secondary);
+        padding: 0.25rem 0;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        color: #ffffff;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-secondary {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+    }
+
+    .btn-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+</style>
+
+<div class="breadcrumb">
+    <a asp-action="Index">Subjects</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Delete</span>
+</div>
+
+<div class="page-header">
+    <h1 class="page-title">Delete Subject</h1>
+    <p class="page-subtitle">Confirm deletion of this subject</p>
+</div>
+
+<div class="warning-card">
+    <div class="warning-icon">⚠️</div>
+    <div class="warning-content">
+        <h3>Warning: This action cannot be undone</h3>
+        <p>You are about to delete this subject. This is a soft delete operation - the subject will be marked as deleted but preserved in the database for audit purposes.</p>
+    </div>
+</div>
+
+<div class="details-card">
+    <div class="detail-row">
+        <div class="detail-label">Subject Code:</div>
+        <div class="detail-value">
+            <span class="subject-code-badge">@Model.SubjectCode</span>
+        </div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">Subject Name:</div>
+        <div class="detail-value">@Model.SubjectName</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">Description:</div>
+        <div class="detail-value">
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                @Model.Description
+            }
+            else
+            {
+                <span style="font-style: italic; opacity: 0.5;">No description provided</span>
+            }
+        </div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">Created Date:</div>
+        <div class="detail-value">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</div>
+    </div>
+
+    @if (hasChapters)
+    {
+        <div class="chapters-warning">
+            <div class="chapters-warning-title">
+                <span>⚠️</span>
+                <span>This subject has @Model.Chapters!.Count chapter(s)</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                Deleting this subject will also soft delete all associated chapters:
+            </p>
+            <ul class="chapters-list">
+                @foreach (var chapter in Model.Chapters!.OrderBy(c => c.ChapterNumber).Take(5))
+                {
+                    <li>Chapter @chapter.ChapterNumber: @chapter.ChapterTitle</li>
+                }
+                @if (Model.Chapters.Count > 5)
+                {
+                    <li style="font-style: italic;">... and @(Model.Chapters.Count - 5) more chapter(s)</li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="form-actions">
+        <button type="submit" class="btn-danger">
+            🗑️ Confirm Delete
+        </button>
+        <a asp-action="Index" class="btn-secondary">
+            Cancel
+        </a>
+    </div>
+</form>

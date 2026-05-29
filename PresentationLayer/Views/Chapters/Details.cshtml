@@ -1,0 +1,243 @@
+@model BussinessLayer.DTOs.ChapterDto
+
+@{
+    ViewData["Title"] = $"Chapter {Model.ChapterNumber} - Details";
+}
+
+<style>
+    .breadcrumb {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+
+    .breadcrumb a:hover {
+        color: var(--accent-purple);
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .chapter-badge {
+        display: inline-block;
+        background-color: rgba(168, 85, 247, 0.15);
+        color: #c084fc;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .details-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-row {
+        display: flex;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        width: 200px;
+        flex-shrink: 0;
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .subject-info-card {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .subject-info-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.75rem;
+    }
+
+    .subject-code {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--accent-purple);
+        margin-bottom: 0.25rem;
+    }
+
+    .subject-name {
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-back {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-back:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, var(--accent-orange) 0%, #fb923c 100%);
+        color: #ffffff;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        color: #ffffff;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+</style>
+
+<div class="breadcrumb">
+    <a asp-controller="Subjects" asp-action="Index">Subjects</a>
+    <span class="breadcrumb-separator">›</span>
+    <a asp-controller="Chapters" asp-action="Index" asp-route-subjectId="@Model.SubjectId">@Model.SubjectCode - Chapters</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Chapter @Model.ChapterNumber</span>
+</div>
+
+<div class="page-header">
+    <div class="chapter-badge">Chapter @Model.ChapterNumber</div>
+    <h1 class="page-title">@Model.ChapterTitle</h1>
+</div>
+
+<div class="subject-info-card">
+    <div class="subject-info-title">Parent Subject</div>
+    <div class="subject-code">@Model.SubjectCode</div>
+    <div class="subject-name">@Model.SubjectName</div>
+</div>
+
+<div class="details-card">
+    <div class="detail-row">
+        <div class="detail-label">Chapter Number</div>
+        <div class="detail-value">@Model.ChapterNumber</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">Chapter Title</div>
+        <div class="detail-value">@Model.ChapterTitle</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">Description</div>
+        <div class="detail-value">
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                @Model.Description
+            }
+            else
+            {
+                <span style="font-style: italic; opacity: 0.5;">No description provided</span>
+            }
+        </div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">Created Date</div>
+        <div class="detail-value">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</div>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.CreatedByUsername))
+    {
+        <div class="detail-row">
+            <div class="detail-label">Created By</div>
+            <div class="detail-value">@Model.CreatedByUsername</div>
+        </div>
+    }
+    @if (Model.UpdatedDate.HasValue)
+    {
+        <div class="detail-row">
+            <div class="detail-label">Last Updated</div>
+            <div class="detail-value">@Model.UpdatedDate.Value.ToString("dd/MM/yyyy HH:mm")</div>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.UpdatedByUsername))
+    {
+        <div class="detail-row">
+            <div class="detail-label">Updated By</div>
+            <div class="detail-value">@Model.UpdatedByUsername</div>
+        </div>
+    }
+</div>
+
+<div class="action-buttons">
+    <a asp-action="Index" asp-route-subjectId="@Model.SubjectId" class="btn-back">← Back to Chapters</a>
+    @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+    {
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-edit">Edit Chapter</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn-delete">Delete Chapter</a>
+    }
+</div>
