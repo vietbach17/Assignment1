@@ -105,6 +105,22 @@
             color: #ffffff;
         }
 
+        .nav-link.active {
+            color: #ffffff;
+            position: relative;
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+            border-radius: 2px;
+        }
+
         /* User Profile & Role Badge */
         .user-section {
             display: flex;
@@ -270,6 +286,17 @@
     <header>
         <div class="navbar">
             <a href="/" class="brand">SecureAuth Portal</a>
+            
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a asp-controller="Home" asp-action="Index" class="nav-link">Trang chủ</a></li>
+                        <li><a asp-controller="Subjects" asp-action="Index" class="nav-link">Môn học</a></li>
+                    </ul>
+                </nav>
+            }
+            
             <div class="user-section">
                 @if (User.Identity?.IsAuthenticated == true)
                 {

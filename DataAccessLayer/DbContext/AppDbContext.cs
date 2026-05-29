@@ -13,6 +13,9 @@ namespace DataAccessLayer.DbContexts
 
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
+        public DbSet<Subject> Subjects { get; set; } = null!;
+        public DbSet<Chapter> Chapters { get; set; } = null!;
+        public DbSet<SubjectLecturer> SubjectLecturers { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +67,187 @@ namespace DataAccessLayer.DbContexts
             };
 
             modelBuilder.Entity<User>().HasData(adminUser, lecturerUser, studentUser);
+
+            // Subject configuration
+            modelBuilder.Entity<Subject>()
+                .HasIndex(s => s.SubjectCode)
+                .IsUnique();
+
+            modelBuilder.Entity<Subject>()
+                .HasMany(s => s.Chapters)
+                .WithOne(c => c.Subject)
+                .HasForeignKey(c => c.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Subject>()
+                .HasMany(s => s.SubjectLecturers)
+                .WithOne(sl => sl.Subject)
+                .HasForeignKey(sl => sl.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Subject>()
+                .HasOne(s => s.CreatedBy)
+                .WithMany()
+                .HasForeignKey(s => s.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Subject>()
+                .HasOne(s => s.UpdatedBy)
+                .WithMany()
+                .HasForeignKey(s => s.UpdatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Chapter configuration
+            modelBuilder.Entity<Chapter>()
+                .HasIndex(c => new { c.SubjectId, c.ChapterNumber })
+                .IsUnique();
+
+            modelBuilder.Entity<Chapter>()
+                .HasOne(c => c.CreatedBy)
+                .WithMany()
+                .HasForeignKey(c => c.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Chapter>()
+                .HasOne(c => c.UpdatedBy)
+                .WithMany()
+                .HasForeignKey(c => c.UpdatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // SubjectLecturer configuration
+            modelBuilder.Entity<SubjectLecturer>()
+                .HasIndex(sl => new { sl.SubjectId, sl.LecturerId })
+                .IsUnique();
+
+            modelBuilder.Entity<SubjectLecturer>()
+                .HasOne(sl => sl.Lecturer)
+                .WithMany()
+                .HasForeignKey(sl => sl.LecturerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Seed data
+            SeedSubjectsAndChapters(modelBuilder);
+        }
+
+        private void SeedSubjectsAndChapters(ModelBuilder modelBuilder)
+        {
+            var prn222Subject = new Subject
+            {
+                Id = 1,
+                SubjectCode = "PRN222",
+                SubjectName = "Advanced Cross-Platform Application Programming With .NET",
+                Description = "This course provides knowledge and skills in developing cross-platform applications using .NET technologies.",
+                CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                CreatedByUserId = 1, // Created by admin
+                IsDeleted = false
+            };
+
+            modelBuilder.Entity<Subject>().HasData(prn222Subject);
+
+            var chapters = new[]
+            {
+                new Chapter
+                {
+                    Id = 1,
+                    ChapterNumber = 1,
+                    ChapterTitle = "Networking Programming",
+                    Description = "Introduction to network programming concepts and protocols",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 2,
+                    ChapterNumber = 2,
+                    ChapterTitle = "Asynchronous and Parallel Programming in .NET",
+                    Description = "Understanding async/await patterns and parallel processing",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 3,
+                    ChapterNumber = 3,
+                    ChapterTitle = "Dependency Injection in .NET",
+                    Description = "Implementing DI patterns and IoC containers in .NET applications",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 4,
+                    ChapterNumber = 4,
+                    ChapterTitle = "Building Web Application using ASP.NET Core MVC",
+                    Description = "Creating MVC web applications with ASP.NET Core",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 5,
+                    ChapterNumber = 5,
+                    ChapterTitle = "Building Websites Using ASP.NET Core Razor Pages",
+                    Description = "Developing page-based web applications with Razor Pages",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 6,
+                    ChapterNumber = 6,
+                    ChapterTitle = "Building a Web App with Blazor and ASP .Net Core",
+                    Description = "Creating interactive web UIs using Blazor framework",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 7,
+                    ChapterNumber = 7,
+                    ChapterTitle = "Real-Time Communication",
+                    Description = "Implementing real-time features with SignalR",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                },
+                new Chapter
+                {
+                    Id = 8,
+                    ChapterNumber = 8,
+                    ChapterTitle = "Background Tasks with Worker Service",
+                    Description = "Creating and managing background services in .NET",
+                    SubjectId = 1,
+                    CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CreatedByUserId = 1,
+                    IsDeleted = false
+                }
+            };
+
+            modelBuilder.Entity<Chapter>().HasData(chapters);
+
+            // Assign PRN222 to the lecturer user (Id = 2)
+            var lecturerAssignment = new SubjectLecturer
+            {
+                Id = 1,
+                SubjectId = 1,
+                LecturerId = 2,
+                AssignedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+
+            modelBuilder.Entity<SubjectLecturer>().HasData(lecturerAssignment);
         }
     }
 }

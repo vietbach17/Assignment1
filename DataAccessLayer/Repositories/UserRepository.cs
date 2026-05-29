@@ -29,6 +29,15 @@ namespace DataAccessLayer.Repositories
                 .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
         }
 
+        public async Task<IEnumerable<User>> GetUsersByRoleIdAsync(int roleId)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.RoleId == roleId)
+                .OrderBy(u => u.Username)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(User user)
         {
             await _context.Users.AddAsync(user);
