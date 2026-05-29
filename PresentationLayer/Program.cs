@@ -11,12 +11,6 @@ builder.Services.AddControllersWithViews();
 // Điều này giúp tầng PresentationLayer KHÔNG cần tham chiếu trực tiếp tới DataAccessLayer
 builder.Services.AddBusinessAndDataServices(builder.Configuration);
 
-// ------- Subscription Management -------
-builder.Services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>(); // Repository giả lập dữ liệu,
-                                                                                  // nên dùng Singleton để giữ nguyên trạng thái
-                                                                                  // trong suốt vòng đời ứng dụng
-builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();    
-
 // --- 3. CẤU HÌNH COOKIE AUTHENTICATION ---
 // Đăng ký và cấu hình cơ chế xác thực bằng Cookie (Cookie Authentication)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
