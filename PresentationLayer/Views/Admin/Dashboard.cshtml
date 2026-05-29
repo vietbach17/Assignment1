@@ -1,3 +1,5 @@
+@model IEnumerable<BussinessLayer.DTOs.DocumentDto>
+@using DataAccessLayer.Models
 @{
     ViewData["Title"] = "Trang quản trị Admin";
 }
@@ -95,6 +97,67 @@
                 <p><strong>💡 Bảo mật thông tin:</strong> Cookie xác thực phiên đăng nhập của Admin được cấu hình với thuộc tính <code>HttpOnly</code> và <code>Secure</code> giúp chống lại các cuộc tấn công XSS chiếm đoạt session.</p>
             </div>
         </div>
+    </div>
+
+    <!-- Quản lý tài liệu (Document List) -->
+    <div class="glass-card table-card" style="margin-top: 2rem;">
+        <h2 class="card-title">📚 Quản lý tài liệu đã tải lên</h2>
+        
+        @if (!Model.Any())
+        {
+            <div class="info-alert" style="border-left-color: var(--accent-orange); background-color: rgba(249, 115, 22, 0.05);">
+                <p>Hiện chưa có tài liệu nào được tải lên hệ thống.</p>
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>Định dạng</th>
+                            <th>Tiêu đề</th>
+                            <th>Môn học</th>
+                            <th>Người tải lên</th>
+                            <th>Ngày tải lên</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @switch (doc.FileType)
+                                    {
+                                        case "pdf":  <span class="role-badge" style="background: rgba(239,68,68,0.15); color: #f87171;">PDF</span>  break;
+                                        case "docx": <span class="role-badge" style="background: rgba(59,130,246,0.15); color: #60a5fa;">DOCX</span> break;
+                                        case "pptx": <span class="role-badge" style="background: rgba(249,115,22,0.15); color: #fb923c;">PPTX</span> break;
+                                        default:     <span class="role-badge">FILE</span>      break;
+                                    }
+                                </td>
+                                <td><strong>@doc.Title</strong><br/><span style="font-size: 0.8rem; color: var(--text-secondary);">@doc.FileSizeDisplay</span></td>
+                                <td>@doc.SubjectCode</td>
+                                <td>@doc.UploadedByUsername</td>
+                                <td>@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @switch (doc.Status)
+                                    {
+                                        case DocumentStatus.Pending: <span class="badge-active" style="color: #facc15; background: rgba(234,179,8,0.1);">🟡 Pending</span>  break;
+                                        case DocumentStatus.Indexed: <span class="badge-active" style="color: #4ade80; background: rgba(34,197,94,0.1);">🟢 Indexed</span>  break;
+                                        case DocumentStatus.Failed:  <span class="badge-active" style="color: #f87171; background: rgba(239,68,68,0.1);">🔴 Failed</span>   break;
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; text-decoration: none; border-radius: 6px;">Chi tiết</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>
 

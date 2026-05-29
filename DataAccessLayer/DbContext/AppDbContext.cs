@@ -16,6 +16,7 @@ namespace DataAccessLayer.DbContexts
         public DbSet<Subject> Subjects { get; set; } = null!;
         public DbSet<Chapter> Chapters { get; set; } = null!;
         public DbSet<SubjectLecturer> SubjectLecturers { get; set; } = null!;
+        public DbSet<Document> Documents { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -123,6 +124,25 @@ namespace DataAccessLayer.DbContexts
                 .HasOne(sl => sl.Lecturer)
                 .WithMany()
                 .HasForeignKey(sl => sl.LecturerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Document configuration
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.Subject)
+                .WithMany()
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.Chapter)
+                .WithMany()
+                .HasForeignKey(d => d.ChapterId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.UploadedBy)
+                .WithMany()
+                .HasForeignKey(d => d.UploadedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Seed data
