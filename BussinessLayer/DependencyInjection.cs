@@ -21,9 +21,13 @@ namespace BussinessLayer
             // 2. Đăng ký Repositories thuộc tầng DataAccessLayer (DAL)
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<ISubjectRepository, SubjectRepository>();
+            services.AddScoped<IChapterRepository, ChapterRepository>();
 
             // 3. Đăng ký Services thuộc tầng BussinessLayer (BLL)
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ISubjectService, SubjectService>();
+            services.AddScoped<IChapterService, ChapterService>();
 
             return services;
         }
