@@ -22,8 +22,17 @@ namespace BussinessLayer
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
 
+            services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>(); // Repository giả lập dữ liệu,
+                                                                                      // nên dùng Singleton để giữ nguyên trạng thái
+                                                                                      // trong suốt vòng đời ứng dụng
+
+
             // 3. Đăng ký Services thuộc tầng BussinessLayer (BLL)
             services.AddScoped<IAuthService, AuthService>();
+
+                    // ------- Subscription Management -------
+            services.AddScoped<ISubscriptionService, SubscriptionService>();
+
 
             return services;
         }
