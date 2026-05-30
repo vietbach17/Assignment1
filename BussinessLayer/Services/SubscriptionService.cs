@@ -1,7 +1,9 @@
-﻿using BussinessLayer.Interfaces;
+﻿using BussinessLayer.DTOs;
+using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using VNPAY;
 using VNPAY.Models;
 using VNPAY.Models.Enums;
@@ -23,12 +25,84 @@ namespace BussinessLayer.Services
             _vnpayClient = vnpayClient;
         }
 
-        public List<SubscriptionPlan> GetAllPlans() => _repository.GetAllPlans();
-        public SubscriptionPlan? GetPlanById(int id) => _repository.GetPlanById(id);
-        public void CreatePlan(SubscriptionPlan plan) => _repository.AddPlan(plan);
-        public void UpdatePlan(SubscriptionPlan plan) => _repository.UpdatePlan(plan);
+        public List<SubscriptionPlanDTO> GetAllPlans()
+        {
+            // 1. Lấy danh sách gốc từ DB/Repo (Dạng Entity Model)
+            var entities = _repository.GetAllPlans(); 
+
+            // 2. Map thủ công toàn bộ danh sách sang DTO bằng Select của LINQ
+            var dtoList = entities.Select(plan => new SubscriptionPlanDTO
+            {
+                Id = plan.Id,
+                Name = plan.Name,
+                Description = plan.Description,
+                Price = plan.Price,
+                QuestionLimit = plan.QuestionLimit
+            }).ToList();
+
+            return dtoList;
+        }
+
+        public SubscriptionPlanDTO? GetPlanById(int id)
+        {
+            var plan = _repository.GetPlanById(id); 
+            if (plan == null) return null;
+
+            return new SubscriptionPlanDTO
+            {
+                Id = plan.Id,
+                Name = plan.Name,
+                Description = plan.Description,
+                Price = plan.Price,
+                QuestionLimit = plan.QuestionLimit
+            };
+        }
+        public void CreatePlan(SubscriptionPlanDTO planDto)
+        {
+            var plan = new SubscriptionPlan
+            {
+                Name = planDto.Name,
+                Description = planDto.Description,
+                Price = planDto.Price,
+                QuestionLimit = planDto.QuestionLimit
+            };
+
+            _repository.AddPlan(plan);
+        }
+        public void UpdatePlan(SubscriptionPlanDTO planDto)
+        {
+            var existingPlan = _repository.GetPlanById(planDto.Id);
+            if (existingPlan != null)
+            {
+                existingPlan.Name = planDto.Name;
+                existingPlan.Description = planDto.Description;
+                existingPlan.Price = planDto.Price;
+                existingPlan.QuestionLimit = planDto.QuestionLimit;
+
+                _repository.UpdatePlan(existingPlan); // Hoặc _context.SaveChanges();
+            }
+        }
         public void DeletePlan(int id) => _repository.DeletePlan(id);
-        public StudentSubscription? GetStudentSubscription(int userId) => _repository.GetStudentSubscription(userId);
+        public StudentSubscriptionDTO? GetStudentSubscription(int userId)
+        {
+            var sub = _repository.GetStudentSubscription(userId);
+
+
+            if (sub == null) return null;
+
+            // Mapping sang DTO trước khi trả về cho Controller
+            return new StudentSubscriptionDTO
+            {
+                Id = sub.Id,
+                UserId = sub.UserId,
+                SubscriptionPlanId = sub.SubscriptionPlanId,
+                PlanName = sub.SubscriptionPlan?.Name ?? "N/A",
+                PlanDescription = sub.SubscriptionPlan?.Description,
+                StartDate = sub.StartDate,
+                EndDate = sub.EndDate,
+                RemainingQuestions = sub.RemainingQuestions
+            };
+        }
 
         // HÀM 1: TẠO URL THANH TOÁN SANG VNPAY (Theo Cách 2 - chi tiết của tài liệu)
         public string CreateVnPayPaymentUrl(int userId, int planId, HttpContext httpContext, string returnUrl)

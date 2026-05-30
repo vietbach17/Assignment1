@@ -1,5 +1,4 @@
-﻿@model DataAccessLayer.Models.StudentSubscription
-
+﻿@model BussinessLayer.DTOs.StudentSubscriptionDTO
 @{
     ViewData["Title"] = "Hội Viên Của Tôi";
 }
@@ -68,7 +67,7 @@
                 @(Model.RemainingQuestions >= 9999 ? "∞" : Model.RemainingQuestions.ToString())
             </div>
             <p style="color: var(--text-secondary); font-size: 0.85rem;">
-                Dựa trên gói: <span style="color: #fff; font-weight: 600;">@Model.SubscriptionPlan.Name</span>
+                Dựa trên gói: <span style="color: #fff; font-weight: 600;">@Model.PlanName</span>
             </p>
         </div>
 
@@ -83,7 +82,7 @@
             </div>
             <div class="info-row">
                 <span style="color: var(--text-secondary);">Tổng hạn mức gói</span>
-                <span>@(Model.SubscriptionPlan.QuestionLimit >= 9999 ? "Không giới hạn" : Model.SubscriptionPlan.QuestionLimit + " câu")</span>
+                <span>@(Model.RemainingQuestions >= 9999 || Model.PlanName == "Pro" ? "Không giới hạn" : "Theo hạn mức gói")</span>
             </div>
         </div>
 

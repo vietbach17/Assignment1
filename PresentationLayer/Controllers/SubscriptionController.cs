@@ -1,8 +1,8 @@
 ﻿using BussinessLayer.Interfaces;
-using DataAccessLayer.Models;
+//using DataAccessLayer.Models;
+using BussinessLayer.DTOs; // Thêm namespace DTOs vào
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 
 namespace PresentationLayer.Controllers
@@ -35,8 +35,9 @@ namespace PresentationLayer.Controllers
         // Xem danh sách các gói dịch vụ chatbot hiện có
         public IActionResult Index()
         {
-            var plans = _subscriptionService.GetAllPlans();
-            return View(plans);
+            List<SubscriptionPlanDTO> plans = _subscriptionService.GetAllPlans();
+
+            return View(plans); // Truyền danh sách sang View
         }
 
         // Xem thông tin gói hiện tại của cá nhân và số lượt câu hỏi còn lại
@@ -44,8 +45,11 @@ namespace PresentationLayer.Controllers
         public IActionResult MySubscription()
         {
             int userId = GetCurrentUserId();
-            var studentSub = _subscriptionService.GetStudentSubscription(userId);
-            return View(studentSub);
+
+            // Nhận về DTO thay vì Entity
+            var studentSubDto = _subscriptionService.GetStudentSubscription(userId);
+
+            return View(studentSubDto);
         }
 
         // Thay thế Action BuyPlan cũ bằng code gọi link VNPay thật này:
@@ -138,11 +142,18 @@ namespace PresentationLayer.Controllers
                     currentSub.StartDate = DateTime.UtcNow;
                     currentSub.EndDate = DateTime.UtcNow.AddMonths(1);
 
-                    // FIX LỖI 1: Cập nhật số câu hỏi còn lại bằng đúng giới hạn của gói mới mua (Ví dụ: Basic = 20 câu)
                     currentSub.RemainingQuestions = plan.QuestionLimit;
 
                     // Gọi hàm lưu đè xuống Postgres
-                    _subscriptionService.SaveStudentSubscription(currentSub);
+                    var entity = new DataAccessLayer.Models.StudentSubscription
+                    {
+                        Id = currentSub.Id,
+                        UserId = currentSub.UserId,
+                        SubscriptionPlanId = plan.Id, // Gán ID gói mới mua
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddMonths(1),
+                        RemainingQuestions = plan.QuestionLimit // Cập nhật số lượng câu hỏi mới theo gói
+                    };
 
                     TempData["SuccessMessage"] = $"⚡ Xác nhận thanh toán thành công! Gói {plan.Name} ({plan.QuestionLimit} câu) đã được kích hoạt.";
                     return RedirectToAction(nameof(MySubscription));
@@ -167,36 +178,36 @@ namespace PresentationLayer.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public IActionResult Create(SubscriptionPlan plan)
+        public IActionResult Create(SubscriptionPlanDTO planDto) // Đổi thành DTO
         {
             if (ModelState.IsValid)
             {
-                _subscriptionService.CreatePlan(plan);
+                _subscriptionService.CreatePlan(planDto); // Truyền DTO xuống Service
                 TempData["SuccessMessage"] = "Tạo gói dịch vụ mới thành công!";
                 return RedirectToAction(nameof(AdminIndex));
             }
-            return View(plan);
+            return View(planDto);
         }
 
         [Authorize(Roles = "Admin")]
         public IActionResult Edit(int id)
         {
-            var plan = _subscriptionService.GetPlanById(id);
-            if (plan == null) return NotFound();
-            return View(plan);
+            var planDto = _subscriptionService.GetPlanById(id); // Nhận về DTO từ Service
+            if (planDto == null) return NotFound();
+            return View(planDto);
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public IActionResult Edit(SubscriptionPlan plan)
+        public IActionResult Edit(SubscriptionPlanDTO planDto) // Đổi thành DTO
         {
             if (ModelState.IsValid)
             {
-                _subscriptionService.UpdatePlan(plan);
+                _subscriptionService.UpdatePlan(planDto); // Truyền DTO xuống Service
                 TempData["SuccessMessage"] = "Cập nhật thông tin gói thành công!";
                 return RedirectToAction(nameof(AdminIndex));
             }
-            return View(plan);
+            return View(planDto);
         }
 
         [Authorize(Roles = "Admin")]

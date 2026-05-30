@@ -1,17 +1,18 @@
-﻿using DataAccessLayer.Models;
+﻿using BussinessLayer.DTOs;
+using DataAccessLayer.Models;
 using Microsoft.AspNetCore.Http; // Thêm để dùng HttpContext
 
 namespace BussinessLayer.Interfaces
 {
     public interface ISubscriptionService
     {
-        List<SubscriptionPlan> GetAllPlans();
-        SubscriptionPlan? GetPlanById(int id);
-        void CreatePlan(SubscriptionPlan plan);
-        void UpdatePlan(SubscriptionPlan plan);
+        List<SubscriptionPlanDTO> GetAllPlans();
+        SubscriptionPlanDTO? GetPlanById(int id);
+        void CreatePlan(SubscriptionPlanDTO planDto);
+        void UpdatePlan(SubscriptionPlanDTO planDto);
         void DeletePlan(int id);
 
-        StudentSubscription? GetStudentSubscription(int userId);
+        StudentSubscriptionDTO? GetStudentSubscription(int userId);
 
         void SaveStudentSubscription(StudentSubscription sub);
         void AddTransaction(PaymentTransaction transaction);

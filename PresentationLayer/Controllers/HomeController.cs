@@ -1,5 +1,6 @@
 using BussinessLayer.Interfaces;
 using BussinessLayer.Services;
+using BussinessLayer.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -52,15 +53,26 @@ namespace PresentationLayer.Controllers
         public IActionResult VerifyAndDeductQuestion()
         {
             int userId = GetCurrentUserId();
-            var currentSub = _subscriptionService.GetStudentSubscription(userId);
 
-            if (currentSub == null)
+            // 1. Lấy thông tin gói hiện tại của học sinh (Dạng DTO)
+            var currentSubDto = _subscriptionService.GetStudentSubscription(userId);
+
+            if (currentSubDto == null)
             {
                 return Json(new { success = false, message = "Không tìm thấy thông tin gói dịch vụ." });
             }
 
-            // Kiểm tra nếu đã hết lượt hỏi (và gói không phải Unlimited)
-            if (currentSub.SubscriptionPlan.QuestionLimit < 9999 && currentSub.RemainingQuestions <= 0)
+            // 2. FIX LỖI FOREACH: Thay vì dùng foreach duyệt qua 1 object đơn lẻ, 
+            // ta lấy trực tiếp thông tin cấu hình gói dựa trên SubscriptionPlanId có sẵn trong DTO
+            var planDto = _subscriptionService.GetPlanById(currentSubDto.SubscriptionPlanId);
+            if (planDto == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy cấu hình gói." });
+            }
+
+            // 3. FIX LỖI .SubscriptionPlan: Đọc trực tiếp giới hạn câu hỏi từ planDto vừa lấy được
+            // Kiểm tra xem gói có bị giới hạn và học sinh đã dùng hết lượt chưa
+            if (planDto.QuestionLimit < 9999 && currentSubDto.RemainingQuestions <= 0)
             {
                 return Json(new
                 {
@@ -70,15 +82,28 @@ namespace PresentationLayer.Controllers
                 });
             }
 
-            // Thực hiện trừ 1 câu hỏi nếu không phải gói Pro Unlimited
-            if (currentSub.SubscriptionPlan.QuestionLimit < 9999)
+            // 4. FIX LỖI ÉP KIỂU: Nếu gói không phải Vô hạn (Pro), tiến hành trừ 1 lượt hỏi
+            if (planDto.QuestionLimit < 9999)
             {
-                currentSub.RemainingQuestions -= 1;
-                _subscriptionService.SaveStudentSubscription(currentSub);
+                // Khởi tạo một đối tượng Entity thực tế của tầng DataAccessLayer để truyền xuống hàm Save
+                var entity = new DataAccessLayer.Models.StudentSubscription
+                {
+                    Id = currentSubDto.Id,
+                    UserId = currentSubDto.UserId,
+                    SubscriptionPlanId = currentSubDto.SubscriptionPlanId,
+                    StartDate = currentSubDto.StartDate,
+                    EndDate = currentSubDto.EndDate,
+                    RemainingQuestions = currentSubDto.RemainingQuestions - 1 // Thực hiện trừ câu hỏi
+                };
+
+                // Gọi hàm lưu của hệ thống bằng cách truyền đúng kiểu đối tượng Entity gốc
+                _subscriptionService.SaveStudentSubscription(entity);
+
+                // Cập nhật lại số lượng câu hỏi mới vào biến DTO để phản hồi về cho giao diện hiển thị
+                currentSubDto.RemainingQuestions = entity.RemainingQuestions;
             }
 
-            // Trả về kết quả hợp lệ kèm số lượt hỏi còn lại để lát UI hiển thị nếu thích
-            return Json(new { success = true, remaining = currentSub.RemainingQuestions });
+            return Json(new { success = true, remaining = currentSubDto.RemainingQuestions });
         }
     }
 }
