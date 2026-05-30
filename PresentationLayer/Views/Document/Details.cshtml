@@ -1,0 +1,188 @@
+@model BussinessLayer.DTOs.DocumentDetailViewModel
+@using DataAccessLayer.Models
+@{
+    ViewData["Title"] = "Chi tiết tài liệu - " + Model.Document.Title;
+    var doc = Model.Document;
+}
+
+<div class="detail-container">
+
+    @* Header *@
+    <div class="page-header glass-card">
+        <div class="header-left">
+            @switch (doc.FileType)
+            {
+                case "pdf":  <span class="file-badge-lg pdf">PDF</span>  break;
+                case "docx": <span class="file-badge-lg docx">DOCX</span> break;
+                case "pptx": <span class="file-badge-lg pptx">PPTX</span> break;
+                default:     <span class="file-badge-lg">FILE</span>      break;
+            }
+            <div>
+                <h1>@doc.Title</h1>
+                <p class="original-name">📎 @doc.FileName</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-primary btn-download-main">⬇️ Tải về</a>
+            <a asp-action="Index" class="btn-back">← Quay lại</a>
+        </div>
+    </div>
+
+    @* Alerts *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">✅ @TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">❌ @TempData["ErrorMessage"]</div>
+    }
+
+    <div class="detail-grid">
+
+        @* ─── Metadata Card ─── *@
+        <div class="glass-card meta-card">
+            <h2 class="card-section-title">📋 Thông tin tài liệu</h2>
+            <div class="meta-table">
+                <div class="meta-row">
+                    <span class="meta-key">Tiêu đề</span>
+                    <span class="meta-val">@doc.Title</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Môn học</span>
+                    <span class="meta-val">
+                        <strong>@doc.SubjectCode</strong> — @doc.SubjectName
+                    </span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Chương</span>
+                    <span class="meta-val">
+                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "—" : doc.ChapterTitle)
+                    </span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Định dạng</span>
+                    <span class="meta-val">@doc.FileType.ToUpperInvariant()</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Dung lượng</span>
+                    <span class="meta-val">@doc.FileSizeDisplay</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Ngày upload</span>
+                    <span class="meta-val">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Người upload</span>
+                    <span class="meta-val">👤 @doc.UploadedByUsername</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-key">Trạng thái</span>
+                    <span class="meta-val">
+                        @switch (doc.Status)
+                        {
+                            case DocumentStatus.Pending: <span class="status-badge pending">🟡 Pending</span>  break;
+                            case DocumentStatus.Indexed: <span class="status-badge indexed">🟢 Indexed</span>  break;
+                            case DocumentStatus.Failed:  <span class="status-badge failed">🔴 Failed</span>   break;
+                        }
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-sidebar">
+            @* ─── Update Status Card ─── *@
+            <div class="glass-card status-card">
+                <h2 class="card-section-title">🔄 Cập nhật trạng thái</h2>
+                <form asp-action="UpdateStatus" asp-route-id="@doc.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="form-group">
+                        <label class="form-label">Trạng thái mới</label>
+                        <select name="newStatus" class="form-select">
+                            @{
+                                var isPending = doc.Status == DocumentStatus.Pending;
+                                var isIndexed = doc.Status == DocumentStatus.Indexed;
+                                var isFailed  = doc.Status == DocumentStatus.Failed;
+                            }
+                            <option value="0" selected="@isPending">🟡 Pending</option>
+                            <option value="1" selected="@isIndexed">🟢 Indexed</option>
+                            <option value="2" selected="@isFailed">🔴 Failed</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">💾 Lưu trạng thái</button>
+                </form>
+            </div>
+
+            @* ─── Danger Zone ─── *@
+            <div class="glass-card danger-card">
+                <h2 class="card-section-title danger-title">⚠️ Vùng nguy hiểm</h2>
+                <p class="danger-desc">Xoá tài liệu sẽ xoá cả file khỏi server. Hành động này không thể khôi phục.</p>
+                <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-danger btn-block">🗑️ Xoá tài liệu</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .detail-container { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Header */
+    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 1.75rem 2rem; gap: 1rem; }
+    .header-left { display: flex; align-items: center; gap: 1.25rem; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .original-name { font-size: 0.82rem; color: var(--text-secondary); }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; flex-shrink: 0; }
+    .btn-download-main { padding: 0.6rem 1.3rem; text-decoration: none; border-radius: 8px; font-size: 0.88rem; }
+    .btn-back { color: var(--text-secondary); font-size: 0.85rem; text-decoration: none; padding: 0.5rem 0.9rem; border: 1px solid var(--border-color); border-radius: 8px; transition: var(--transition-smooth); }
+    .btn-back:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+    /* Alerts */
+    .alert { padding: 0.9rem 1.25rem; border-radius: 10px; font-size: 0.9rem; }
+    .alert-success { background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3);  color: #4ade80; }
+    .alert-danger  { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+
+    /* Grid layout */
+    .detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+    @@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+
+    /* Meta card */
+    .meta-card { padding: 2rem; }
+    .card-section-title { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
+    .meta-table { display: flex; flex-direction: column; gap: 0; }
+    .meta-row { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-key { font-size: 0.82rem; color: var(--text-secondary); align-self: center; }
+    .meta-val { font-size: 0.88rem; color: #e2e8f0; }
+
+    /* File badges */
+    .file-badge-lg { display: inline-block; padding: 0.5rem 0.9rem; border-radius: 8px; font-size: 0.95rem; font-weight: 800; flex-shrink: 0; }
+    .file-badge-lg.pdf  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .file-badge-lg.docx { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .file-badge-lg.pptx { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+
+    /* Status badges */
+    .status-badge { font-size: 0.82rem; padding: 0.3rem 0.8rem; border-radius: 20px; }
+    .status-badge.pending { background: rgba(234,179,8,0.1);   color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
+    .status-badge.indexed { background: rgba(34,197,94,0.1);   color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .status-badge.failed  { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* Sidebar */
+    .detail-sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
+    .status-card { padding: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { font-size: 0.82rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem; }
+    .form-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; padding: 0.55rem 0.9rem; font-size: 0.88rem; outline: none; }
+    .form-select:focus { border-color: var(--accent-orange); }
+    .btn-block { width: 100%; text-align: center; padding: 0.65rem; border-radius: 8px; font-size: 0.88rem; }
+
+    /* Danger zone */
+    .danger-card { padding: 1.5rem; border-color: rgba(239,68,68,0.2); }
+    .danger-title { color: #f87171; }
+    .danger-desc { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5; }
+    .btn-danger {
+        display: block; background: rgba(239,68,68,0.1); color: #f87171;
+        border: 1px solid rgba(239,68,68,0.3); text-decoration: none;
+        border-radius: 8px; transition: var(--transition-smooth); cursor: pointer;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); }
+</style>
