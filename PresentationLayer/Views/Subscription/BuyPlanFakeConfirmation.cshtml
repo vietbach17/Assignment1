@@ -1,0 +1,25 @@
+﻿@model DataAccessLayer.Models.SubscriptionPlan
+@{
+    ViewData["Title"] = "Xác nhận thanh toán";
+}
+
+<div style="max-width: 500px; margin: 4rem auto;">
+    <div class="glass-card text-center" style="border-color: var(--accent-orange);">
+        <h2 style="color: var(--accent-orange); margin-bottom: 1rem;">✦ Testing Mode ✦</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Bạn đang thực hiện giao dịch giả lập.</p>
+
+        <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">Gói đăng ký</p>
+            <h3 style="color: #fff;">@Model.Name</h3>
+            <h2 style="color: var(--accent-blue); margin-top: 0.5rem;">@Model.Price.ToString("#,##0") VNĐ</h2>
+        </div>
+
+        <form asp-action="ProcessFakePayment" method="post">
+            <input type="hidden" name="userId" value="@ViewBag.UserId" />
+            <input type="hidden" name="planId" value="@ViewBag.PlanId" />
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem;">XÁC NHẬN THANH TOÁN</button>
+        </form>
+
+        <a asp-action="Index" style="display: block; margin-top: 1.5rem; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Hủy giao dịch</a>
+    </div>
+</div>
