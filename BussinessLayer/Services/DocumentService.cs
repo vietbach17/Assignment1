@@ -1,6 +1,8 @@
 using BussinessLayer.DTOs;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
+using DocumentStatusEntity = DataAccessLayer.Models.DocumentStatus;
+using DocumentStatusDto = BussinessLayer.DTOs.DocumentStatus;
 
 namespace BussinessLayer.Services
 {
@@ -117,7 +119,7 @@ namespace BussinessLayer.Services
                 FilePath = relativeFilePath,
                 FileSize = file.Length,
                 FileType = extension.TrimStart('.').ToLowerInvariant(),
-                Status = DocumentStatus.Pending,
+                Status = DocumentStatusEntity.Pending,
                 SubjectId = viewModel.SubjectId,
                 ChapterId = viewModel.ChapterId,
                 UploadedByUserId = uploadedByUserId,
@@ -172,17 +174,17 @@ namespace BussinessLayer.Services
         /// <summary>
         /// Cập nhật trạng thái xử lý của tài liệu: Pending → Indexed hoặc Failed
         /// </summary>
-        public async Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatus newStatus)
+        public async Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatusDto newStatus)
         {
-            var updated = await _documentRepository.UpdateStatusAsync(id, newStatus);
+            var updated = await _documentRepository.UpdateStatusAsync(id, (DocumentStatusEntity)newStatus);
             if (!updated)
                 return (false, "Không tìm thấy tài liệu để cập nhật trạng thái.");
 
             var statusName = newStatus switch
             {
-                DocumentStatus.Pending => "Pending",
-                DocumentStatus.Indexed => "Indexed",
-                DocumentStatus.Failed  => "Failed",
+                DocumentStatusDto.Pending => "Pending",
+                DocumentStatusDto.Indexed => "Indexed",
+                DocumentStatusDto.Failed  => "Failed",
                 _                      => newStatus.ToString()
             };
 
@@ -202,7 +204,7 @@ namespace BussinessLayer.Services
             FilePath          = d.FilePath,
             FileSize          = d.FileSize,
             FileType          = d.FileType,
-            Status            = d.Status,
+            Status            = (DocumentStatusDto)d.Status,
             SubjectId         = d.SubjectId,
             SubjectCode       = d.Subject?.SubjectCode,
             SubjectName       = d.Subject?.SubjectName,
