@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using BussinessLayer.DTOs;
 using BussinessLayer.Services;
-using DataAccessLayer.Models;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
