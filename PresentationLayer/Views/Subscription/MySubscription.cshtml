@@ -1,38 +1,95 @@
 ﻿@model DataAccessLayer.Models.StudentSubscription
 
 @{
-    ViewData["Title"] = "Gói Của Tôi";
+    ViewData["Title"] = "Hội Viên Của Tôi";
 }
 
-<div class="container mt-5" style="max-width: 600px;">
+<style>
+    .status-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        margin: 1.5rem 0;
+    }
+
+    .remaining-count {
+        font-size: 4rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+        margin: 0.5rem 0;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .alert-success-glass {
+        background: rgba(16, 185, 129, 0.1);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+</style>
+
+<div class="status-container">
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
-            ⚡ @TempData["SuccessMessage"]
+        <div class="alert-success-glass">
+            ✦ @TempData["SuccessMessage"]
         </div>
     }
 
-    <div class="card shadow border-0 rounded-3 overflow-hidden">
-        <div class="card-header bg-gradient bg-primary text-white text-center py-4">
-            <h4 class="mb-0 fw-bold">TÀI KHOẢN HỘI VIÊN CHATBOT</h4>
+    <div class="glass-card">
+        <h2 style="text-align: center; margin-bottom: 1.5rem;">Thông tin <span style="color: var(--accent-blue)">Hội viên</span></h2>
+
+        <div class="stat-box">
+            <p style="color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Số lượt câu hỏi còn lại</p>
+            <div class="remaining-count">
+                @(Model.RemainingQuestions >= 9999 ? "∞" : Model.RemainingQuestions.ToString())
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">
+                Dựa trên gói: <span style="color: #fff; font-weight: 600;">@Model.SubscriptionPlan.Name</span>
+            </p>
         </div>
-        <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <span class="badge bg-success px-4 py-2 fs-6 mb-2">Gói Hiện Tại: @Model.SubscriptionPlan.Name</span>
-                <p class="text-muted small">Thời gian hiệu lực: @Model.StartDate.ToString("dd/MM/yyyy") - @Model.EndDate.ToString("dd/MM/yyyy")</p>
-            </div>
 
-            <div class="bg-light rounded p-4 text-center border">
-                <h5 class="text-secondary fw-semibold">Số lượt đặt câu hỏi còn lại trong tháng</h5>
-                <div class="display-3 fw-bold text-primary my-2">
-                    @(Model.RemainingQuestions >= 9999 ? "∞" : Model.RemainingQuestions)
-                </div>
-                <p class="mb-0 text-muted small">Trên tổng số @(Model.SubscriptionPlan.QuestionLimit >= 9999 ? "không giới hạn" : Model.SubscriptionPlan.QuestionLimit) câu của gói.</p>
+        <div class="info-section" style="margin-bottom: 2rem;">
+            <div class="info-row">
+                <span style="color: var(--text-secondary);">Ngày kích hoạt</span>
+                <span>@Model.StartDate.ToString("dd/MM/yyyy")</span>
             </div>
+            <div class="info-row">
+                <span style="color: var(--text-secondary);">Ngày hết hạn</span>
+                <span>@Model.EndDate.ToString("dd/MM/yyyy")</span>
+            </div>
+            <div class="info-row">
+                <span style="color: var(--text-secondary);">Tổng hạn mức gói</span>
+                <span>@(Model.SubscriptionPlan.QuestionLimit >= 9999 ? "Không giới hạn" : Model.SubscriptionPlan.QuestionLimit + " câu")</span>
+            </div>
+        </div>
 
-            <div class="d-grid gap-2 mt-4">
-                <a asp-action="Index" class="btn btn-outline-primary py-2 fw-bold">Nâng Cấp / Đổi Gói Dịch Vụ</a>
-            </div>
+        <div class="action-buttons" style="display: flex; gap: 1rem;">
+            <a asp-action="Index" class="btn-primary" style="flex: 2;">Nâng cấp gói</a>
+            <a href="/" class="btn-secondary" style="flex: 1;">Về trang chủ</a>
         </div>
     </div>
 </div>
