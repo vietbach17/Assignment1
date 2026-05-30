@@ -1,9 +1,11 @@
+using BussinessLayer.Interfaces;
+using BussinessLayer.Services;
 using DataAccessLayer.DbContexts;
 using DataAccessLayer.Repositories;
-using BussinessLayer.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using VNPAY.Extensions;
 
 namespace BussinessLayer
 {
@@ -24,16 +26,22 @@ namespace BussinessLayer
             services.AddScoped<ISubjectRepository, SubjectRepository>();
             services.AddScoped<IChapterRepository, ChapterRepository>();
 
-            services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>(); // Repository giả lập dữ liệu,
-                                                                                      // nên dùng Singleton để giữ nguyên trạng thái
-                                                                                      // trong suốt vòng đời ứng dụng
+            // 1. Đăng ký Client VNPay
+            var vnpayConfig = configuration.GetSection("VNPAY");
+            services.AddVnpayClient(config =>
+            {
+                config.TmnCode = vnpayConfig["TmnCode"]!;
+                config.HashSecret = vnpayConfig["HashSecret"]!;
+                config.CallbackUrl = vnpayConfig["CallbackUrl"]!;
+            });
+            // ------- Subscription Management -------
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
 
             // 3. Đăng ký Services thuộc tầng BussinessLayer (BLL)
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();
-
                     // ------- Subscription Management -------
             services.AddScoped<ISubscriptionService, SubscriptionService>();
 
