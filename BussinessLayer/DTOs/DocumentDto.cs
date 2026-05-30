@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using DataAccessLayer.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace BussinessLayer.DTOs
