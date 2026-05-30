@@ -94,42 +94,66 @@
 </div>
 
 <script>
-    function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const text = input.value.trim();
-        if (text === '') return;
+        function sendMessage() 
+        {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (text === '') return;
 
-        const chatMessages = document.getElementById('chatMessages');
-        
-        // Append Sent Message
-        const sentDiv = document.createElement('div');
-        sentDiv.className = 'message message-sent';
-        sentDiv.innerHTML = `
-            <div class="message-bubble">
-                <p>${escapeHtml(text)}</p>
-                <span class="message-time">Vừa xong</span>
-            </div>
-        `;
-        chatMessages.appendChild(sentDiv);
-        
-        input.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+            // GỌI LÊN BACKEND KIỂM TRA QUYỀN VÀ TRỪ LƯỢT HỎI TRƯỚC
+            fetch('/Home/VerifyAndDeductQuestion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const chatMessages = document.getElementById('chatMessages');
 
-        // Auto Bot Reply (Mock)
-        setTimeout(() => {
-            const replyDiv = document.createElement('div');
-            replyDiv.className = 'message message-received';
-            replyDiv.innerHTML = `
-                <span class="message-avatar">🤖</span>
-                <div class="message-bubble">
-                    <p>Cảm ơn bạn đã phản hồi! Đây là không gian mô phỏng kiểm thử giao diện phân quyền Student thành công.</p>
-                    <span class="message-time">Vừa xong</span>
-                </div>
-            `;
-            chatMessages.appendChild(replyDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 1000);
-    }
+                if (data.success === false) {
+                    // Nếu hết lượt hỏi, in thông báo lỗi màu đỏ của hệ thống vào khung chat
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'system-message';
+                    errDiv.innerHTML = `<span style="color: #fca5a5; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2)">⚠️ ${data.message} <a href="/Subscription" style="color: #60a5fa; text-decoration: underline;">Nâng cấp gói ngay</a></span>`;
+                    chatMessages.appendChild(errDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    return; // Chặn không cho gửi tin nhắn đi
+                }
+
+                // --- NẾU HỢP LỆ VÀ TRỪ ĐIỂM THÀNH CÔNG -> HIỂN THỊ TIN NHẮN USER ---
+                const sentDiv = document.createElement('div');
+                sentDiv.className = 'message message-sent';
+                sentDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <p>${escapeHtml(text)}</p>
+                        <span class="message-time">Vừa xong (Lượt hỏi còn lại: ${data.remaining >= 9999 ? '∞' : data.remaining})</span>
+                    </div>
+                `;
+                chatMessages.appendChild(sentDiv);
+
+                input.value = '';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Phản hồi giả lập của Bot (Giai đoạn Assignment 2 sẽ đổi đoạn này thành gọi API AI RAG thật)
+                setTimeout(() => {
+                    const replyDiv = document.createElement('div');
+                    replyDiv.className = 'message message-received';
+                    replyDiv.innerHTML = `
+                        <span class="message-avatar">🤖</span>
+                        <div class="message-bubble">
+                            <p>Cảm ơn bạn đã đặt câu hỏi! Hệ thống đã ghi nhận và tự động trừ 1 câu hỏi vào Postgres Database thành công.</p>
+                            <span class="message-time">Vừa xong</span>
+                        </div>
+                    `;
+                    chatMessages.appendChild(replyDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
 
     function handleKeyPress(event) {
         if (event.key === 'Enter') {
