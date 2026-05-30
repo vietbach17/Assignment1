@@ -1,294 +1,217 @@
+@model BussinessLayer.DTOs.DocumentListViewModel
+@using DataAccessLayer.Models
 @{
-    ViewData["Title"] = "Thư viện Tài liệu Giảng viên";
+    ViewData["Title"] = "Quản lý Tài liệu";
 }
 
 <div class="document-container">
+
+    @* ─── Banner ─── *@
     <div class="welcome-banner glass-card">
         <div class="banner-text">
-            <h1>📚 Kho Học Liệu & Bài Giảng (Lecturer)</h1>
-            <p>Xin chào Giảng viên! Nơi đây lưu trữ giáo trình, slide bài giảng, đề thi và các tài liệu chuyên ngành.</p>
+            <h1>📚 Kho Học Liệu & Tài Liệu</h1>
+            <p>Quản lý tài liệu PDF, DOCX, PPTX theo môn học và chương.</p>
         </div>
-        <span class="banner-badge role-badge role-lecturer">Giảng Dạy</span>
+        <a asp-action="Upload" class="btn-primary upload-cta">
+            ➕ Tải lên tài liệu mới
+        </a>
     </div>
 
-    <div class="library-workspace">
-        <!-- Sidebar - Categories -->
-        <div class="glass-card library-sidebar">
-            <h3 class="sidebar-title">📁 Danh mục tài liệu</h3>
-            <ul class="category-list">
-                <li class="category-item active">📂 Tất cả tài liệu</li>
-                <li class="category-item">📘 Slide Bài giảng</li>
-                <li class="category-item">📙 Đề kiểm tra & Đề thi</li>
-                <li class="category-item">📗 Giáo trình chính thức</li>
-                <li class="category-item">📝 Bài tập lớn (Project)</li>
-            </ul>
-            <button class="btn-primary upload-btn" onclick="alert('Tính năng tải lên tài liệu mới đang được phát triển!')">➕ Tải lên tài liệu</button>
+    @* ─── Alert Messages ─── *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            ✅ @TempData["SuccessMessage"]
         </div>
-
-        <!-- Main - Document Grid -->
-        <div class="glass-card library-main">
-            <div class="main-header">
-                <h2 class="card-title">📄 Danh sách tài liệu hiện hành</h2>
-                <span class="doc-count">4 tài liệu đã nạp</span>
-            </div>
-
-            <div class="doc-grid">
-                <!-- Doc 1 -->
-                <div class="doc-card">
-                    <div class="doc-icon">📘</div>
-                    <div class="doc-info">
-                        <h4 class="doc-name">Slide_01_Introduction_to_C_Sharp.pptx</h4>
-                        <p class="doc-meta">Kích thước: 4.8 MB • Cập nhật: 2 giờ trước</p>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action" onclick="alert('Đang tải file...')">⬇️ Tải về</button>
-                        <button class="btn-action btn-share" onclick="alert('Đã chia sẻ link cho sinh viên!')">🔗 Chia sẻ</button>
-                    </div>
-                </div>
-
-                <!-- Doc 2 -->
-                <div class="doc-card">
-                    <div class="doc-icon">📘</div>
-                    <div class="doc-info">
-                        <h4 class="doc-name">Slide_02_Entity_Framework_Core_PostgreSQL.pptx</h4>
-                        <p class="doc-meta">Kích thước: 6.2 MB • Cập nhật: Hôm qua</p>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action" onclick="alert('Đang tải file...')">⬇️ Tải về</button>
-                        <button class="btn-action btn-share" onclick="alert('Đã chia sẻ link cho sinh viên!')">🔗 Chia sẻ</button>
-                    </div>
-                </div>
-
-                <!-- Doc 3 -->
-                <div class="doc-card">
-                    <div class="doc-icon">📙</div>
-                    <div class="doc-info">
-                        <h4 class="doc-name">De_Thi_Giua_Ky_Mon_NET8_MVC.docx</h4>
-                        <p class="doc-meta">Kích thước: 1.1 MB • Cập nhật: 3 ngày trước</p>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action" onclick="alert('Đang tải file...')">⬇️ Tải về</button>
-                        <button class="btn-action btn-share" onclick="alert('Đã chia sẻ link cho sinh viên!')">🔗 Chia sẻ</button>
-                    </div>
-                </div>
-
-                <!-- Doc 4 -->
-                <div class="doc-card">
-                    <div class="doc-icon">📗</div>
-                    <div class="doc-info">
-                        <h4 class="doc-name">Giao_Trinh_Kien_Truc_Phan_Mem_3Layers.pdf</h4>
-                        <p class="doc-meta">Kích thước: 18.5 MB • Cập nhật: Tuần trước</p>
-                    </div>
-                    <div class="doc-actions">
-                        <button class="btn-action" onclick="alert('Đang tải file...')">⬇️ Tải về</button>
-                        <button class="btn-action btn-share" onclick="alert('Đã chia sẻ link cho sinh viên!')">🔗 Chia sẻ</button>
-                    </div>
-                </div>
-            </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            ❌ @TempData["ErrorMessage"]
         </div>
+    }
+
+    @* ─── Filter Bar ─── *@
+    <div class="glass-card filter-bar">
+        <form method="get" asp-action="Index" class="filter-form">
+            <div class="filter-group">
+                <label for="subjectFilter">📂 Môn học</label>
+                <select id="subjectFilter" name="subjectId" class="form-select" onchange="this.form.submit()">
+                    <option value="">— Tất cả môn học —</option>
+                    @foreach (var item in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Subjects)
+                    {
+                        if (item.Selected)
+                        {
+                            <option value="@item.Value" selected>@item.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="statusFilter">🔖 Trạng thái</label>
+                <select id="statusFilter" name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">— Tất cả —</option>
+                    @{
+                        var fPending = Model.FilterStatus == DocumentStatus.Pending;
+                        var fIndexed = Model.FilterStatus == DocumentStatus.Indexed;
+                        var fFailed  = Model.FilterStatus == DocumentStatus.Failed;
+                    }
+                    <option value="0" selected="@fPending">🟡 Pending</option>
+                    <option value="1" selected="@fIndexed">🟢 Indexed</option>
+                    <option value="2" selected="@fFailed">🔴 Failed</option>
+                </select>
+            </div>
+            <div class="filter-count">
+                <span>@Model.TotalCount tài liệu</span>
+            </div>
+        </form>
+    </div>
+
+    @* ─── Document List ─── *@
+    <div class="glass-card library-main">
+        @if (!Model.Documents.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>Chưa có tài liệu nào</h3>
+                <p>Nhấn "Tải lên tài liệu mới" để bắt đầu.</p>
+                <a asp-action="Upload" class="btn-primary" style="display:inline-block;margin-top:1rem;">➕ Upload ngay</a>
+            </div>
+        }
+        else
+        {
+            <div class="doc-list">
+                @foreach (var doc in Model.Documents)
+                {
+                    <div class="doc-row">
+                        <div class="doc-icon-col">
+                            @switch (doc.FileType)
+                            {
+                                case "pdf":  <span class="file-badge pdf">PDF</span>  break;
+                                case "docx": <span class="file-badge docx">DOCX</span> break;
+                                case "pptx": <span class="file-badge pptx">PPTX</span> break;
+                                default:     <span class="file-badge">FILE</span>      break;
+                            }
+                        </div>
+                        <div class="doc-info">
+                            <div class="doc-title">@doc.Title</div>
+                            <div class="doc-meta-row">
+                                <span>📁 @doc.SubjectCode</span>
+                                @if (!string.IsNullOrEmpty(doc.ChapterTitle))
+                                {
+                                    <span>• 📖 @doc.ChapterTitle</span>
+                                }
+                                <span>• @doc.FileSizeDisplay</span>
+                                <span>• @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                <span>• 👤 @doc.UploadedByUsername</span>
+                            </div>
+                        </div>
+                        <div class="doc-status-col">
+                            @switch (doc.Status)
+                            {
+                                case DocumentStatus.Pending: <span class="status-badge pending">🟡 Pending</span>  break;
+                                case DocumentStatus.Indexed: <span class="status-badge indexed">🟢 Indexed</span>  break;
+                                case DocumentStatus.Failed:  <span class="status-badge failed">🔴 Failed</span>   break;
+                            }
+                        </div>
+                        <div class="doc-actions">
+                            <a asp-action="Details" asp-route-id="@doc.Id" class="btn-action btn-detail" title="Xem chi tiết">🔍</a>
+                            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-action btn-download" title="Tải về">⬇️</a>
+                            <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-action btn-delete" title="Xoá">🗑️</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </div>
 
 <style>
-    .document-container {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
+    .document-container { display: flex; flex-direction: column; gap: 1.5rem; }
 
+    /* Banner */
     .welcome-banner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 2.5rem;
-        background: linear-gradient(135deg, rgba(22, 30, 49, 0.7) 0%, rgba(249, 115, 22, 0.1) 100%);
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 2rem 2.5rem;
+        background: linear-gradient(135deg, rgba(22,30,49,0.8) 0%, rgba(249,115,22,0.12) 100%);
     }
+    .banner-text h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .banner-text p  { color: var(--text-secondary); font-size: 0.95rem; }
+    .upload-cta     { padding: 0.65rem 1.4rem; font-size: 0.9rem; text-decoration: none; border-radius: 8px; white-space: nowrap; }
 
-    .banner-text h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+    /* Alert */
+    .alert { padding: 0.9rem 1.25rem; border-radius: 10px; font-size: 0.9rem; }
+    .alert-success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .alert-danger  { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+
+    /* Filter */
+    .filter-bar   { padding: 1rem 1.5rem; }
+    .filter-form  { display: flex; align-items: flex-end; gap: 1.5rem; flex-wrap: wrap; }
+    .filter-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .filter-group label { font-size: 0.8rem; color: var(--text-secondary); }
+    .form-select  {
+        background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+        color: #fff; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.88rem;
+        cursor: pointer; outline: none;
     }
+    .form-select:focus { border-color: var(--accent-orange); }
+    .filter-count { margin-left: auto; font-size: 0.85rem; color: var(--text-secondary); align-self: center; }
 
-    .banner-text p {
-        color: var(--text-secondary);
-        font-size: 1rem;
-    }
-
-    .banner-badge {
-        font-size: 0.9rem;
-        padding: 0.4rem 1rem;
-    }
-
-    /* Library Workspace */
-    .library-workspace {
+    /* Doc list */
+    .library-main { padding: 1.5rem 2rem; }
+    .doc-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .doc-row {
         display: grid;
-        grid-template-columns: 280px 1fr;
-        gap: 2rem;
-    }
-
-    @@media (max-width: 768px) {
-        .library-workspace {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Sidebar */
-    .library-sidebar {
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        height: fit-content;
-    }
-
-    .sidebar-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #ffffff;
-    }
-
-    .category-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        list-style: none;
-    }
-
-    .category-item {
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: var(--transition-smooth);
-    }
-
-    .category-item:hover {
-        background-color: rgba(255, 255, 255, 0.04);
-        color: #ffffff;
-    }
-
-    .category-item.active {
-        background-color: rgba(249, 115, 22, 0.1);
-        color: #fb923c;
-        border-left: 3px solid var(--accent-orange);
-        font-weight: 500;
-    }
-
-    .upload-btn {
-        width: 100%;
-    }
-
-    /* Library Main */
-    .library-main {
-        padding: 2rem;
-    }
-
-    .main-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 1rem;
-    }
-
-    .card-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-    }
-
-    .doc-count {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-    }
-
-    /* Doc Grid */
-    .doc-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .doc-card {
-        background-color: rgba(255, 255, 255, 0.02);
+        grid-template-columns: 80px 1fr auto auto;
+        gap: 1rem; align-items: center;
+        padding: 1rem 1.25rem;
+        background: rgba(255,255,255,0.025);
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        padding: 1.25rem;
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 1.25rem;
-        align-items: center;
         transition: var(--transition-smooth);
     }
+    .doc-row:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); transform: translateY(-1px); }
 
-    @@media (max-width: 600px) {
-        .doc-card {
-            grid-template-columns: 1fr;
-            text-align: center;
-            justify-items: center;
-        }
+    .file-badge {
+        display: inline-block; padding: 0.3rem 0.6rem; border-radius: 6px;
+        font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; text-align: center;
     }
+    .file-badge.pdf  { background: rgba(239,68,68,0.15);   color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .file-badge.docx { background: rgba(59,130,246,0.15);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .file-badge.pptx { background: rgba(249,115,22,0.15);  color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
 
-    .doc-card:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.12);
-        transform: translateY(-2px);
-    }
+    .doc-title    { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .doc-meta-row { font-size: 0.78rem; color: var(--text-secondary); display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-    .doc-icon {
-        font-size: 2.25rem;
-    }
+    .status-badge { font-size: 0.78rem; padding: 0.3rem 0.75rem; border-radius: 20px; white-space: nowrap; }
+    .status-badge.pending { background: rgba(234,179,8,0.1);   color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
+    .status-badge.indexed { background: rgba(34,197,94,0.1);   color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .status-badge.failed  { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
 
-    .doc-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-    }
-
-    .doc-name {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #ffffff;
-        word-break: break-all;
-    }
-
-    .doc-meta {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-
-    .doc-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .btn-action {
-        background-color: rgba(255, 255, 255, 0.05);
-        color: #ffffff;
-        border: 1px solid var(--border-color);
-        padding: 0.4rem 0.85rem;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        cursor: pointer;
+    .doc-actions { display: flex; gap: 0.4rem; }
+    .btn-action  {
+        width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+        border-radius: 8px; font-size: 0.9rem; cursor: pointer; text-decoration: none;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--border-color);
         transition: var(--transition-smooth);
     }
+    .btn-action:hover { background: rgba(255,255,255,0.1); }
+    .btn-delete:hover  { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); }
+    .btn-download:hover { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
 
-    .btn-action:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
+    /* Empty state */
+    .empty-state { text-align: center; padding: 4rem 2rem; }
+    .empty-icon  { font-size: 4rem; margin-bottom: 1rem; }
+    .empty-state h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+    .empty-state p  { color: var(--text-secondary); }
 
-    .btn-share {
-        background-color: rgba(249, 115, 22, 0.08);
-        color: #fb923c;
-        border-color: rgba(249, 115, 22, 0.2);
-    }
-
-    .btn-share:hover {
-        background-color: var(--accent-orange);
-        color: #ffffff;
-        border-color: var(--accent-orange);
+    @@media (max-width: 768px) {
+        .doc-row { grid-template-columns: 60px 1fr; }
+        .doc-status-col, .doc-actions { grid-column: 2; }
+        .welcome-banner { flex-direction: column; gap: 1rem; text-align: center; }
     }
 </style>

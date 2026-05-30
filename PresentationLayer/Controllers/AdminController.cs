@@ -1,3 +1,4 @@
+using BussinessLayer.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,10 +8,20 @@ namespace PresentationLayer.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
-        public IActionResult Dashboard()
+        private readonly IDocumentService _documentService;
+
+        public AdminController(IDocumentService documentService)
         {
-            // Trả về trang quản trị dành riêng cho Admin
-            return View();
+            _documentService = documentService;
+        }
+
+        public async Task<IActionResult> Dashboard()
+        {
+            // Lấy danh sách toàn bộ tài liệu đã upload để hiển thị cho Admin
+            var documents = await _documentService.GetAllDocumentsAsync(includeDeleted: false);
+            
+            // Trả về trang quản trị dành riêng cho Admin kèm danh sách tài liệu
+            return View(documents);
         }
     }
 }

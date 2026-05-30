@@ -23,11 +23,13 @@ namespace BussinessLayer
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<ISubjectRepository, SubjectRepository>();
             services.AddScoped<IChapterRepository, ChapterRepository>();
+            services.AddScoped<IDocumentRepository, DocumentRepository>();
 
             // 3. Đăng ký Services thuộc tầng BussinessLayer (BLL)
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();
+            services.AddScoped<IDocumentService, DocumentService>();
 
             return services;
         }

@@ -1,0 +1,3 @@
+# Thư mục lưu trữ tài liệu được upload bởi Lecturer
+# File này giữ cho git tracking thư mục uploads/
+# Các file thực sự (.pdf, .docx, .pptx) sẽ được thêm vào khi chạy ứng dụng
