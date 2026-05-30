@@ -5,6 +5,16 @@
 }
 
 <style>
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 2rem;
+    }
+
     .pricing-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -84,11 +94,45 @@
         color: #fca5a5;
         border-color: rgba(239, 68, 68, 0.2);
     }
+
+    /* CSS tùy biến thêm cho nút Xem Gói Của Tôi */
+    .btn-my-plan {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+    }
+
+        .btn-my-plan:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+            color: #fff;
+        }
 </style>
 
-<div class="header-section text-center">
-    <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Nâng Cấp <span style="background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Đặc Quyền</span></h1>
-    <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Lựa chọn gói hội viên để mở khóa sức mạnh AI, hỗ trợ tối đa cho việc học tập của bạn.</p>
+<div class="header-container">
+    <div class="header-section text-start" style="flex: 1; min-width: 300px;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Nâng Cấp <span style="background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Đặc Quyền</span></h1>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 0;">Lựa chọn gói hội viên để mở khóa sức mạnh AI, hỗ trợ tối đa cho việc học tập của bạn.</p>
+    </div>
+
+    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+    {
+        <div class="action-section">
+            <a asp-controller="Subscription" asp-action="MySubscription" class="btn-my-plan">
+                💳 Xem Gói Của Tôi ➜
+            </a>
+        </div>
+    }
 </div>
 
 @if (TempData["ErrorMessage"] != null)
