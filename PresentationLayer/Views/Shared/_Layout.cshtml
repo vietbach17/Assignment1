@@ -292,7 +292,14 @@
                 <nav>
                     <ul class="nav-menu">
                         <li><a asp-controller="Home" asp-action="Index" class="nav-link">Trang chủ</a></li>
-                        <li><a asp-controller="Subjects" asp-action="Index" class="nav-link">Môn học</a></li>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+                        {
+                            <li><a asp-controller="Subjects" asp-action="Index" class="nav-link">Môn học</a></li>
+                        }
+                        @if (User.IsInRole("Student"))
+                        {
+                            <li><a asp-controller="StudentDocument" asp-action="Subjects" class="nav-link">Tài liệu</a></li>
+                        }
                         <li><a asp-controller="Subscription" asp-action="Index" class="nav-link">Hội viên</a></li>
                     </ul>
                 </nav>
