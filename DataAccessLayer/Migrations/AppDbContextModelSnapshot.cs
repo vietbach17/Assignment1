@@ -23,507 +23,655 @@ namespace DataAccessLayer.Migrations
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("DataAccessLayer.Models.Chapter", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ChapterNumber")
-                        .HasColumnType("integer");
+                b.Property<int>("ChapterNumber")
+                    .HasColumnType("integer");
 
-                    b.Property<string>("ChapterTitle")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                b.Property<string>("ChapterTitle")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
+                b.Property<int>("CreatedByUserId")
+                    .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime>("CreatedDate")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                b.Property<string>("Description")
+                    .HasMaxLength(1000)
+                    .HasColumnType("character varying(1000)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("boolean");
 
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("integer");
+                b.Property<int>("SubjectId")
+                    .HasColumnType("integer");
 
-                    b.Property<int?>("UpdatedByUserId")
-                        .HasColumnType("integer");
+                b.Property<int?>("UpdatedByUserId")
+                    .HasColumnType("integer");
 
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedDate")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("UpdatedByUserId");
+                b.HasIndex("UpdatedByUserId");
 
-                    b.HasIndex("SubjectId", "ChapterNumber")
-                        .IsUnique();
+                b.HasIndex("SubjectId", "ChapterNumber")
+                    .IsUnique();
 
-                    b.ToTable("Chapters");
+                b.ToTable("Chapters");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ChapterNumber = 1,
-                            ChapterTitle = "Networking Programming",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Introduction to network programming concepts and protocols",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ChapterNumber = 2,
-                            ChapterTitle = "Asynchronous and Parallel Programming in .NET",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Understanding async/await patterns and parallel processing",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ChapterNumber = 3,
-                            ChapterTitle = "Dependency Injection in .NET",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Implementing DI patterns and IoC containers in .NET applications",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ChapterNumber = 4,
-                            ChapterTitle = "Building Web Application using ASP.NET Core MVC",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Creating MVC web applications with ASP.NET Core",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ChapterNumber = 5,
-                            ChapterTitle = "Building Websites Using ASP.NET Core Razor Pages",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Developing page-based web applications with Razor Pages",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ChapterNumber = 6,
-                            ChapterTitle = "Building a Web App with Blazor and ASP .Net Core",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Creating interactive web UIs using Blazor framework",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ChapterNumber = 7,
-                            ChapterTitle = "Real-Time Communication",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Implementing real-time features with SignalR",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ChapterNumber = 8,
-                            ChapterTitle = "Background Tasks with Worker Service",
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Creating and managing background services in .NET",
-                            IsDeleted = false,
-                            SubjectId = 1
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        ChapterNumber = 1,
+                        ChapterTitle = "Networking Programming",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Introduction to network programming concepts and protocols",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 2,
+                        ChapterNumber = 2,
+                        ChapterTitle = "Asynchronous and Parallel Programming in .NET",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Understanding async/await patterns and parallel processing",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 3,
+                        ChapterNumber = 3,
+                        ChapterTitle = "Dependency Injection in .NET",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Implementing DI patterns and IoC containers in .NET applications",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 4,
+                        ChapterNumber = 4,
+                        ChapterTitle = "Building Web Application using ASP.NET Core MVC",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Creating MVC web applications with ASP.NET Core",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 5,
+                        ChapterNumber = 5,
+                        ChapterTitle = "Building Websites Using ASP.NET Core Razor Pages",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Developing page-based web applications with Razor Pages",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 6,
+                        ChapterNumber = 6,
+                        ChapterTitle = "Building a Web App with Blazor and ASP .Net Core",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Creating interactive web UIs using Blazor framework",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 7,
+                        ChapterNumber = 7,
+                        ChapterTitle = "Real-Time Communication",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Implementing real-time features with SignalR",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    },
+                    new
+                    {
+                        Id = 8,
+                        ChapterNumber = 8,
+                        ChapterTitle = "Background Tasks with Worker Service",
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "Creating and managing background services in .NET",
+                        IsDeleted = false,
+                        SubjectId = 1
+                    });
+            });
+
+            modelBuilder.Entity("DataAccessLayer.Models.PaymentTransaction", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
+
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                b.Property<decimal>("Amount")
+                    .HasColumnType("numeric");
+
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)");
+
+                b.Property<int>("SubscriptionPlanId")
+                    .HasColumnType("integer");
+
+                b.Property<DateTime>("TransactionDate")
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property<int>("UserId")
+                    .HasColumnType("integer");
+
+                b.HasKey("Id");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("PaymentTransactions");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Document", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ChapterId")
-                        .HasColumnType("integer");
+                b.Property<int?>("ChapterId")
+                    .HasColumnType("integer");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                b.Property<string>("FileName")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)");
 
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                b.Property<string>("FilePath")
+                    .IsRequired()
+                    .HasMaxLength(1000)
+                    .HasColumnType("character varying(1000)");
 
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
+                b.Property<long>("FileSize")
+                    .HasColumnType("bigint");
 
-                    b.Property<string>("FileType")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                b.Property<string>("FileType")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("character varying(10)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("boolean");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                b.Property<int>("Status")
+                    .HasColumnType("integer");
 
-                    b.Property<string>("StoredFileName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                b.Property<string>("StoredFileName")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)");
 
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("integer");
+                b.Property<int>("SubjectId")
+                    .HasColumnType("integer");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(300)
+                    .HasColumnType("character varying(300)");
 
-                    b.Property<int>("UploadedByUserId")
-                        .HasColumnType("integer");
+                b.Property<int>("UploadedByUserId")
+                    .HasColumnType("integer");
 
-                    b.Property<DateTime>("UploadedDate")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime>("UploadedDate")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("ChapterId");
+                b.HasIndex("ChapterId");
 
-                    b.HasIndex("SubjectId");
+                b.HasIndex("SubjectId");
 
-                    b.HasIndex("UploadedByUserId");
+                b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("Documents");
-                });
+                b.ToTable("Documents");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("RoleName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                b.Property<string>("RoleName")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                b.ToTable("Roles");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            RoleName = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            RoleName = "Lecturer"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            RoleName = "Student"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        RoleName = "Admin"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        RoleName = "Lecturer"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        RoleName = "Student"
+                    });
+            });
+
+            modelBuilder.Entity("DataAccessLayer.Models.StudentSubscription", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
+
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                b.Property<DateTime>("EndDate")
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property<int>("RemainingQuestions")
+                    .HasColumnType("integer");
+
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property<int>("SubscriptionPlanId")
+                    .HasColumnType("integer");
+
+                b.Property<int>("UserId")
+                    .HasColumnType("integer");
+
+                b.HasKey("Id");
+
+                b.HasIndex("SubscriptionPlanId");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("StudentSubscriptions");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Subject", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
+                b.Property<int>("CreatedByUserId")
+                    .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime>("CreatedDate")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                b.Property<string>("Description")
+                    .HasMaxLength(1000)
+                    .HasColumnType("character varying(1000)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("boolean");
 
-                    b.Property<string>("SubjectCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                b.Property<string>("SubjectCode")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("character varying(20)");
 
-                    b.Property<string>("SubjectName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                b.Property<string>("SubjectName")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)");
 
-                    b.Property<int?>("UpdatedByUserId")
-                        .HasColumnType("integer");
+                b.Property<int?>("UpdatedByUserId")
+                    .HasColumnType("integer");
 
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedDate")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("SubjectCode")
-                        .IsUnique();
+                b.HasIndex("SubjectCode")
+                    .IsUnique();
 
-                    b.HasIndex("UpdatedByUserId");
+                b.HasIndex("UpdatedByUserId");
 
-                    b.ToTable("Subjects");
+                b.ToTable("Subjects");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedByUserId = 1,
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "This course provides knowledge and skills in developing cross-platform applications using .NET technologies.",
-                            IsDeleted = false,
-                            SubjectCode = "PRN222",
-                            SubjectName = "Advanced Cross-Platform Application Programming With .NET"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        CreatedByUserId = 1,
+                        CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        Description = "This course provides knowledge and skills in developing cross-platform applications using .NET technologies.",
+                        IsDeleted = false,
+                        SubjectCode = "PRN222",
+                        SubjectName = "Advanced Cross-Platform Application Programming With .NET"
+                    });
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.SubjectLecturer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AssignedDate")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime>("AssignedDate")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("LecturerId")
-                        .HasColumnType("integer");
+                b.Property<int>("LecturerId")
+                    .HasColumnType("integer");
 
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("integer");
+                b.Property<int>("SubjectId")
+                    .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("LecturerId");
+                b.HasIndex("LecturerId");
 
-                    b.HasIndex("SubjectId", "LecturerId")
-                        .IsUnique();
+                b.HasIndex("SubjectId", "LecturerId")
+                    .IsUnique();
 
-                    b.ToTable("SubjectLecturers");
+                b.ToTable("SubjectLecturers");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            LecturerId = 2,
-                            SubjectId = 1
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        AssignedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                        LecturerId = 2,
+                        SubjectId = 1
+                    });
+            });
+
+            modelBuilder.Entity("DataAccessLayer.Models.SubscriptionPlan", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
+
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)");
+
+                b.Property<decimal>("Price")
+                    .HasColumnType("numeric");
+
+                b.Property<int>("QuestionLimit")
+                    .HasColumnType("integer");
+
+                b.HasKey("Id");
+
+                b.ToTable("SubscriptionPlans");
+
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Description = "Gói mặc định cho sinh viên mới tạo tài khoản.",
+                        Name = "Free",
+                        Price = 0m,
+                        QuestionLimit = 5
+                    },
+                    new
+                    {
+                        Id = 2,
+                        Description = "Phù hợp nhu cầu ôn thi thông thường.",
+                        Name = "Basic",
+                        Price = 50000m,
+                        QuestionLimit = 20
+                    },
+                    new
+                    {
+                        Id = 3,
+                        Description = "Hỏi đáp không giới hạn.",
+                        Name = "Pro",
+                        Price = 150000m,
+                        QuestionLimit = 999999
+                    });
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                b.Property<string>("PasswordHash")
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasColumnType("character varying(255)");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("integer");
+                b.Property<int>("RoleId")
+                    .HasColumnType("integer");
 
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                b.Property<string>("Username")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.HasIndex("Username")
-                        .IsUnique();
+                b.HasIndex("Username")
+                    .IsUnique();
 
-                    b.ToTable("Users");
+                b.ToTable("Users");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            PasswordHash = "$2a$11$p7e/dWqp3/H5V2hA8gfj4egjrUGPAPfbZqBqMcSvnBcc/Qc8qpjcq",
-                            RoleId = 1,
-                            Username = "admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            PasswordHash = "$2a$11$.V0CPaW.aVn4ajd6qwur7eF84ysDgtwM6iTNNiVTUaC77F2nMaNji",
-                            RoleId = 2,
-                            Username = "lecturer"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            PasswordHash = "$2a$11$9Eg5STUA/KUfGzB3ubcC0OGv7Mph4h14Lj3lSBPgznmpJ4Sh73oAi",
-                            RoleId = 3,
-                            Username = "student"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        PasswordHash = "$2a$11$p7e/dWqp3/H5V2hA8gfj4egjrUGPAPfbZqBqMcSvnBcc/Qc8qpjcq",
+                        RoleId = 1,
+                        Username = "admin"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        PasswordHash = "$2a$11$.V0CPaW.aVn4ajd6qwur7eF84ysDgtwM6iTNNiVTUaC77F2nMaNji",
+                        RoleId = 2,
+                        Username = "lecturer"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        PasswordHash = "$2a$11$9Eg5STUA/KUfGzB3ubcC0OGv7Mph4h14Lj3lSBPgznmpJ4Sh73oAi",
+                        RoleId = 3,
+                        Username = "student"
+                    });
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Chapter", b =>
-                {
-                    b.HasOne("DataAccessLayer.Models.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("DataAccessLayer.Models.User", "CreatedBy")
+                    .WithMany()
+                    .HasForeignKey("CreatedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("DataAccessLayer.Models.Subject", "Subject")
-                        .WithMany("Chapters")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("DataAccessLayer.Models.Subject", "Subject")
+                    .WithMany("Chapters")
+                    .HasForeignKey("SubjectId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("DataAccessLayer.Models.User", "UpdatedBy")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne("DataAccessLayer.Models.User", "UpdatedBy")
+                    .WithMany()
+                    .HasForeignKey("UpdatedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("CreatedBy");
+                b.Navigation("CreatedBy");
 
-                    b.Navigation("Subject");
+                b.Navigation("Subject");
 
-                    b.Navigation("UpdatedBy");
-                });
+                b.Navigation("UpdatedBy");
+            });
+
+            modelBuilder.Entity("DataAccessLayer.Models.PaymentTransaction", b =>
+            {
+                b.HasOne("DataAccessLayer.Models.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
+            modelBuilder.Entity("DataAccessLayer.Models.StudentSubscription", b =>
+            {
+                b.HasOne("DataAccessLayer.Models.SubscriptionPlan", "SubscriptionPlan")
+                    .WithMany()
+                    .HasForeignKey("SubscriptionPlanId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.HasOne("DataAccessLayer.Models.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("SubscriptionPlan");
+
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Document", b =>
-                {
-                    b.HasOne("DataAccessLayer.Models.Chapter", "Chapter")
-                        .WithMany()
-                        .HasForeignKey("ChapterId")
-                        .OnDelete(DeleteBehavior.SetNull);
+            {
+                b.HasOne("DataAccessLayer.Models.Chapter", "Chapter")
+                    .WithMany()
+                    .HasForeignKey("ChapterId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("DataAccessLayer.Models.Subject", "Subject")
-                        .WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("DataAccessLayer.Models.Subject", "Subject")
+                    .WithMany()
+                    .HasForeignKey("SubjectId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("DataAccessLayer.Models.User", "UploadedBy")
-                        .WithMany()
-                        .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("DataAccessLayer.Models.User", "UploadedBy")
+                    .WithMany()
+                    .HasForeignKey("UploadedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Chapter");
+                b.Navigation("Chapter");
 
-                    b.Navigation("Subject");
+                b.Navigation("Subject");
 
-                    b.Navigation("UploadedBy");
-                });
+                b.Navigation("UploadedBy");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Subject", b =>
-                {
-                    b.HasOne("DataAccessLayer.Models.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("DataAccessLayer.Models.User", "CreatedBy")
+                    .WithMany()
+                    .HasForeignKey("CreatedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("DataAccessLayer.Models.User", "UpdatedBy")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne("DataAccessLayer.Models.User", "UpdatedBy")
+                    .WithMany()
+                    .HasForeignKey("UpdatedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("CreatedBy");
+                b.Navigation("CreatedBy");
 
-                    b.Navigation("UpdatedBy");
-                });
+                b.Navigation("UpdatedBy");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.SubjectLecturer", b =>
-                {
-                    b.HasOne("DataAccessLayer.Models.User", "Lecturer")
-                        .WithMany()
-                        .HasForeignKey("LecturerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("DataAccessLayer.Models.User", "Lecturer")
+                    .WithMany()
+                    .HasForeignKey("LecturerId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("DataAccessLayer.Models.Subject", "Subject")
-                        .WithMany("SubjectLecturers")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("DataAccessLayer.Models.Subject", "Subject")
+                    .WithMany("SubjectLecturers")
+                    .HasForeignKey("SubjectId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Lecturer");
+                b.Navigation("Lecturer");
 
-                    b.Navigation("Subject");
-                });
+                b.Navigation("Subject");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.User", b =>
-                {
-                    b.HasOne("DataAccessLayer.Models.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("DataAccessLayer.Models.Role", "Role")
+                    .WithMany("Users")
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Role");
-                });
+                b.Navigation("Role");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Role", b =>
-                {
-                    b.Navigation("Users");
-                });
+            {
+                b.Navigation("Users");
+            });
 
             modelBuilder.Entity("DataAccessLayer.Models.Subject", b =>
-                {
-                    b.Navigation("Chapters");
+            {
+                b.Navigation("Chapters");
 
-                    b.Navigation("SubjectLecturers");
-                });
+                b.Navigation("SubjectLecturers");
+            });
 #pragma warning restore 612, 618
         }
     }

@@ -1,0 +1,196 @@
+﻿@model IEnumerable<BussinessLayer.DTOs.SubscriptionPlanDTO>
+@{
+    ViewData["Title"] = "Gói Hội Viên";
+}
+
+<style>
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 2rem;
+    }
+
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+
+    .plan-card {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+
+        .plan-card.recommended {
+            border-color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+    .plan-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        padding: 4px 16px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .price-value {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 1.5rem 0;
+        color: #fff;
+    }
+
+    .price-unit {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        font-weight: 400;
+    }
+
+    .feature-list {
+        list-style: none;
+        margin: 2rem 0;
+        text-align: left;
+        flex-grow: 1;
+    }
+
+        .feature-list li {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+            .feature-list li::before {
+                content: "✦";
+                color: var(--accent-purple);
+            }
+
+    .alert-glass {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+        border: 1px solid transparent;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    /* CSS tùy biến thêm cho nút Xem Gói Của Tôi */
+    .btn-my-plan {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+    }
+
+        .btn-my-plan:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+            color: #fff;
+        }
+</style>
+
+<div class="header-container">
+    <div class="header-section text-start" style="flex: 1; min-width: 300px;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Nâng Cấp <span style="background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Đặc Quyền</span></h1>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 0;">Lựa chọn gói hội viên để mở khóa sức mạnh AI, hỗ trợ tối đa cho việc học tập của bạn.</p>
+    </div>
+
+    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+    {
+        <div class="action-section">
+            <a asp-controller="Subscription" asp-action="MySubscription" class="btn-my-plan">
+                💳 Xem Gói Của Tôi ➜
+            </a>
+        </div>
+    }
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-glass alert-error mt-4">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="pricing-grid">
+    @foreach (var item in Model)
+    {
+        <div class="glass-card plan-card @(item.Name == "Basic" ? "recommended" : "")">
+            @if (item.Name == "Basic")
+            {
+                <div class="plan-badge">Phổ biến nhất</div>
+            }
+
+            <h3 style="font-size: 1.5rem; color: #fff;">@item.Name</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">@item.Description</p>
+
+            <div class="price-value">
+                @item.Price.ToString("#,##0")<span class="price-unit"> VNĐ</span>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <strong>Giới hạn:</strong>
+                    @if (item.QuestionLimit >= 9999)
+                    {
+                        <span style="color: var(--accent-emerald)">Vô hạn câu hỏi</span>
+                    }
+                    else
+                    {
+                        <span>@item.QuestionLimit câu hỏi / tháng</span>
+                    }
+                </li>
+                <li>Phản hồi ưu tiên từ AI</li>
+                <li>Trích dẫn nguồn tài liệu PDF/Docx</li>
+                <li>Hỗ trợ học tập 24/7</li>
+            </ul>
+
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+            {
+                <form asp-action="BuyPlan" method="post">
+                    <input type="hidden" name="planId" value="@item.Id" />
+                    <button type="submit" class="btn-primary" style="width: 100%;">
+                        @(item.Price == 0 ? "Sử dụng miễn phí" : "Nâng cấp ngay")
+                    </button>
+                </form>
+            }
+            else if (!User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Auth" asp-action="Login" class="btn-secondary" style="width: 100%;">Đăng nhập để mua</a>
+            }
+            else
+            {
+                <button class="btn-secondary" style="width: 100%; cursor: not-allowed;" disabled>Dành cho Student</button>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,307 @@
+@model BussinessLayer.DTOs.DocumentDto
+
+@{
+    ViewData["Title"] = $"Xem tài liệu - {Model.Title}";
+    var fileUrl = ViewBag.FileUrl as string;
+    var fileType = ViewBag.FileType as string;
+}
+
+<style>
+    .viewer-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 200px);
+        min-height: 600px;
+    }
+
+    .viewer-header {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 12px 12px 0 0;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .viewer-title-section {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .viewer-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .viewer-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+    }
+
+    .viewer-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-viewer-action {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition-smooth);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-download-viewer {
+        background: linear-gradient(135deg, var(--accent-emerald) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-download-viewer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-back-viewer {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-back-viewer:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .viewer-frame-container {
+        flex: 1;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .viewer-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: #ffffff;
+    }
+
+    .viewer-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--accent-blue);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .viewer-notice {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        color: #93c5fd;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .viewer-notice-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .file-type-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .file-type-pdf {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .file-type-docx {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .file-type-pptx {
+        background-color: rgba(249, 115, 22, 0.15);
+        color: #fdba74;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+
+    .breadcrumb a:hover {
+        color: #ffffff;
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+    }
+</style>
+
+<div class="breadcrumb">
+    <a asp-action="Subjects">Môn học</a>
+    <span class="breadcrumb-separator">›</span>
+    <a asp-action="Chapters" asp-route-subjectId="@Model.SubjectId">@Model.SubjectName</a>
+    @if (Model.ChapterId.HasValue)
+    {
+        <span class="breadcrumb-separator">›</span>
+        <a asp-action="Documents" asp-route-chapterId="@Model.ChapterId">@Model.ChapterTitle</a>
+    }
+    <span class="breadcrumb-separator">›</span>
+    <span>Xem tài liệu</span>
+</div>
+
+@if (fileType == "docx" || fileType == "pptx")
+{
+    <div class="viewer-notice">
+        <span class="viewer-notice-icon">ℹ️</span>
+        <div>
+            <strong>Lưu ý:</strong> File @fileType.ToUpper() được xem qua Office Online Viewer. 
+            Nếu không hiển thị, vui lòng tải về để xem trên máy tính.
+        </div>
+    </div>
+}
+
+<div class="viewer-container">
+    <div class="viewer-header">
+        <div class="viewer-title-section">
+            <h1 class="viewer-title">@Model.Title</h1>
+            <div class="viewer-meta">
+                <span class="file-type-badge file-type-@fileType">@fileType.ToUpper()</span>
+                <span>@((Model.FileSize / 1024.0 / 1024.0).ToString("F2")) MB</span>
+                <span>📅 @Model.UploadedDate.ToString("dd/MM/yyyy")</span>
+            </div>
+        </div>
+        <div class="viewer-actions">
+            <a asp-action="Download" asp-route-id="@Model.Id" class="btn-viewer-action btn-download-viewer">
+                ⬇ Tải xuống
+            </a>
+            @if (Model.ChapterId.HasValue)
+            {
+                <a asp-action="Documents" asp-route-chapterId="@Model.ChapterId" class="btn-viewer-action btn-back-viewer">
+                    ← Quay lại
+                </a>
+            }
+            else
+            {
+                <a asp-action="SubjectDocuments" asp-route-subjectId="@Model.SubjectId" class="btn-viewer-action btn-back-viewer">
+                    ← Quay lại
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="viewer-frame-container">
+        <div class="viewer-loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p>Đang tải tài liệu...</p>
+        </div>
+
+        @if (fileType == "pdf")
+        {
+            <!-- PDF Viewer - Hiển thị trực tiếp -->
+            <iframe 
+                id="documentFrame"
+                class="viewer-frame" 
+                src="@Url.Action("PreviewFile", new { id = Model.Id })"
+                onload="hideLoading()">
+            </iframe>
+        }
+        else if (fileType == "docx" || fileType == "pptx")
+        {
+            var fullUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{fileUrl}";
+            var viewerUrl = $"https://view.officeapps.live.com/op/embed.aspx?src={Uri.EscapeDataString(fullUrl)}";
+            
+            <!-- Office Viewer - Sử dụng Office Online Viewer -->
+            <iframe 
+                id="documentFrame"
+                class="viewer-frame" 
+                src="@viewerUrl"
+                onload="hideLoading()">
+            </iframe>
+        }
+        else
+        {
+            <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                <p>Không thể xem trước loại file này. Vui lòng tải về để xem.</p>
+                <a asp-action="Download" asp-route-id="@Model.Id" class="btn-viewer-action btn-download-viewer" style="margin-top: 1rem;">
+                    ⬇ Tải xuống
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function hideLoading() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // Ẩn loading sau 10 giây nếu iframe không load được
+        setTimeout(hideLoading, 10000);
+    </script>
+}

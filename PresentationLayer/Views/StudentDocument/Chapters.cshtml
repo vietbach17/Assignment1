@@ -1,0 +1,197 @@
+@model IEnumerable<BussinessLayer.DTOs.ChapterDto>
+
+@{
+    ViewData["Title"] = $"Chapters - {ViewBag.SubjectName}";
+}
+
+<style>
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .breadcrumb a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+
+    .breadcrumb a:hover {
+        color: #ffffff;
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+    }
+
+    .subject-header {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .subject-code-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+    }
+
+    .subject-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .subject-desc {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .chapters-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .chapter-item {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: var(--transition-smooth);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chapter-item:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateX(4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .chapter-info {
+        flex: 1;
+    }
+
+    .chapter-number {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--accent-purple);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.3rem;
+    }
+
+    .chapter-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .chapter-desc {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .btn-view-documents {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition-smooth);
+        white-space: nowrap;
+    }
+
+    .btn-view-documents:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+
+<div class="breadcrumb">
+    <a asp-action="Subjects">Môn học</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>@ViewBag.SubjectName</span>
+</div>
+
+<div class="subject-header">
+    <div class="subject-code-badge">@ViewBag.SubjectCode</div>
+    <h1 class="subject-title">@ViewBag.SubjectName</h1>
+    @if (!string.IsNullOrEmpty(ViewBag.SubjectDescription))
+    {
+        <p class="subject-desc">@ViewBag.SubjectDescription</p>
+    }
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@if (Model.Any())
+{
+    <div class="chapters-list">
+        @foreach (var chapter in Model.OrderBy(c => c.ChapterNumber))
+        {
+            <div class="chapter-item">
+                <div class="chapter-info">
+                    <div class="chapter-number">Chapter @chapter.ChapterNumber</div>
+                    <h3 class="chapter-title">@chapter.ChapterTitle</h3>
+                    @if (!string.IsNullOrEmpty(chapter.Description))
+                    {
+                        <p class="chapter-desc">@chapter.Description</p>
+                    }
+                </div>
+                <a asp-action="Documents" asp-route-chapterId="@chapter.Id" class="btn-view-documents">
+                    Xem tài liệu →
+                </a>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">📂</div>
+        <h3>Chưa có chapter nào</h3>
+        <p>Môn học này chưa có chapter nào được tạo.</p>
+    </div>
+}

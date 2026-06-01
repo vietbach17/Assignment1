@@ -1,0 +1,187 @@
+@model IEnumerable<BussinessLayer.DTOs.SubjectDto>
+
+@{
+    ViewData["Title"] = "Danh sách môn học";
+}
+
+<style>
+    .page-header {
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    .subjects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .subject-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: var(--transition-smooth);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .subject-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        transform: scaleX(0);
+        transition: var(--transition-smooth);
+    }
+
+    .subject-card:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .subject-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .subject-code {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--accent-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .subject-name {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1rem;
+    }
+
+    .subject-description {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .subject-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-view-chapters, .btn-view-all-docs {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-view-chapters {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-view-chapters:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-view-all-docs {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-view-all-docs:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">📚 Tài liệu học tập</h1>
+    <p class="page-subtitle">Chọn môn học để xem tài liệu và bài giảng</p>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@if (Model.Any())
+{
+    <div class="subjects-grid">
+        @foreach (var subject in Model)
+        {
+            <div class="subject-card">
+                <div class="subject-code">@subject.SubjectCode</div>
+                <h3 class="subject-name">@subject.SubjectName</h3>
+                @if (!string.IsNullOrEmpty(subject.Description))
+                {
+                    <p class="subject-description">@subject.Description</p>
+                }
+                <div class="subject-actions">
+                    <a asp-action="Chapters" asp-route-subjectId="@subject.Id" class="btn-view-chapters">
+                        Xem Chapters
+                    </a>
+                    <a asp-action="SubjectDocuments" asp-route-subjectId="@subject.Id" class="btn-view-all-docs">
+                        Tất cả tài liệu
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Chưa có môn học nào</h3>
+        <p>Hiện tại chưa có môn học nào được tạo trong hệ thống.</p>
+    </div>
+}
