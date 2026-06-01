@@ -1,0 +1,274 @@
+@model IEnumerable<BussinessLayer.DTOs.DocumentDto>
+
+@{
+    ViewData["Title"] = $"Tài liệu - Chapter {ViewBag.ChapterNumber}";
+}
+
+<style>
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+
+    .breadcrumb a:hover {
+        color: #ffffff;
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+    }
+
+    .chapter-header {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chapter-number-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+    }
+
+    .chapter-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .chapter-desc {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .document-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: var(--transition-smooth);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .document-card:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .document-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .document-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .document-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .document-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-type-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .file-type-pdf {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .file-type-docx {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .file-type-pptx {
+        background-color: rgba(249, 115, 22, 0.15);
+        color: #fdba74;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .document-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: auto;
+    }
+
+    .btn-view, .btn-download {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-download {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-download:hover {
+        background-color: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+
+<div class="breadcrumb">
+    <a asp-action="Subjects">Môn học</a>
+    <span class="breadcrumb-separator">›</span>
+    <a asp-action="Chapters" asp-route-subjectId="@ViewBag.SubjectId">@ViewBag.SubjectName</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Chapter @ViewBag.ChapterNumber</span>
+</div>
+
+<div class="chapter-header">
+    <div class="chapter-number-badge">Chapter @ViewBag.ChapterNumber</div>
+    <h1 class="chapter-title">@ViewBag.ChapterTitle</h1>
+    @if (!string.IsNullOrEmpty(ViewBag.ChapterDescription))
+    {
+        <p class="chapter-desc">@ViewBag.ChapterDescription</p>
+    }
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@if (Model.Any())
+{
+    <div class="documents-grid">
+        @foreach (var doc in Model)
+        {
+            var iconEmoji = doc.FileType switch
+            {
+                "pdf" => "📕",
+                "docx" => "📘",
+                "pptx" => "📙",
+                _ => "📄"
+            };
+
+            var fileTypeClass = $"file-type-{doc.FileType}";
+
+            <div class="document-card">
+                <div class="document-icon">@iconEmoji</div>
+                <h3 class="document-title">@doc.Title</h3>
+                <div class="document-meta">
+                    <div class="document-meta-item">
+                        <span class="file-type-badge @fileTypeClass">@doc.FileType.ToUpper()</span>
+                        <span>@((doc.FileSize / 1024.0 / 1024.0).ToString("F2")) MB</span>
+                    </div>
+                    <div class="document-meta-item">
+                        📅 @doc.UploadedDate.ToString("dd/MM/yyyy")
+                    </div>
+                    @if (!string.IsNullOrEmpty(doc.UploadedByUsername))
+                    {
+                        <div class="document-meta-item">
+                            👤 @doc.UploadedByUsername
+                        </div>
+                    }
+                </div>
+                <div class="document-actions">
+                    <a asp-action="ViewFile" asp-route-id="@doc.Id" class="btn-view" title="Xem trực tuyến">
+                        👁 Xem
+                    </a>
+                    <a asp-action="Download" asp-route-id="@doc.Id" class="btn-download" title="Tải về máy">
+                        ⬇ Tải
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Chưa có tài liệu nào</h3>
+        <p>Chapter này chưa có tài liệu nào được upload hoặc tài liệu chưa được xử lý.</p>
+    </div>
+}

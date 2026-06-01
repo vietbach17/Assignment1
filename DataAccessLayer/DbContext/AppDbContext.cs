@@ -18,6 +18,11 @@ namespace DataAccessLayer.DbContexts
         public DbSet<SubjectLecturer> SubjectLecturers { get; set; } = null!;
         public DbSet<Document> Documents { get; set; } = null!;
 
+        // ============ SUBCRIPTIONS (GÓI HỘI VIÊN) ============
+        public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; } = null!;
+        public DbSet<StudentSubscription> StudentSubscriptions { get; set; } = null!;
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -147,6 +152,22 @@ namespace DataAccessLayer.DbContexts
 
             // Seed data
             SeedSubjectsAndChapters(modelBuilder);
+
+
+            // ============ SUBCRIPTION ============
+            // 1. Cấu hình quan hệ giữa StudentSubscription và User (1 Student - 1 Subscription)
+            modelBuilder.Entity<StudentSubscription>()
+                .HasOne(s => s.User)
+                .WithMany() // Một user có thể có lịch sử gói, hoặc để trống nếu quản lý gói hiện tại
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade); // Xóa tài khoản thì xóa luôn thông tin gói đăng ký
+
+            // 2. Seed Data cho 3 gói dịch vụ Chatbot mặc định
+            modelBuilder.Entity<SubscriptionPlan>().HasData(
+                new SubscriptionPlan { Id = 1, Name = "Free", Price = 0, QuestionLimit = 5, Description = "Gói mặc định cho sinh viên mới tạo tài khoản." },
+                new SubscriptionPlan { Id = 2, Name = "Basic", Price = 50000, QuestionLimit = 20, Description = "Phù hợp nhu cầu ôn thi thông thường." },
+                new SubscriptionPlan { Id = 3, Name = "Pro", Price = 150000, QuestionLimit = 9999, Description = "Hỏi đáp không giới hạn." }
+            );
         }
 
         private void SeedSubjectsAndChapters(ModelBuilder modelBuilder)
