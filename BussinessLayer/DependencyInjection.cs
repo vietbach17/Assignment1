@@ -16,7 +16,7 @@ namespace BussinessLayer
         public static IServiceCollection AddBusinessAndDataServices(this IServiceCollection services, IConfiguration configuration)
         {
             // 1. Đăng ký DbContext kết nối tới PostgreSQL (DataAccessLayer)
-            var connectionString = configuration["DefaultConnection"];
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString, b => b.MigrationsAssembly("DataAccessLayer")));
 
