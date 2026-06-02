@@ -10,11 +10,13 @@ namespace PresentationLayer.Controllers
     {
         private readonly IDocumentService _documentService;
         private readonly IRoleService _roleService;
+        private readonly DataAccessLayer.Repositories.IUserRepository _userRepository;
 
-        public AdminController(IDocumentService documentService, IRoleService roleService)
+        public AdminController(IDocumentService documentService, IRoleService roleService, DataAccessLayer.Repositories.IUserRepository userRepository)
         {
             _documentService = documentService;
             _roleService = roleService;
+            _userRepository = userRepository;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -100,6 +102,23 @@ namespace PresentationLayer.Controllers
                 TempData["ErrorMsg"] = "Không thể xoá vai trò này (vai trò mặc định hoặc đang có User sử dụng).";
             }
             return RedirectToAction("Dashboard");
+        }
+
+        // --- User Management Actions ---
+        
+        [HttpGet]
+        public async Task<IActionResult> Users()
+        {
+            var users = await _userRepository.GetAllUsersAsync();
+            return View(users);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UserDetails(int id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null) return NotFound();
+            return View(user);
         }
     }
 }

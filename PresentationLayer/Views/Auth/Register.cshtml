@@ -1,119 +1,345 @@
 @model RegisterViewModel
 @{
+    // Tắt layout mặc định để dùng giao diện full màn hình này
     Layout = null;
 }
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Đăng ký tài khoản - EduQuest</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - EduManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif; background-color: #1f2128; color: #fff; height: 100vh; overflow: hidden; display: flex; }
-        .split-layout { display: flex; width: 100%; height: 100%; }
-        
-        .left-panel {
-            flex: 1; padding: 4rem 10%; display: flex; flex-direction: column; background-color: #1c1e26;
-            max-width: 55%; overflow-y: auto;
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+
+        :root {
+            --primary-pink: #eb2f64;
+            --brutal-yellow: #f4cf45;
+            --black: #000000;
+            --white: #ffffff;
+            --bg-color: #f8f8f8;
+            --border-width: 3px;
         }
-        .right-panel {
-            flex: 1; background: linear-gradient(rgba(28, 30, 38, 0.75), rgba(28, 30, 38, 0.95)), url('https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=2000&auto=format&fit=crop') no-repeat center center;
-            background-size: cover; border-top-left-radius: 40px; border-bottom-left-radius: 40px;
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             position: relative;
+            overflow: hidden; /* Ngăn scroll bar nếu họa tiết tràn viền */
+            /* Nền caro mờ */
+            background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, var(--bg-color) 25%, var(--bg-color) 75%, #f0f0f0 75%, #f0f0f0);
+            background-position: 0 0, 20px 20px;
+            background-size: 40px 40px;
+        }
+
+        /* =========================================
+           HỌA TIẾT TRANG TRÍ MEMPHIS (NỔI XUNG QUANH)
+        ========================================= */
+        .decor {
+            position: absolute;
+            z-index: 0;
+        }
+
+        /* Tam giác hồng bên trái trên */
+        .dec-tri-1 { top: 20%; left: 25%; transform: rotate(-15deg); }
+        /* Squiggle vàng bên trái giữa */
+        .dec-squ-1 { top: 40%; left: 23%; transform: rotate(10deg); }
+        /* Chấm tròn đen bên trái */
+        .dec-dot-1 { top: 50%; left: 26%; }
+        /* Squiggle hồng bên trái dưới */
+        .dec-squ-2 { bottom: 30%; left: 25%; transform: rotate(-20deg); }
+        /* Tam giác hồng bên trái dưới cùng */
+        .dec-tri-2 { bottom: 20%; left: 28%; transform: rotate(45deg); width: 20px; height: 20px; }
+
+        /* Tam giác hồng bên phải trên */
+        .dec-tri-3 { top: 22%; right: 26%; transform: rotate(25deg); }
+        /* Squiggle hồng bên phải giữa */
+        .dec-squ-3 { top: 38%; right: 24%; transform: rotate(-30deg); }
+        /* Chấm tròn đen bên phải */
+        .dec-dot-2 { top: 50%; right: 25%; }
+        /* Tam giác vàng bên phải dưới */
+        .dec-tri-4 { bottom: 25%; right: 22%; transform: rotate(-10deg); }
+
+        /* Style chung cho SVG tam giác */
+        .shape-triangle {
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary-pink);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            border: 2px solid var(--black);
+            filter: drop-shadow(0px 0px 0px var(--black)) drop-shadow(2px 0px 0px var(--black)) drop-shadow(0px 2px 0px var(--black)) drop-shadow(-2px 0px 0px var(--black)) drop-shadow(0px -2px 0px var(--black));
+        }
+        .shape-triangle.yellow { background-color: var(--brutal-yellow); }
+        
+        .shape-dot {
+            width: 12px; height: 12px;
+            background-color: var(--black);
+            border-radius: 50%;
+        }
+
+        /* =========================================
+           LOGO GÓC TRÁI TRÊN
+        ========================================= */
+        .top-logo {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            color: var(--primary-pink);
+            font-size: 24px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        /* =========================================
+           KHUNG ĐĂNG KÝ CHÍNH
+        ========================================= */
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .login-box {
+            background-color: var(--white);
+            border: var(--border-width) solid var(--black);
+            box-shadow: 8px 8px 0px 0px var(--black);
+            padding: 40px 35px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-box h1 {
+            color: var(--primary-pink);
+            font-weight: 900;
+            font-size: 32px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 30px;
+            color: var(--black);
+        }
+
+        /* Form Controls */
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i.left-icon {
+            position: absolute;
+            left: 15px;
+            font-size: 16px;
+            color: var(--black);
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 40px;
+            border: var(--border-width) solid var(--black);
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.1s;
+        }
+
+        .input-wrapper input:focus {
+            box-shadow: 4px 4px 0px 0px var(--black);
+            transform: translate(-2px, -2px);
+        }
+
+        .input-wrapper input::placeholder {
+            color: #888;
+            font-weight: 500;
+        }
+
+        .text-danger {
+            color: var(--primary-pink);
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Nút bấm */
+        .btn-brutal {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 900;
+            border: var(--border-width) solid var(--black);
+            cursor: pointer;
+            box-shadow: 4px 4px 0px 0px var(--black);
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-brutal:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px var(--black);
+        }
+
+        .btn-login {
+            background-color: var(--brutal-yellow);
+            color: var(--black);
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--black);
+            margin-bottom: 10px;
+            text-decoration: none;
+            display: inline-block;
         }
         
-        .brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.2rem; margin-bottom: 5rem; text-decoration: none; color: #fff; }
-        .brand-dot { width: 24px; height: 24px; background-color: #3b82f6; border-radius: 50%; }
-        
-        .form-container { max-width: 480px; width: 100%; margin: 0 auto; }
-        .subtitle { color: #8e95a3; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
-        .title { font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: baseline; gap: 0.5rem; }
-        .title-dot { width: 10px; height: 10px; background-color: #3b82f6; border-radius: 50%; display: inline-block; }
-        
-        .alt-action { color: #8e95a3; font-size: 0.95rem; margin-bottom: 2.5rem; }
-        .alt-action a { color: #3b82f6; text-decoration: none; font-weight: 500; }
-        
-        .form-group { margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
-        .form-row { display: flex; gap: 1rem; }
-        .form-row .form-group { flex: 1; }
-        
-        label { font-size: 0.75rem; color: #8e95a3; padding-left: 0.5rem; }
-        
-        .form-control {
-            width: 100%; background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #fff; padding: 1rem 1.25rem; border-radius: 12px; font-size: 0.95rem; font-family: inherit;
-            transition: all 0.2s; outline: none;
+        .validation-summary {
+            background-color: #f8d7da;
+            border: 2px solid var(--primary-pink);
+            color: var(--primary-pink);
+            padding: 10px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 13px;
         }
-        .form-control:focus { border-color: #3b82f6; background-color: rgba(255, 255, 255, 0.06); }
-        .form-control::placeholder { color: rgba(255,255,255,0.2); }
-        
-        .btn-group { display: flex; gap: 1rem; margin-top: 2.5rem; }
-        .btn { padding: 0.9rem 2rem; border-radius: 99px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
-        .btn-primary { background-color: #3b82f6; color: #fff; flex: 1; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
-        .btn-primary:hover { background-color: #2563eb; transform: translateY(-1px); }
-        .btn-secondary { background-color: rgba(255, 255, 255, 0.1); color: #fff; flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center; }
-        .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.15); }
-        
-        .validation-summary { margin-bottom: 1.5rem; color: #fca5a5; font-size: 0.9rem; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .text-danger { color: #fca5a5; font-size: 0.8rem; margin-top: 0.25rem; padding-left: 0.5rem; display: block; }
-        
-        .aw-logo { position: absolute; bottom: 3rem; right: 3rem; font-size: 2.2rem; font-weight: 800; letter-spacing: -2px; color: #fff; display: flex; align-items: baseline; gap: 0.2rem; }
-        .aw-logo-dot { width: 7px; height: 7px; background-color: #fff; border-radius: 50%; display: inline-block; }
-        
-        @@media (max-width: 992px) {
-            .left-panel { max-width: 100%; padding: 3rem 5%; }
-            .right-panel { display: none; }
+
+        /* Footer Đăng nhập */
+        .login-footer {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 20px;
+        }
+
+        .login-footer a {
+            color: var(--black);
+            font-weight: 900;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
         }
     </style>
 </head>
 <body>
-    <div class="split-layout">
-        <div class="left-panel">
-            <a href="/" class="brand">
-                <div class="brand-dot"></div>
-                EduQuest app.
-            </a>
-            
-            <div class="form-container">
-                <div class="subtitle">BẮT ĐẦU MIỄN PHÍ</div>
-                <h1 class="title">Tạo tài khoản<span class="title-dot"></span></h1>
-                <p class="alt-action">Đã có tài khoản? <a asp-action="Login">Đăng nhập</a></p>
-                
-                <form asp-controller="Auth" asp-action="Register" method="post">
-                    <div asp-validation-summary="ModelOnly" class="validation-summary" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
 
-                    <div class="form-group">
-                        <label asp-for="Username">Tên đăng nhập</label>
-                        <input asp-for="Username" class="form-control" placeholder="Tên đăng nhập..." autocomplete="username" />
-                        <span asp-validation-for="Username" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label asp-for="Password">Mật khẩu</label>
-                            <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="new-password" type="password" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="ConfirmPassword">Xác nhận mật khẩu</label>
-                            <input asp-for="ConfirmPassword" class="form-control" placeholder="••••••••" autocomplete="new-password" type="password" />
-                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                        </div>
-                    </div>
-
-                    <div class="btn-group">
-                        <a href="/" class="btn btn-secondary">Về trang chủ</a>
-                        <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
-                    </div>
-                </form>
-            </div>
+    <a href="/" style="text-decoration: none;">
+        <div class="top-logo">
+            <i class="fa-solid fa-graduation-cap"></i> EduManager
         </div>
-        
-        <div class="right-panel">
-            <div class="aw-logo"><span class="aw-logo-dot"></span>EQ<span class="aw-logo-dot" style="margin-left: 2px;"></span></div>
+    </a>
+
+    <div class="decor dec-tri-1 shape-triangle"></div>
+    
+    <svg class="decor dec-squ-1" width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="#f4cf45" stroke-width="4" stroke-linecap="round"/>
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="black" stroke-width="6" stroke-linecap="round" style="z-index:-1; position:absolute; stroke:black; mix-blend-mode: destination-over;"/>
+    </svg>
+    
+    <div class="decor dec-dot-1 shape-dot"></div>
+
+    <svg class="decor dec-squ-2" width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="#eb2f64" stroke-width="4" stroke-linecap="round"/>
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="black" stroke-width="6" stroke-linecap="round" style="z-index:-1; position:absolute; stroke:black; mix-blend-mode: destination-over;"/>
+    </svg>
+
+    <div class="decor dec-tri-2 shape-triangle"></div>
+    <div class="decor dec-tri-3 shape-triangle"></div>
+    
+    <svg class="decor dec-squ-3" width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="#eb2f64" stroke-width="4" stroke-linecap="round"/>
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="black" stroke-width="6" stroke-linecap="round" style="z-index:-1; position:absolute; stroke:black; mix-blend-mode: destination-over;"/>
+    </svg>
+
+    <div class="decor dec-dot-2 shape-dot"></div>
+    <div class="decor dec-tri-4 shape-triangle yellow"></div>
+
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h1>ĐĂNG KÝ 👋 ✨</h1>
+            <p class="subtitle">Bắt đầu học tập ngay hôm nay!</p>
+
+            <form asp-controller="Auth" asp-action="Register" method="post">
+                
+                <div asp-validation-summary="ModelOnly" class="validation-summary" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
+                
+                <div class="input-group">
+                    <label asp-for="Username">Tên đăng nhập</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-user left-icon"></i>
+                        <input asp-for="Username" placeholder="Nhập tên đăng nhập của bạn" required autocomplete="username">
+                    </div>
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div class="input-group">
+                    <label asp-for="Password">Mật khẩu</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock left-icon"></i>
+                        <input asp-for="Password" type="password" placeholder="••••••••" required autocomplete="new-password">
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="input-group">
+                    <label asp-for="ConfirmPassword">Xác nhận mật khẩu</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock left-icon"></i>
+                        <input asp-for="ConfirmPassword" type="password" placeholder="••••••••" required autocomplete="new-password">
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn-brutal btn-login">ĐĂNG KÝ NGAY</button>
+            </form>
+            
+            <a href="/" class="btn-brutal btn-secondary">VỀ TRANG CHỦ</a>
+        </div>
+
+        <div class="login-footer">
+            Đã có tài khoản? <a asp-controller="Auth" asp-action="Login">Đăng nhập ngay!</a>
         </div>
     </div>
+
 </body>
 </html>
