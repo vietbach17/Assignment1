@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace BussinessLayer.DTOs
 {
@@ -15,5 +15,11 @@ namespace BussinessLayer.DTOs
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public int RemainingQuestions { get; set; }
+
+        // Thời điểm bắt đầu chu kỳ 24h reset
+        public DateTime? DailyResetTime { get; set; }
+
+        // Tổng giới hạn câu hỏi/ngày của gói hiện tại (để view hiển thị)
+        public int QuestionLimit { get; set; }
     }
 }
