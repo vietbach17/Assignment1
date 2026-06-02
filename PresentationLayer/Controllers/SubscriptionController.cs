@@ -1,4 +1,4 @@
-﻿using BussinessLayer.Interfaces;
+using BussinessLayer.Interfaces;
 //using DataAccessLayer.Models;
 using BussinessLayer.DTOs; // Thêm namespace DTOs vào
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +36,14 @@ namespace PresentationLayer.Controllers
         public IActionResult Index()
         {
             List<SubscriptionPlanDTO> plans = _subscriptionService.GetAllPlans();
+
+            // Truyền PlanId hiện tại của Student để View đánh dấu gói đang dùng
+            if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+            {
+                int userId = GetCurrentUserId();
+                var currentSub = _subscriptionService.GetStudentSubscription(userId);
+                ViewBag.CurrentPlanId = currentSub?.SubscriptionPlanId ?? 0;
+            }
 
             return View(plans); // Truyền danh sách sang View
         }
@@ -151,9 +159,12 @@ namespace PresentationLayer.Controllers
                         UserId = currentSub.UserId,
                         SubscriptionPlanId = plan.Id, // Gán ID gói mới mua
                         StartDate = DateTime.UtcNow,
-                        EndDate = DateTime.UtcNow.AddMonths(1),
-                        RemainingQuestions = plan.QuestionLimit // Cập nhật số lượng câu hỏi mới theo gói
+                        EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1), // Gói Free = vĩnh viễn
+                        RemainingQuestions = plan.QuestionLimit, // Cập nhật số lượng câu hỏi mới theo gói
+                        DailyResetTime = null // Reset chu kỳ daily khi đổi gói
                     };
+
+                    _subscriptionService.SaveStudentSubscription(entity); // Lưu thay đổi xuống Database
 
                     TempData["SuccessMessage"] = $"⚡ Xác nhận thanh toán thành công! Gói {plan.Name} ({plan.QuestionLimit} câu) đã được kích hoạt.";
                     return RedirectToAction(nameof(MySubscription));
