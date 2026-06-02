@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
@@ -100,7 +100,9 @@ namespace BussinessLayer.Services
                 PlanDescription = sub.SubscriptionPlan?.Description,
                 StartDate = sub.StartDate,
                 EndDate = sub.EndDate,
-                RemainingQuestions = sub.RemainingQuestions
+                RemainingQuestions = sub.RemainingQuestions,
+                DailyResetTime = sub.DailyResetTime,
+                QuestionLimit = sub.SubscriptionPlan?.QuestionLimit ?? 0
             };
         }
 
@@ -166,8 +168,9 @@ namespace BussinessLayer.Services
                         {
                             currentSub.SubscriptionPlanId = plan.Id;
                             currentSub.StartDate = DateTime.Now;
-                            currentSub.EndDate = DateTime.Now.AddMonths(1);
+                            currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.Now.AddMonths(1);
                             currentSub.RemainingQuestions = plan.QuestionLimit;
+                            currentSub.DailyResetTime = null; // Reset chu kỳ daily khi đổi gói
 
                             _repository.SaveStudentSubscription(currentSub);
                         }
