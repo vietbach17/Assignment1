@@ -1,6 +1,7 @@
-﻿@model IEnumerable<BussinessLayer.DTOs.SubscriptionPlanDTO>
+@model IEnumerable<BussinessLayer.DTOs.SubscriptionPlanDTO>
 @{
     ViewData["Title"] = "Gói Hội Viên";
+    int currentPlanId = ViewBag.CurrentPlanId ?? 0;
 }
 
 <style>
@@ -34,6 +35,13 @@
             background: rgba(168, 85, 247, 0.05);
         }
 
+        /* Style cho gói đang sử dụng */
+        .plan-card.current-plan {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.05);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+        }
+
     .plan-badge {
         position: absolute;
         top: -12px;
@@ -45,6 +53,25 @@
         font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
+    }
+
+    /* Badge xanh lá cho gói hiện tại */
+    .current-plan-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        padding: 4px 16px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
     }
 
     .price-value {
@@ -116,6 +143,23 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
             color: #fff;
         }
+
+    /* Nút đang sử dụng (disabled) */
+    .btn-current-plan {
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #6ee7b7;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: default;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
 </style>
 
 <div class="header-container">
@@ -144,8 +188,14 @@
 <div class="pricing-grid">
     @foreach (var item in Model)
     {
-        <div class="glass-card plan-card @(item.Name == "Basic" ? "recommended" : "")">
-            @if (item.Name == "Basic")
+        bool isCurrentPlan = (item.Id == currentPlanId);
+
+        <div class="glass-card plan-card @(isCurrentPlan ? "current-plan" : item.Name == "Basic" ? "recommended" : "")">
+            @if (isCurrentPlan)
+            {
+                <div class="current-plan-badge">✅ Gói hiện tại</div>
+            }
+            else if (item.Name == "Basic")
             {
                 <div class="plan-badge">Phổ biến nhất</div>
             }
@@ -166,7 +216,7 @@
                     }
                     else
                     {
-                        <span>@item.QuestionLimit câu hỏi / tháng</span>
+                        <span>@item.QuestionLimit câu hỏi / ngày</span>
                     }
                 </li>
                 <li>Phản hồi ưu tiên từ AI</li>
@@ -176,12 +226,21 @@
 
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
             {
-                <form asp-action="BuyPlan" method="post">
-                    <input type="hidden" name="planId" value="@item.Id" />
-                    <button type="submit" class="btn-primary" style="width: 100%;">
-                        @(item.Price == 0 ? "Sử dụng miễn phí" : "Nâng cấp ngay")
-                    </button>
-                </form>
+                @if (isCurrentPlan)
+                {
+                    <div class="btn-current-plan">
+                        ✅ Đang sử dụng
+                    </div>
+                }
+                else
+                {
+                    <form asp-action="BuyPlan" method="post">
+                        <input type="hidden" name="planId" value="@item.Id" />
+                        <button type="submit" class="btn-primary" style="width: 100%;">
+                            @(item.Price == 0 ? "Sử dụng miễn phí" : "Nâng cấp ngay")
+                        </button>
+                    </form>
+                }
             }
             else if (!User.Identity?.IsAuthenticated == true)
             {
