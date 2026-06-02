@@ -1,6 +1,8 @@
-﻿@model BussinessLayer.DTOs.StudentSubscriptionDTO
+@model BussinessLayer.DTOs.StudentSubscriptionDTO
 @{
     ViewData["Title"] = "Hội Viên Của Tôi";
+    bool isFreePlan = Model.SubscriptionPlanId == 1 || Model.PlanName == "Free";
+    bool isUnlimitedPlan = Model.QuestionLimit >= 9999;
 }
 
 <style>
@@ -48,6 +50,34 @@
         margin-bottom: 2rem;
         text-align: center;
     }
+
+    /* Countdown timer style */
+    .countdown-box {
+        background: rgba(251, 191, 36, 0.08);
+        border: 1px solid rgba(251, 191, 36, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        text-align: center;
+    }
+
+    .countdown-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.3rem;
+    }
+
+    .countdown-timer {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fbbf24;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .badge-permanent {
+        color: #22c55e;
+        font-weight: 600;
+    }
 </style>
 
 <div class="status-container">
@@ -62,14 +92,29 @@
         <h2 style="text-align: center; margin-bottom: 1.5rem;">Thông tin <span style="color: var(--accent-blue)">Hội viên</span></h2>
 
         <div class="stat-box">
-            <p style="color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Số lượt câu hỏi còn lại</p>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
+                @(isUnlimitedPlan ? "Số lượt câu hỏi còn lại" : "Số lượt còn lại hôm nay")
+            </p>
             <div class="remaining-count">
-                @(Model.RemainingQuestions >= 9999 ? "∞" : Model.RemainingQuestions.ToString())
+                @(isUnlimitedPlan ? "∞" : Model.RemainingQuestions.ToString())
             </div>
             <p style="color: var(--text-secondary); font-size: 0.85rem;">
                 Dựa trên gói: <span style="color: #fff; font-weight: 600;">@Model.PlanName</span>
+                @if (!isUnlimitedPlan)
+                {
+                    <span> — @Model.QuestionLimit câu/ngày</span>
+                }
             </p>
         </div>
+
+        @* Countdown timer - chỉ hiện khi user đã dùng ít nhất 1 câu hỏi và gói không phải unlimited *@
+        @if (!isUnlimitedPlan && Model.DailyResetTime.HasValue)
+        {
+            <div class="countdown-box">
+                <div class="countdown-label">⏳ Lượt câu hỏi sẽ reset sau</div>
+                <div class="countdown-timer" id="countdown-timer">Đang tính...</div>
+            </div>
+        }
 
         <div class="info-section" style="margin-bottom: 2rem;">
             <div class="info-row">
@@ -78,11 +123,18 @@
             </div>
             <div class="info-row">
                 <span style="color: var(--text-secondary);">Ngày hết hạn</span>
-                <span>@Model.EndDate.ToString("dd/MM/yyyy")</span>
+                @if (isFreePlan || Model.EndDate.Year >= 9000)
+                {
+                    <span class="badge-permanent">♾️ Vĩnh viễn</span>
+                }
+                else
+                {
+                    <span>@Model.EndDate.ToString("dd/MM/yyyy")</span>
+                }
             </div>
             <div class="info-row">
                 <span style="color: var(--text-secondary);">Tổng hạn mức gói</span>
-                <span>@(Model.RemainingQuestions >= 9999 || Model.PlanName == "Pro" ? "Không giới hạn" : "Theo hạn mức gói")</span>
+                <span>@(isUnlimitedPlan ? "Không giới hạn" : $"{Model.QuestionLimit} câu hỏi / ngày")</span>
             </div>
         </div>
 
@@ -92,3 +144,38 @@
         </div>
     </div>
 </div>
+
+@if (!isUnlimitedPlan && Model.DailyResetTime.HasValue)
+{
+    <script>
+        (function () {
+            // Thời gian reset = DailyResetTime + 24h (server trả về UTC)
+            var resetTimeUtc = new Date("@Model.DailyResetTime.Value.AddHours(24).ToString("o")");
+            var timerEl = document.getElementById('countdown-timer');
+
+            function updateCountdown() {
+                var now = new Date();
+                var diff = resetTimeUtc.getTime() - now.getTime();
+
+                if (diff <= 0) {
+                    timerEl.textContent = "🔄 Đã reset! Tải lại trang...";
+                    timerEl.style.color = "#22c55e";
+                    setTimeout(function () { location.reload(); }, 2000);
+                    return;
+                }
+
+                var hours = Math.floor(diff / (1000 * 60 * 60));
+                var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                timerEl.textContent = hours.toString().padStart(2, '0') + "h "
+                    + minutes.toString().padStart(2, '0') + "p "
+                    + seconds.toString().padStart(2, '0') + "s";
+
+                requestAnimationFrame(updateCountdown);
+            }
+
+            updateCountdown();
+        })();
+    </script>
+}
