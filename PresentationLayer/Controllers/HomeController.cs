@@ -47,7 +47,7 @@ namespace PresentationLayer.Controllers
             return View();
         }
 
-        // --- HÀM MỚI CHÈN VÀO ĐỂ TRỪ CÂU HỎI KHI CHAT ---
+        // --- HÀM TRỪ CÂU HỎI VỚI CƠ CHẾ RESET HÀNG NGÀY (24H) ---
         [Authorize(Roles = "Student")]
         [HttpPost]
         public IActionResult VerifyAndDeductQuestion()
@@ -62,30 +62,63 @@ namespace PresentationLayer.Controllers
                 return Json(new { success = false, message = "Không tìm thấy thông tin gói dịch vụ." });
             }
 
-            // 2. FIX LỖI FOREACH: Thay vì dùng foreach duyệt qua 1 object đơn lẻ, 
-            // ta lấy trực tiếp thông tin cấu hình gói dựa trên SubscriptionPlanId có sẵn trong DTO
+            // 2. Lấy cấu hình gói
             var planDto = _subscriptionService.GetPlanById(currentSubDto.SubscriptionPlanId);
             if (planDto == null)
             {
                 return Json(new { success = false, message = "Không tìm thấy cấu hình gói." });
             }
 
-            // 3. FIX LỖI .SubscriptionPlan: Đọc trực tiếp giới hạn câu hỏi từ planDto vừa lấy được
-            // Kiểm tra xem gói có bị giới hạn và học sinh đã dùng hết lượt chưa
+            // 3. Kiểm tra & thực hiện Daily Reset nếu đã qua 24h
+            bool wasReset = false;
+            if (planDto.QuestionLimit < 9999
+                && currentSubDto.DailyResetTime.HasValue
+                && DateTime.UtcNow >= currentSubDto.DailyResetTime.Value.AddHours(24))
+            {
+                // Đã qua 24h → Reset lại số câu hỏi
+                currentSubDto.RemainingQuestions = planDto.QuestionLimit;
+                currentSubDto.DailyResetTime = null;
+                wasReset = true;
+
+                // Lưu ngay trạng thái reset xuống DB
+                var resetEntity = new DataAccessLayer.Models.StudentSubscription
+                {
+                    Id = currentSubDto.Id,
+                    UserId = currentSubDto.UserId,
+                    SubscriptionPlanId = currentSubDto.SubscriptionPlanId,
+                    StartDate = currentSubDto.StartDate,
+                    EndDate = currentSubDto.EndDate,
+                    RemainingQuestions = planDto.QuestionLimit,
+                    DailyResetTime = null
+                };
+                _subscriptionService.SaveStudentSubscription(resetEntity);
+            }
+
+            // 4. Kiểm tra còn lượt không
             if (planDto.QuestionLimit < 9999 && currentSubDto.RemainingQuestions <= 0)
             {
+                // Tính thời gian còn lại trước khi reset
+                string resetTimeIso = "";
+                if (currentSubDto.DailyResetTime.HasValue)
+                {
+                    resetTimeIso = currentSubDto.DailyResetTime.Value.AddHours(24).ToString("o");
+                }
+
                 return Json(new
                 {
                     success = false,
                     outOfQuota = true,
-                    message = "Bạn đã hết lượt đặt câu hỏi trong tháng này. Vui lòng nâng cấp gói!"
+                    message = "Bạn đã hết lượt đặt câu hỏi hôm nay. Vui lòng chờ reset hoặc nâng cấp gói!",
+                    resetTime = resetTimeIso
                 });
             }
 
-            // 4. FIX LỖI ÉP KIỂU: Nếu gói không phải Vô hạn (Pro), tiến hành trừ 1 lượt hỏi
+            // 5. Nếu gói không phải Vô hạn (Pro), tiến hành trừ 1 lượt hỏi
             if (planDto.QuestionLimit < 9999)
             {
-                // Khởi tạo một đối tượng Entity thực tế của tầng DataAccessLayer để truyền xuống hàm Save
+                // Nếu chưa có DailyResetTime → đây là câu hỏi đầu tiên trong chu kỳ
+                DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
+
                 var entity = new DataAccessLayer.Models.StudentSubscription
                 {
                     Id = currentSubDto.Id,
@@ -93,17 +126,28 @@ namespace PresentationLayer.Controllers
                     SubscriptionPlanId = currentSubDto.SubscriptionPlanId,
                     StartDate = currentSubDto.StartDate,
                     EndDate = currentSubDto.EndDate,
-                    RemainingQuestions = currentSubDto.RemainingQuestions - 1 // Thực hiện trừ câu hỏi
+                    RemainingQuestions = currentSubDto.RemainingQuestions - 1,
+                    DailyResetTime = newDailyResetTime
                 };
 
-                // Gọi hàm lưu của hệ thống bằng cách truyền đúng kiểu đối tượng Entity gốc
                 _subscriptionService.SaveStudentSubscription(entity);
-
-                // Cập nhật lại số lượng câu hỏi mới vào biến DTO để phản hồi về cho giao diện hiển thị
                 currentSubDto.RemainingQuestions = entity.RemainingQuestions;
+                currentSubDto.DailyResetTime = newDailyResetTime;
             }
 
-            return Json(new { success = true, remaining = currentSubDto.RemainingQuestions });
+            // 6. Trả về kết quả kèm thời gian reset cho frontend
+            string resetTimeResponse = "";
+            if (currentSubDto.DailyResetTime.HasValue)
+            {
+                resetTimeResponse = currentSubDto.DailyResetTime.Value.AddHours(24).ToString("o");
+            }
+
+            return Json(new
+            {
+                success = true,
+                remaining = currentSubDto.RemainingQuestions,
+                resetTime = resetTimeResponse
+            });
         }
     }
 }
