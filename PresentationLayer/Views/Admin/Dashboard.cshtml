@@ -7,7 +7,7 @@
 <div class="dashboard-container">
     <div class="welcome-banner glass-card">
         <div class="banner-text">
-            <h1>⚡ Bảng Điều Khiển Hệ Thống (Admin)</h1>
+            <h1>Bảng Điều Khiển Hệ Thống (Admin)</h1>
             <p>Chào mừng Admin! Đây là trang bảo mật cao dành riêng cho việc cấu hình, kiểm soát hệ thống và phân quyền.</p>
         </div>
         <span class="banner-badge role-badge role-admin">Quyền Tối Cao</span>
@@ -17,7 +17,6 @@
     <div class="stats-grid">
         <div class="glass-card stat-card">
             <div class="stat-header">
-                <span class="stat-icon">👥</span>
                 <span class="stat-growth">+12%</span>
             </div>
             <h3 class="stat-value">1,248</h3>
@@ -25,7 +24,6 @@
         </div>
         <div class="glass-card stat-card">
             <div class="stat-header">
-                <span class="stat-icon">🛡️</span>
                 <span class="stat-growth font-emerald">Hoạt động</span>
             </div>
             <h3 class="stat-value">3 Roles</h3>
@@ -33,7 +31,6 @@
         </div>
         <div class="glass-card stat-card">
             <div class="stat-header">
-                <span class="stat-icon">💾</span>
                 <span class="stat-growth">PostgreSQL</span>
             </div>
             <h3 class="stat-value">99.9%</h3>
@@ -41,7 +38,6 @@
         </div>
         <div class="glass-card stat-card">
             <div class="stat-header">
-                <span class="stat-icon">⚡</span>
                 <span class="stat-growth">+4.2%</span>
             </div>
             <h3 class="stat-value">0.12 ms</h3>
@@ -52,56 +48,89 @@
     <div class="details-grid">
         <!-- Seed Roles Info Table -->
         <div class="glass-card table-card">
-            <h2 class="card-title">🛡️ Quản lý vai trò (Role List)</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 class="card-title" style="margin-bottom: 0;">Quản lý vai trò (Role List)</h2>
+                <a asp-action="CreateRole" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none;">+ Thêm Vai Trò</a>
+            </div>
+            
+            @if(TempData["SuccessMsg"] != null) {
+                <div class="info-alert" style="border-left-color: #10b981; background-color: rgba(16, 185, 129, 0.05); margin-bottom: 1rem;">
+                    <p style="color: #34d399; margin: 0;">@TempData["SuccessMsg"]</p>
+                </div>
+            }
+            @if(TempData["ErrorMsg"] != null) {
+                <div class="info-alert" style="border-left-color: #ef4444; background-color: rgba(239, 68, 68, 0.05); margin-bottom: 1rem;">
+                    <p style="color: #fca5a5; margin: 0;">@TempData["ErrorMsg"]</p>
+                </div>
+            }
+
             <table class="premium-table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Tên vai trò</th>
-                        <th>Mức độ bảo mật</th>
                         <th>Trạng thái</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td><span class="role-badge role-admin">Admin</span></td>
-                        <td>Tối cao (Full Access)</td>
-                        <td><span class="badge-active">Hoạt động</span></td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td><span class="role-badge role-lecturer">Lecturer</span></td>
-                        <td>Giảng dạy (Manage Docs)</td>
-                        <td><span class="badge-active">Hoạt động</span></td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td><span class="role-badge role-student">Student</span></td>
-                        <td>Học tập (Default Role)</td>
-                        <td><span class="badge-active">Hoạt động</span></td>
-                    </tr>
+                    @if (ViewBag.Roles != null)
+                    {
+                        foreach (var role in ViewBag.Roles)
+                        {
+                            bool isDefault = role.RoleName == "Admin" || role.RoleName == "Lecturer" || role.RoleName == "Student";
+                            string roleClass = role.RoleName switch {
+                                "Admin" => "role-admin",
+                                "Lecturer" => "role-lecturer",
+                                "Student" => "role-student",
+                                _ => ""
+                            };
+                            
+                            <tr>
+                                <td>@role.Id</td>
+                                <td>
+                                    <span class="role-badge @roleClass" style="@(roleClass == "" ? "background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;" : "")">@role.RoleName</span>
+                                    @if(isDefault) {
+                                        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.5rem;">(Mặc định)</span>
+                                    }
+                                </td>
+                                <td><span class="badge-active">Hoạt động</span></td>
+                                <td>
+                                    @if(!isDefault) {
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <a asp-action="EditRole" asp-route-id="@role.Id" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; text-decoration: none;">Sửa</a>
+                                            <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xoá vai trò này?');" style="display: inline; margin: 0;">
+                                                <button type="submit" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer;">Xoá</button>
+                                            </form>
+                                        </div>
+                                    } else {
+                                        <span style="color: var(--text-secondary); font-size: 0.8rem;">Không thể sửa/xoá</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
         </div>
 
         <!-- Quick Settings / Info -->
         <div class="glass-card actions-card">
-            <h2 class="card-title">⚙️ Tác vụ quản trị nhanh</h2>
+            <h2 class="card-title">Tác vụ quản trị nhanh</h2>
             <div class="action-buttons-list">
-                <button class="btn-primary" onclick="alert('Đã đồng bộ PostgreSQL database thành công!')">🔄 Đồng bộ Database</button>
-                <button class="btn-secondary" onclick="alert('Tạo sao lưu backup.sql thành công!')">💾 Backup Dữ liệu</button>
-                <button class="btn-secondary" onclick="alert('Hệ thống hoạt động bình thường!')">🩺 Health Check</button>
+                <button class="btn-primary" onclick="alert('Đã đồng bộ PostgreSQL database thành công!')">Đồng bộ Database</button>
+                <button class="btn-secondary" onclick="alert('Tạo sao lưu backup.sql thành công!')">Backup Dữ liệu</button>
+                <button class="btn-secondary" onclick="alert('Hệ thống hoạt động bình thường!')">Health Check</button>
             </div>
             <div class="info-alert">
-                <p><strong>💡 Bảo mật thông tin:</strong> Cookie xác thực phiên đăng nhập của Admin được cấu hình với thuộc tính <code>HttpOnly</code> và <code>Secure</code> giúp chống lại các cuộc tấn công XSS chiếm đoạt session.</p>
+                <p><strong>Bảo mật thông tin:</strong> Cookie xác thực phiên đăng nhập của Admin được cấu hình với thuộc tính <code>HttpOnly</code> và <code>Secure</code> giúp chống lại các cuộc tấn công XSS chiếm đoạt session.</p>
             </div>
         </div>
     </div>
 
     <!-- Quản lý tài liệu (Document List) -->
     <div class="glass-card table-card" style="margin-top: 2rem;">
-        <h2 class="card-title">📚 Quản lý tài liệu đã tải lên</h2>
+        <h2 class="card-title">Quản lý tài liệu đã tải lên</h2>
         
         @if (!Model.Any())
         {
@@ -208,12 +237,8 @@
 
     .stat-header {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
-    }
-
-    .stat-icon {
-        font-size: 1.75rem;
     }
 
     .stat-growth {

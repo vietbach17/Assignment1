@@ -73,8 +73,7 @@ namespace BussinessLayer.Services
         {
             var file = viewModel.File;
 
-            // --- Validation ---
-
+            // điều kiện upload
             // 1. File không được rỗng
             if (file == null || file.Length == 0)
                 return (false, "Vui lòng chọn file để tải lên.", null);
@@ -87,6 +86,12 @@ namespace BussinessLayer.Services
             // 3. Kiểm tra dung lượng file (≤ 50 MB)
             if (file.Length > MaxFileSizeBytes)
                 return (false, $"File vượt dung lượng cho phép. Tối đa 50 MB (file hiện tại: {file.Length / (1024.0 * 1024):F1} MB).", null);
+
+            // 4. Kiểm tra file trùng lặp (chống duplicate)
+            var existingDocs = await _documentRepository.GetBySubjectIdAsync(viewModel.SubjectId, includeDeleted: false);
+            bool isDuplicate = existingDocs.Any(d => d.FileName.Equals(file.FileName, StringComparison.OrdinalIgnoreCase) && d.FileSize == file.Length);
+            if (isDuplicate)
+                return (false, $"Tài liệu \"{file.FileName}\" đã tồn tại trong hệ thống. Không được phép tải lên file trùng lặp.", null);
 
             // --- Lưu file vật lý ---
 

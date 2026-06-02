@@ -7,7 +7,7 @@
 
     <div class="page-header glass-card">
         <div>
-            <h1>📤 Tải lên Tài liệu</h1>
+            <h1>Tải lên Tài liệu</h1>
             <p>Hỗ trợ định dạng: PDF, DOCX, PPTX — Tối đa 50 MB</p>
         </div>
         <a asp-action="Index" class="btn-secondary-link">← Quay lại danh sách</a>
@@ -21,17 +21,18 @@
     <div class="glass-card upload-form-card">
         <form asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm" novalidate>
             @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger validation-summary"></div>
 
             @* Title *@
             <div class="form-group">
-                <label asp-for="Title" class="form-label">📝 Tiêu đề tài liệu <span class="required">*</span></label>
+                <label asp-for="Title" class="form-label">Tiêu đề tài liệu <span class="required">*</span></label>
                 <input asp-for="Title" class="form-input" id="titleInput" placeholder="Ví dụ: Slide Chapter 1 - Introduction" autocomplete="off" />
                 <span asp-validation-for="Title" class="validation-error"></span>
             </div>
 
             @* Subject *@
             <div class="form-group">
-                <label asp-for="SubjectId" class="form-label">📚 Môn học <span class="required">*</span></label>
+                <label asp-for="SubjectId" class="form-label">Môn học <span class="required">*</span></label>
                 <select asp-for="SubjectId" id="subjectSelect" class="form-select" asp-items="ViewBag.SubjectList">
                     <option value="">— Chọn môn học —</option>
                 </select>
@@ -40,7 +41,7 @@
 
             @* Chapter (dynamic via AJAX) *@
             <div class="form-group">
-                <label asp-for="ChapterId" class="form-label">📖 Chương (tuỳ chọn)</label>
+                <label asp-for="ChapterId" class="form-label">Chương (tuỳ chọn)</label>
                 <select asp-for="ChapterId" id="chapterSelect" class="form-select">
                     <option value="">— Chọn chương (tuỳ chọn) —</option>
                 </select>
@@ -51,7 +52,7 @@
             <div class="form-group">
                 <label class="form-label">📎 File tài liệu <span class="required">*</span></label>
                 <div class="drop-zone" id="dropZone">
-                    <div class="drop-zone-icon">📁</div>
+                    <div class="drop-zone-icon"></div>
                     <div class="drop-zone-text">
                         <p>Kéo thả file vào đây hoặc <span class="browse-link" onclick="document.getElementById('fileInput').click()">chọn file</span></p>
                         <p class="drop-zone-hint">PDF, DOCX, PPTX — tối đa 50 MB</p>
@@ -67,13 +68,13 @@
                     <button type="button" class="remove-file" onclick="clearFile()">✕</button>
                 </div>
                 <span asp-validation-for="File" class="validation-error"></span>
-                <div id="fileSizeError" class="validation-error" style="display:none">⚠️ File vượt quá giới hạn 50 MB.</div>
+                <div id="fileSizeError" class="validation-error" style="display:none">File vượt quá giới hạn 50 MB.</div>
             </div>
 
             @* Submit *@
             <div class="form-actions">
                 <button type="submit" class="btn-primary btn-submit" id="submitBtn">
-                    ⬆️ Tải lên tài liệu
+                    Tải lên tài liệu
                 </button>
                 <a asp-action="Index" class="btn-cancel">Huỷ</a>
             </div>
@@ -91,6 +92,8 @@
 
     .alert { padding: 0.9rem 1.25rem; border-radius: 10px; font-size: 0.9rem; }
     .alert-danger { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+    .validation-summary-valid { display: none !important; }
+    .validation-summary-errors { margin-bottom: 1.5rem; }
 
     .upload-form-card { padding: 2rem 2.5rem; display: flex; flex-direction: column; gap: 0; }
     .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.5rem; }
@@ -101,6 +104,7 @@
         color: #fff; border-radius: 10px; padding: 0.65rem 1rem; font-size: 0.9rem;
         outline: none; transition: border-color 0.2s;
     }
+    .form-select option { background-color: #1c1c21; color: #fff; }
     .form-input:focus, .form-select:focus { border-color: var(--accent-orange); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
     .form-input::placeholder { color: rgba(255,255,255,0.3); }
     .form-hint { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.2rem; }

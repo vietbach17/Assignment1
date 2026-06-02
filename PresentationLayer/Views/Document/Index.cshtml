@@ -6,18 +6,18 @@
 
 <div class="document-container">
 
-    @* ─── Banner ─── *@
+
     <div class="welcome-banner glass-card">
         <div class="banner-text">
-            <h1>📚 Kho Học Liệu & Tài Liệu</h1>
+            <h1>Kho Học Liệu & Tài Liệu</h1>
             <p>Quản lý tài liệu PDF, DOCX, PPTX theo môn học và chương.</p>
         </div>
         <a asp-action="Upload" class="btn-primary upload-cta">
-            ➕ Tải lên tài liệu mới
+            Tải lên tài liệu mới
         </a>
     </div>
 
-    @* ─── Alert Messages ─── *@
+   
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success">
@@ -35,7 +35,7 @@
     <div class="glass-card filter-bar">
         <form method="get" asp-action="Index" class="filter-form">
             <div class="filter-group">
-                <label for="subjectFilter">📂 Môn học</label>
+                <label for="subjectFilter">Môn học</label>
                 <select id="subjectFilter" name="subjectId" class="form-select" onchange="this.form.submit()">
                     <option value="">— Tất cả môn học —</option>
                     @foreach (var item in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Subjects)
@@ -52,7 +52,7 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label for="statusFilter">🔖 Trạng thái</label>
+                <label for="statusFilter">Trạng thái</label>
                 <select id="statusFilter" name="status" class="form-select" onchange="this.form.submit()">
                     <option value="">— Tất cả —</option>
                     @{
@@ -76,10 +76,10 @@
         @if (!Model.Documents.Any())
         {
             <div class="empty-state">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon"></div>
                 <h3>Chưa có tài liệu nào</h3>
                 <p>Nhấn "Tải lên tài liệu mới" để bắt đầu.</p>
-                <a asp-action="Upload" class="btn-primary" style="display:inline-block;margin-top:1rem;">➕ Upload ngay</a>
+                <a asp-action="Upload" class="btn-primary" style="display:inline-block;margin-top:1rem;">Upload ngay</a>
             </div>
         }
         else
@@ -100,28 +100,28 @@
                         <div class="doc-info">
                             <div class="doc-title">@doc.Title</div>
                             <div class="doc-meta-row">
-                                <span>📁 @doc.SubjectCode</span>
+                                <span>Môn: @doc.SubjectCode</span>
                                 @if (!string.IsNullOrEmpty(doc.ChapterTitle))
                                 {
-                                    <span>• 📖 @doc.ChapterTitle</span>
+                                    <span>• @doc.ChapterTitle</span>
                                 }
                                 <span>• @doc.FileSizeDisplay</span>
                                 <span>• @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
-                                <span>• 👤 @doc.UploadedByUsername</span>
+                                <span>• @doc.UploadedByUsername</span>
                             </div>
                         </div>
                         <div class="doc-status-col">
                             @switch (doc.Status)
                             {
-                                case DocumentStatus.Pending: <span class="status-badge pending">🟡 Pending</span>  break;
-                                case DocumentStatus.Indexed: <span class="status-badge indexed">🟢 Indexed</span>  break;
-                                case DocumentStatus.Failed:  <span class="status-badge failed">🔴 Failed</span>   break;
+                                case DocumentStatus.Pending: <span class="status-badge pending">Pending</span>  break;
+                                case DocumentStatus.Indexed: <span class="status-badge indexed">Indexed</span>  break;
+                                case DocumentStatus.Failed:  <span class="status-badge failed">Failed</span>   break;
                             }
                         </div>
                         <div class="doc-actions">
-                            <a asp-action="Details" asp-route-id="@doc.Id" class="btn-action btn-detail" title="Xem chi tiết">🔍</a>
-                            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-action btn-download" title="Tải về">⬇️</a>
-                            <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-action btn-delete" title="Xoá">🗑️</a>
+                            <a asp-action="Details" asp-route-id="@doc.Id" class="btn-action btn-detail" title="Xem chi tiết">Chi tiết</a>
+                            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-action btn-download" title="Tải về">Tải về</a>
+                            <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-action btn-delete" title="Xoá">Xoá</a>
                         </div>
                     </div>
                 }
@@ -158,6 +158,7 @@
         color: #fff; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.88rem;
         cursor: pointer; outline: none;
     }
+    .form-select option { background-color: #1c1c21; color: #fff; }
     .form-select:focus { border-color: var(--accent-orange); }
     .filter-count { margin-left: auto; font-size: 0.85rem; color: var(--text-secondary); align-self: center; }
 
@@ -194,9 +195,9 @@
 
     .doc-actions { display: flex; gap: 0.4rem; }
     .btn-action  {
-        width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-        border-radius: 8px; font-size: 0.9rem; cursor: pointer; text-decoration: none;
-        background: rgba(255,255,255,0.04); border: 1px solid var(--border-color);
+        height: 34px; padding: 0 0.8rem; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 6px; font-size: 0.85rem; cursor: pointer; text-decoration: none;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); color: #fff;
         transition: var(--transition-smooth);
     }
     .btn-action:hover { background: rgba(255,255,255,0.1); }
