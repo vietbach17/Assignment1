@@ -10,11 +10,13 @@ namespace PresentationLayer.Controllers
     public class HomeController : Controller
     {
         private readonly ISubscriptionService _subscriptionService;
+        private readonly IDocumentService _documentService;
 
         // Tiêm dịch vụ quản lý gói vào HomeController (Subcription)
-        public HomeController(ISubscriptionService subscriptionService)
+        public HomeController(ISubscriptionService subscriptionService, IDocumentService documentService)
         {
             _subscriptionService = subscriptionService;
+            _documentService = documentService;
         }
 
         // Hàm Helper lấy nhanh UserId từ Cookie đăng nhập
@@ -41,8 +43,10 @@ namespace PresentationLayer.Controllers
 
         // Chỉ cho phép sinh viên (Student) truy cập vào chức năng Chat trực tuyến
         [Authorize(Roles = "Student")]
-        public IActionResult Chat()
+        public async Task<IActionResult> Chat()
         {
+            var documents = await _documentService.GetAllDocumentsAsync(includeDeleted: false);
+            ViewBag.Documents = documents.ToList();
             // Trả về giao diện chat tương tác hiện đại của Sinh viên
             return View();
         }

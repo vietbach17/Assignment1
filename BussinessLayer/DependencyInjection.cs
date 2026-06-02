@@ -43,6 +43,7 @@ namespace BussinessLayer
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();
+            services.AddScoped<IRoleService, RoleService>();
 
                     // ------- Subscription Management -------
             services.AddScoped<ISubscriptionService, SubscriptionService>();

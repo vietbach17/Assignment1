@@ -23,7 +23,7 @@
             </div>
         </div>
         <div class="header-actions">
-            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-primary btn-download-main">⬇️ Tải về</a>
+            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-primary btn-download-main">Tải về</a>
             <a asp-action="Index" class="btn-back">← Quay lại</a>
         </div>
     </div>
@@ -42,7 +42,7 @@
 
         @* ─── Metadata Card ─── *@
         <div class="glass-card meta-card">
-            <h2 class="card-section-title">📋 Thông tin tài liệu</h2>
+            <h2 class="card-section-title">Thông tin tài liệu</h2>
             <div class="meta-table">
                 <div class="meta-row">
                     <span class="meta-key">Tiêu đề</span>
@@ -93,7 +93,7 @@
         <div class="detail-sidebar">
             @* ─── Update Status Card ─── *@
             <div class="glass-card status-card">
-                <h2 class="card-section-title">🔄 Cập nhật trạng thái</h2>
+                <h2 class="card-section-title">Cập nhật trạng thái</h2>
                 <form asp-action="UpdateStatus" asp-route-id="@doc.Id" method="post">
                     @Html.AntiForgeryToken()
                     <div class="form-group">
@@ -115,9 +115,9 @@
 
             @* ─── Danger Zone ─── *@
             <div class="glass-card danger-card">
-                <h2 class="card-section-title danger-title">⚠️ Vùng nguy hiểm</h2>
+                <h2 class="card-section-title danger-title">Vùng nguy hiểm</h2>
                 <p class="danger-desc">Xoá tài liệu sẽ xoá cả file khỏi server. Hành động này không thể khôi phục.</p>
-                <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-danger btn-block">🗑️ Xoá tài liệu</a>
+                <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-danger btn-block">Xoá tài liệu</a>
             </div>
         </div>
     </div>
@@ -172,6 +172,7 @@
     .form-group { margin-bottom: 1rem; }
     .form-label { font-size: 0.82rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem; }
     .form-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; padding: 0.55rem 0.9rem; font-size: 0.88rem; outline: none; }
+    .form-select option { background-color: #1c1c21; color: #fff; }
     .form-select:focus { border-color: var(--accent-orange); }
     .btn-block { width: 100%; text-align: center; padding: 0.65rem; border-radius: 8px; font-size: 0.88rem; }
 

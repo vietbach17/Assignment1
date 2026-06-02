@@ -24,5 +24,28 @@ namespace DataAccessLayer.Repositories
             return await _context.Roles
                 .FirstOrDefaultAsync(r => r.RoleName.ToLower() == roleName.ToLower());
         }
+
+        public async Task<IEnumerable<Role>> GetAllAsync()
+        {
+            return await _context.Roles.OrderBy(r => r.Id).ToListAsync();
+        }
+
+        public async Task AddAsync(Role role)
+        {
+            await _context.Roles.AddAsync(role);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(Role role)
+        {
+            _context.Roles.Update(role);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Role role)
+        {
+            _context.Roles.Remove(role);
+            await _context.SaveChangesAsync();
+        }
     }
 }

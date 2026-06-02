@@ -80,10 +80,10 @@
             gap: 0.5rem;
         }
 
-        .brand::before {
-            content: "✦";
-            font-size: 1.25rem;
-            -webkit-text-fill-color: #a855f7;
+        .brand-logo {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
         }
 
         .nav-menu {
@@ -285,7 +285,10 @@
 <body>
     <header>
         <div class="navbar">
-            <a href="/" class="brand">SecureAuth Portal</a>
+            <a href="/" class="brand">
+                <img src="https://raw.githubusercontent.com/vietbach17/Assignment1/refs/heads/main/eduquest.png" alt="EduQuest Logo" class="brand-logo" />
+                EduQuest
+            </a>
             
             @if (User.Identity?.IsAuthenticated == true)
             {
@@ -332,7 +335,7 @@
     </main>
 
     <footer>
-        <p>&copy; 2026 Antigravity Secure Portal - Thiết kế bởi Ahihi. Phát triển trên nền tảng <a href="https://dotnet.microsoft.com/en-us/apps/aspnet" target="_blank">ASP.NET Core MVC 8.0</a>.</p>
+        <p> EduQuest được phát triển bởi GROUP 1 - PRN221 </p>
     </footer>
 
     @await RenderSectionAsync("Scripts", required: false)
