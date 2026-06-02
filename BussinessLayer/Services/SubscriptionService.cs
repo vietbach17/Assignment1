@@ -157,7 +157,7 @@ namespace BussinessLayer.Services
                             UserId = userId,
                             SubscriptionPlanId = planId,
                             Amount = plan.Price,
-                            TransactionDate = DateTime.Now,
+                            TransactionDate = DateTime.UtcNow,
                             Status = "Success"
                         };
                         _repository.AddTransaction(transaction);
@@ -167,8 +167,8 @@ namespace BussinessLayer.Services
                         if (currentSub != null)
                         {
                             currentSub.SubscriptionPlanId = plan.Id;
-                            currentSub.StartDate = DateTime.Now;
-                            currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.Now.AddMonths(1);
+                            currentSub.StartDate = DateTime.UtcNow;
+                            currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1);
                             currentSub.RemainingQuestions = plan.QuestionLimit;
                             currentSub.DailyResetTime = null; // Reset chu kỳ daily khi đổi gói
 
@@ -179,10 +179,15 @@ namespace BussinessLayer.Services
                 }
                 return false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Nếu lỗi chữ ký hash hoặc lỗi parse chuỗi, trả về false luôn
-                return false;
+                // Ghi log chi tiết lỗi ra console của Web Server
+                Console.WriteLine("================ VNPAY EXCEPTION ================");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("=================================================");
+                
+                // Rethrow để Controller có thể bắt được và hiện ra giao diện cho dễ debug
+                throw;
             }
         }
 

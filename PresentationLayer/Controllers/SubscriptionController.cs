@@ -102,17 +102,44 @@ namespace PresentationLayer.Controllers
         [Authorize(Roles = "Student")]
         public IActionResult VnPayReturn()
         {
-            // Truyền trực tiếp đối tượng Request của Controller vào Service xử lý theo tài liệu hướng dẫn
-            bool isSuccess = _subscriptionService.ProcessVnPayReturn(this.Request);
-
-            if (isSuccess)
+            try
             {
-                TempData["SuccessMessage"] = "Thanh toán qua cổng VNPay thành công! Gói dịch vụ đã được kích hoạt.";
-                return RedirectToAction(nameof(MySubscription));
-            }
+                // Truyền trực tiếp đối tượng Request của Controller vào Service xử lý theo tài liệu hướng dẫn
+                bool isSuccess = _subscriptionService.ProcessVnPayReturn(this.Request);
 
-            TempData["ErrorMessage"] = "Giao dịch thanh toán thất bại hoặc chữ ký bảo mật không hợp lệ.";
+                if (isSuccess)
+                {
+                    TempData["SuccessMessage"] = "Thanh toán qua cổng VNPay thành công! Gói dịch vụ đã được kích hoạt.";
+                    return RedirectToAction(nameof(MySubscription));
+                }
+
+                TempData["ErrorMessage"] = "Giao dịch thanh toán thất bại hoặc phản hồi không hợp lệ.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Lỗi xử lý callback VNPay: {ex.Message} (Chi tiết: {ex.InnerException?.Message ?? "Không có"})";
+            }
             return RedirectToAction(nameof(Index));
+        }
+
+        // ACTION MỚI: NHẬN THÔNG BÁO GIAO DỊCH TỪ SERVER VNPAY (Server-to-Server IPN)
+        // Không dùng [Authorize] vì VNPay gọi trực tiếp từ backend của họ
+        [HttpGet]
+        public IActionResult VnPayIPN()
+        {
+            try
+            {
+                bool isSuccess = _subscriptionService.ProcessVnPayReturn(this.Request);
+                if (isSuccess)
+                {
+                    return Json(new { RspCode = "00", Message = "Confirm Success" });
+                }
+                return Json(new { RspCode = "99", Message = "Confirm Failed" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { RspCode = "99", Message = ex.Message });
+            }
         }
         // ================== ACTION MỚI: GIẢ LẬP TRẢ VỀ TỪ VNPAY (Dành cho test nhanh) ==================
         [Authorize(Roles = "Student")]
