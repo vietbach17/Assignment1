@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.DbContexts;
+using DataAccessLayer.DbContexts;
 using DataAccessLayer.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -65,8 +65,8 @@ namespace DataAccessLayer.Repositories
                     UserId = userId,
                     SubscriptionPlanId = 1,
                     StartDate = DateTime.UtcNow,
-                    EndDate = DateTime.UtcNow.AddYears(1),
-                    RemainingQuestions = freePlan?.QuestionLimit ?? 5 // Mặc định gói free là 5 câu
+                    EndDate = DateTime.MaxValue, // Gói Free = vĩnh viễn
+                    RemainingQuestions = freePlan?.QuestionLimit ?? 5 // Mặc định gói free là 5 câu/ngày
                 };
 
                 _context.StudentSubscriptions.Add(sub);
