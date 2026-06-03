@@ -46,6 +46,13 @@ namespace PresentationLayer.Controllers
             return View(subjects);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> AllDocuments()
+        {
+            var allDocuments = await _documentService.GetAllDocumentsAsync();
+            return View(allDocuments);
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         // GET: /StudentDocument/Chapters?subjectId={id}
         // Hiển thị danh sách chapters của một môn học
@@ -164,7 +171,7 @@ namespace PresentationLayer.Controllers
             if (document == null || document.Status != BussinessLayer.DTOs.DocumentStatus.Indexed)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy tài liệu hoặc tài liệu chưa sẵn sàng.";
-                return RedirectToAction(nameof(Subjects));
+                return RedirectToAction(nameof(Documents));
             }
 
             var wwwrootPath = _webHostEnvironment.WebRootPath;
