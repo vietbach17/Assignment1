@@ -1,4 +1,4 @@
-@model IEnumerable<DataAccessLayer.Models.User>
+@model IEnumerable<BussinessLayer.DTOs.UserDto>
 @{
     Layout = null;
     ViewData["Title"] = "Quản lý Người Dùng";
@@ -134,7 +134,7 @@
                         <tbody class="divide-y divide-gray-100">
                             @foreach (var user in Model)
                             {
-                                string roleClass = user.Role.RoleName switch {
+                                string roleClass = user.RoleName switch {
                                     "Admin" => "bg-purple-100 text-purple-700",
                                     "Lecturer" => "bg-blue-100 text-blue-700",
                                     "Student" => "bg-green-100 text-green-700",
@@ -148,7 +148,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <span class="inline-block px-3 py-1 rounded-full text-xs font-bold @roleClass">
-                                            @user.Role.RoleName
+                                            @user.RoleName
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">
