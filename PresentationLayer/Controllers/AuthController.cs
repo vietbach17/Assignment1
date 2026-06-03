@@ -133,36 +133,39 @@ namespace PresentationLayer.Controllers
             // Trường hợp 1: Có truyền trực tiếp RoleName (Ví dụ: Vừa đăng nhập thành công ở POST Login)
             if (!string.IsNullOrEmpty(roleName))
             {
-                if (string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Dashboard", "Admin");
-                }
-                if (string.Equals(roleName, "Lecturer", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Document");
-                }
-                if (string.Equals(roleName, "Student", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Chat", "Home");
-                }
+                return RedirectToAction("Index", "Home");
+                //if (string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase))
+                //{
+                //    return RedirectToAction("Dashboard", "Admin");
+                //}
+                //if (string.Equals(roleName, "Lecturer", StringComparison.OrdinalIgnoreCase))
+                //{
+                //    return RedirectToAction("Index", "Document");
+                //}
+                //if (string.Equals(roleName, "Student", StringComparison.OrdinalIgnoreCase))
+                //{
+                //    return RedirectToAction("Chat", "Home");
+                //}
             }
 
             // Trường hợp 2: Không truyền RoleName (Ví dụ: Đã có sẵn Cookie ở GET Login)
-            if (User.IsInRole("Admin"))
-            {
-                return RedirectToAction("Dashboard", "Admin");
-            }
-            if (User.IsInRole("Lecturer"))
-            {
-                return RedirectToAction("Index", "Document");
-            }
-            if (User.IsInRole("Student"))
-            {
-                // Học viên -> Phòng chat
-                return RedirectToAction("Chat", "Home");
-            }
+            //if (User.IsInRole("Admin"))
+            //{
+            //    return RedirectToAction("Dashboard", "Admin");
+            //}
+            //if (User.IsInRole("Lecturer"))
+            //{
+            //    return RedirectToAction("Index", "Document");
+            //}
+            //if (User.IsInRole("Student"))
+            //{
+            //    // Học viên -> Phòng chat
+            //    return RedirectToAction("Chat", "Home");
+            //}
 
-            return RedirectToAction("Chat", "Home"); // Mặc định chuyển về trang Home Student
+            //return RedirectToAction("Chat", "Home"); // Mặc định chuyển về trang Home Student
+
+            return RedirectToAction("Index", "Home");
         }
     }
 }

@@ -43,6 +43,14 @@ namespace DataAccessLayer.Repositories
             await _context.Users.AddAsync(user);
         }
 
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .OrderBy(u => u.Username)
+                .ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

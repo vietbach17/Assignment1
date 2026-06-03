@@ -97,5 +97,13 @@ namespace DataAccessLayer.Repositories
             _context.PaymentTransactions.Add(transaction);
             _context.SaveChanges();
         }
+
+        public List<PaymentTransaction> GetAllTransactions()
+        {
+            return _context.PaymentTransactions
+                .Include(t => t.User)
+                .OrderByDescending(t => t.TransactionDate)
+                .ToList();
+        }
     }
 }

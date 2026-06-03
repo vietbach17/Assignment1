@@ -87,11 +87,27 @@ namespace BussinessLayer.Services
             if (file.Length > MaxFileSizeBytes)
                 return (false, $"File vượt dung lượng cho phép. Tối đa 50 MB (file hiện tại: {file.Length / (1024.0 * 1024):F1} MB).", null);
 
-            // 4. Kiểm tra file trùng lặp (chống duplicate)
-            var existingDocs = await _documentRepository.GetBySubjectIdAsync(viewModel.SubjectId, includeDeleted: false);
-            bool isDuplicate = existingDocs.Any(d => d.FileName.Equals(file.FileName, StringComparison.OrdinalIgnoreCase) && d.FileSize == file.Length);
-            if (isDuplicate)
-                return (false, $"Tài liệu \"{file.FileName}\" đã tồn tại trong hệ thống. Không được phép tải lên file trùng lặp.", null);
+            // 4. Tính toán mã băm SHA-256 và kiểm tra trùng lặp nội dung
+            string fileHash;
+            try
+            {
+                using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                {
+                    using (var stream = file.OpenReadStream())
+                    {
+                        var hashBytes = sha256.ComputeHash(stream);
+                        fileHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Lỗi khi tính mã băm file: {ex.Message}", null);
+            }
+
+            var duplicateDoc = await _documentRepository.GetByHashAsync(fileHash);
+            if (duplicateDoc != null)
+                return (false, $"Tài liệu trùng lặp nội dung với tài liệu \"{duplicateDoc.Title}\" đã tồn tại trong hệ thống.", null);
 
             // --- Lưu file vật lý ---
 
@@ -129,6 +145,7 @@ namespace BussinessLayer.Services
                 ChapterId = viewModel.ChapterId,
                 UploadedByUserId = uploadedByUserId,
                 UploadedDate = DateTime.UtcNow,
+                FileHash = fileHash,
                 IsDeleted = false
             };
 
@@ -196,6 +213,157 @@ namespace BussinessLayer.Services
             return (true, $"Trạng thái tài liệu đã được cập nhật thành \"{statusName}\".");
         }
 
+        /// <summary>Tìm tài liệu theo mã băm SHA-256 nội dung</summary>
+        public async Task<DocumentDto?> GetDocumentByHashAsync(string fileHash)
+        {
+            var document = await _documentRepository.GetByHashAsync(fileHash);
+            return document == null ? null : MapToDto(document);
+        }
+
+        /// <summary>Xử lý upload phân đoạn (Chunk Upload)</summary>
+        public async Task<(bool Success, string Message, DocumentDto? Document)> ProcessChunkAsync(
+            Microsoft.AspNetCore.Http.IFormFile chunk, int chunkIndex, int totalChunks, string fileName, string fileGuid,
+            string title, int subjectId, int? chapterId, int uploadedByUserId, string wwwrootPath)
+        {
+            if (chunk == null || chunk.Length == 0)
+                return (false, "Phân đoạn file trống.", null);
+
+            var extension = Path.GetExtension(fileName);
+            if (!AllowedExtensions.Contains(extension))
+                return (false, $"Định dạng file không hỗ trợ. Chỉ chấp nhận: PDF, DOCX, PPTX.", null);
+
+            // 1. Tạo thư mục tạm lưu các chunk
+            var tempFolder = Path.Combine(wwwrootPath, "temp", fileGuid);
+            Directory.CreateDirectory(tempFolder);
+
+            // 2. Lưu chunk hiện tại
+            var chunkFilePath = Path.Combine(tempFolder, $"chunk_{chunkIndex}");
+            try
+            {
+                using (var stream = new FileStream(chunkFilePath, FileMode.Create))
+                {
+                    await chunk.CopyToAsync(stream);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Lỗi khi lưu chunk {chunkIndex}: {ex.Message}", null);
+            }
+
+            // 3. Nếu chưa phải chunk cuối cùng, trả về trạng thái đang xử lý
+            if (chunkIndex < totalChunks - 1)
+            {
+                return (true, $"Đã tải lên phân đoạn {chunkIndex + 1}/{totalChunks}.", null);
+            }
+
+            // 4. Chunk cuối cùng -> Thực hiện ghép các chunk
+            var uploadsFolder = Path.Combine(wwwrootPath, "uploads");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var storedFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+            var fullFilePath = Path.Combine(uploadsFolder, storedFileName);
+            var relativeFilePath = Path.Combine("uploads", storedFileName).Replace("\\", "/");
+
+            try
+            {
+                // Ghép tệp tin
+                using (var destStream = new FileStream(fullFilePath, FileMode.Create))
+                {
+                    for (int i = 0; i < totalChunks; i++)
+                    {
+                        var partPath = Path.Combine(tempFolder, $"chunk_{i}");
+                        if (!File.Exists(partPath))
+                        {
+                            // Nếu thiếu chunk, dọn dẹp và báo lỗi
+                            if (Directory.Exists(tempFolder)) Directory.Delete(tempFolder, true);
+                            if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
+                            return (false, $"Thiếu phân đoạn thứ {i + 1}. Vui lòng upload lại.", null);
+                        }
+
+                        using (var srcStream = new FileStream(partPath, FileMode.Open))
+                        {
+                            await srcStream.CopyToAsync(destStream);
+                        }
+                    }
+                }
+
+                // Dọn dẹp thư mục tạm
+                Directory.Delete(tempFolder, true);
+            }
+            catch (Exception ex)
+            {
+                if (Directory.Exists(tempFolder)) Directory.Delete(tempFolder, true);
+                if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
+                return (false, $"Lỗi khi ghép file: {ex.Message}", null);
+            }
+
+            // 5. Tính toán SHA-256
+            string fileHash;
+            long fileSize;
+            try
+            {
+                using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                {
+                    using (var stream = File.OpenRead(fullFilePath))
+                    {
+                        var hashBytes = sha256.ComputeHash(stream);
+                        fileHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                        fileSize = stream.Length;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
+                return (false, $"Lỗi khi tính mã băm file: {ex.Message}", null);
+            }
+
+            // 6. Kiểm tra dung lượng tối đa
+            if (fileSize > MaxFileSizeBytes)
+            {
+                if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
+                return (false, $"File vượt dung lượng cho phép. Tối đa 50 MB (file hiện tại: {fileSize / (1024.0 * 1024):F1} MB).", null);
+            }
+
+            // 7. Kiểm tra trùng mã băm SHA-256
+            var duplicateDoc = await _documentRepository.GetByHashAsync(fileHash);
+            if (duplicateDoc != null)
+            {
+                if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
+                return (false, $"Tài liệu trùng lặp nội dung với tài liệu \"{duplicateDoc.Title}\" đã tồn tại trong hệ thống.", null);
+            }
+
+            // 8. Lưu metadata vào DB
+            var document = new Document
+            {
+                Title = title.Trim(),
+                FileName = fileName,
+                StoredFileName = storedFileName,
+                FilePath = relativeFilePath,
+                FileSize = fileSize,
+                FileType = extension.TrimStart('.').ToLowerInvariant(),
+                Status = DocumentStatusEntity.Pending,
+                SubjectId = subjectId,
+                ChapterId = chapterId,
+                UploadedByUserId = uploadedByUserId,
+                UploadedDate = DateTime.UtcNow,
+                FileHash = fileHash,
+                IsDeleted = false
+            };
+
+            try
+            {
+                var savedDocument = await _documentRepository.AddAsync(document);
+                var savedDto = await GetDocumentByIdAsync(savedDocument.Id);
+                return (true, $"Tài liệu \"{document.Title}\" đã được tải lên và ghép thành công.", savedDto);
+            }
+            catch (Exception ex)
+            {
+                if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
+                return (false, $"Lỗi khi lưu thông tin vào cơ sở dữ liệu: {ex.Message}", null);
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         // Private helper: Map Document entity → DocumentDto
         // ─────────────────────────────────────────────────────────────────────
@@ -218,6 +386,7 @@ namespace BussinessLayer.Services
             UploadedByUserId  = d.UploadedByUserId,
             UploadedByUsername = d.UploadedBy?.Username,
             UploadedDate      = d.UploadedDate,
+            FileHash          = d.FileHash,
             IsDeleted         = d.IsDeleted
         };
     }

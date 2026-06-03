@@ -1,4 +1,5 @@
 using BussinessLayer.Services;
+using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +11,19 @@ namespace PresentationLayer.Controllers
     {
         private readonly IDocumentService _documentService;
         private readonly IRoleService _roleService;
+        private readonly DataAccessLayer.Repositories.IUserRepository _userRepository;
+        private readonly ISubscriptionService _subscriptionService;
 
-        public AdminController(IDocumentService documentService, IRoleService roleService)
+        public AdminController(
+            IDocumentService documentService,
+            IRoleService roleService,
+            DataAccessLayer.Repositories.IUserRepository userRepository,
+            ISubscriptionService subscriptionService)
         {
             _documentService = documentService;
             _roleService = roleService;
+            _userRepository = userRepository;
+            _subscriptionService = subscriptionService;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -24,6 +33,18 @@ namespace PresentationLayer.Controllers
             
             // Lấy danh sách toàn bộ Role
             ViewBag.Roles = await _roleService.GetAllRolesAsync();
+
+            // Thống kê tài chính
+            var transactions = _subscriptionService.GetAllTransactions();
+            var successTransactions = transactions.Where(t => t.Status == "Success").ToList();
+            
+            decimal totalRevenue = successTransactions.Sum(t => t.Amount);
+            decimal netProfit = totalRevenue * 0.85m; // 85% profit margin
+
+            ViewBag.Transactions = transactions;
+            ViewBag.TotalRevenue = totalRevenue;
+            ViewBag.NetProfit = netProfit;
+            ViewBag.SuccessTransactionCount = successTransactions.Count;
             
             // Trả về trang quản trị dành riêng cho Admin kèm danh sách tài liệu
             return View(documents);
@@ -100,6 +121,23 @@ namespace PresentationLayer.Controllers
                 TempData["ErrorMsg"] = "Không thể xoá vai trò này (vai trò mặc định hoặc đang có User sử dụng).";
             }
             return RedirectToAction("Dashboard");
+        }
+
+        // --- User Management Actions ---
+        
+        [HttpGet]
+        public async Task<IActionResult> Users()
+        {
+            var users = await _userRepository.GetAllUsersAsync();
+            return View(users);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UserDetails(int id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null) return NotFound();
+            return View(user);
         }
     }
 }

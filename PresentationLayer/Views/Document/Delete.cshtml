@@ -2,102 +2,171 @@
 @using BussinessLayer.DTOs
 @{
     ViewData["Title"] = "Xoá tài liệu";
+    Layout = null;
 }
-
-<div class="delete-container">
-    <div class="glass-card delete-card">
-
-        @* Icon cảnh báo *@
-        <div class="warning-icon">⚠️</div>
-        <h1 class="delete-title">Xác nhận Xoá Tài liệu</h1>
-        <p class="delete-subtitle">Hành động này <strong>không thể hoàn tác</strong>. File sẽ bị xoá khỏi server.</p>
-
-        @* Thông tin tài liệu sẽ bị xoá *@
-        <div class="doc-summary">
-            <div class="doc-summary-row">
-                @switch (Model.FileType)
-                {
-                    case "pdf":  <span class="file-badge pdf">PDF</span>  break;
-                    case "docx": <span class="file-badge docx">DOCX</span> break;
-                    case "pptx": <span class="file-badge pptx">PPTX</span> break;
-                    default:     <span class="file-badge">FILE</span>      break;
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#1e3b31',
+                            active: '#2c5344',
+                            button: '#376b56',
+                            text: '#222222',
+                            gray: '#f4f6f8'
+                        }
+                    }
                 }
-                <div class="doc-summary-info">
-                    <div class="doc-summary-title">@Model.Title</div>
-                    <div class="doc-summary-meta">
-                        📁 @Model.SubjectCode •
-                        @(string.IsNullOrEmpty(Model.ChapterTitle) ? "" : $"📖 {Model.ChapterTitle} • ")
-                        @Model.FileSizeDisplay •
-                        @Model.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy")
-                    </div>
-                </div>
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-brand-dark text-white flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-book-open text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
+                <p class="text-xs text-gray-300">Xoá tài liệu</p>
             </div>
         </div>
 
-        @* Form xác nhận xoá *@
-        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="delete-form">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn-danger-confirm" id="deleteBtn">
-                🗑️ Xác nhận Xoá
-            </button>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn-cancel-delete">Huỷ bỏ</a>
-        </form>
-    </div>
-</div>
+        <div class="px-4 py-2">
+            <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+            <ul class="space-y-1">
+                <li>
+                    <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-border-all w-5"></i>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-book w-5"></i>
+                        <span>Môn Học</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
+                        <i class="fa-regular fa-file-lines w-5"></i>
+                        <span>Tài liệu</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
 
-<style>
-    .delete-container {
-        display: flex; justify-content: center; align-items: flex-start;
-        padding: 2rem 0;
-    }
-    .delete-card {
-        max-width: 540px; width: 100%; padding: 3rem 2.5rem;
-        text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
-        border-color: rgba(239,68,68,0.2);
-    }
-    .warning-icon { font-size: 3.5rem; line-height: 1; }
-    .delete-title { font-size: 1.6rem; font-weight: 700; color: #f87171; }
-    .delete-subtitle { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
-    .delete-subtitle strong { color: #fbbf24; }
+        <div class="px-4 py-6 border-t border-white/5 mt-auto">
+            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+    </aside>
 
-    /* Doc summary */
-    .doc-summary {
-        width: 100%; background: rgba(239,68,68,0.05);
-        border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 1.25rem 1.5rem;
-        text-align: left;
-    }
-    .doc-summary-row { display: flex; align-items: center; gap: 1rem; }
-    .doc-summary-info { flex: 1; }
-    .doc-summary-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; }
-    .doc-summary-meta { font-size: 0.78rem; color: var(--text-secondary); }
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
+            <div class="relative w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Tìm kiếm..." class="w-full bg-gray-50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-button">
+            </div>
+            
+            <div class="flex items-center space-x-5">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="text-gray-400 hover:text-gray-600 relative">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 cursor-pointer">
+                        <div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
+                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </header>
 
-    /* File badges */
-    .file-badge { display: inline-block; padding: 0.35rem 0.7rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
-    .file-badge.pdf  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-    .file-badge.docx { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-    .file-badge.pptx { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+        <div class="flex-1 overflow-y-auto p-8 flex items-center justify-center">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
+                <div class="mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-5xl block mb-4"></i>
+                </div>
 
-    /* Form */
-    .delete-form { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
-    .btn-danger-confirm {
-        width: 100%; padding: 0.85rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600;
-        background: rgba(239,68,68,0.15); color: #f87171;
-        border: 1px solid rgba(239,68,68,0.4); cursor: pointer;
-        transition: var(--transition-smooth);
-    }
-    .btn-danger-confirm:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
-    .btn-cancel-delete {
-        display: block; width: 100%; padding: 0.75rem; border-radius: 10px;
-        font-size: 0.9rem; color: var(--text-secondary); text-decoration: none;
-        border: 1px solid var(--border-color); text-align: center;
-        transition: var(--transition-smooth);
-    }
-    .btn-cancel-delete:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
-</style>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Xác nhận Xoá Tài liệu</h2>
+                <p class="text-gray-600 text-sm mb-6">
+                    Hành động này <strong>không thể hoàn tác</strong>. File sẽ bị xoá khỏi server.
+                </p>
+
+                <!-- Document Summary -->
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-left">
+                    <div class="flex items-center space-x-3 mb-2">
+                        @switch (Model.FileType)
+                        {
+                            case "pdf":
+                                <div class="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                break;
+                            case "docx":
+                                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-file-word"></i>
+                                </div>
+                                break;
+                            case "pptx":
+                                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-file-powerpoint"></i>
+                                </div>
+                                break;
+                        }
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800">@Model.Title</p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                Môn: <strong>@Model.SubjectCode</strong>
+                                @if (!string.IsNullOrEmpty(Model.ChapterTitle))
+                                {
+                                    <span>• @Model.ChapterTitle</span>
+                                }
+                                • @Model.FileSizeDisplay
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="space-y-3">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm" id="deleteBtn">
+                        <i class="fa-solid fa-trash mr-2"></i>Xác nhận Xoá
+                    </button>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="block w-full px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium rounded-xl transition">
+                        Huỷ bỏ
+                    </a>
+                </form>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
 
 @section Scripts {
     <script>
-        // Confirm thêm lần nữa khi click Delete (double protection)
         document.getElementById('deleteBtn').addEventListener('click', function(e) {
             if (!confirm('Bạn có chắc chắn muốn xoá tài liệu này? File sẽ bị xoá vĩnh viễn.')) {
                 e.preventDefault();

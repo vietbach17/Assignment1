@@ -138,5 +138,17 @@ namespace DataAccessLayer.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        /// <summary>
+        /// Tìm tài liệu theo mã băm SHA-256 nội dung file
+        /// </summary>
+        public async Task<Document?> GetByHashAsync(string fileHash)
+        {
+            return await _context.Documents
+                .Include(d => d.Subject)
+                .Include(d => d.Chapter)
+                .Include(d => d.UploadedBy)
+                .FirstOrDefaultAsync(d => d.FileHash == fileHash && !d.IsDeleted);
+        }
     }
 }

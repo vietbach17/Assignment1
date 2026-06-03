@@ -1,10 +1,12 @@
 @model IEnumerable<BussinessLayer.DTOs.ChapterDto>
 
 @{
-    ViewData["Title"] = $"Chapters - {ViewBag.SubjectName}";
+    // ViewData["Title"] = $"Chapters - {ViewBag.SubjectName}";
+    Layout = null;
+    ViewBag.ActiveMenu = "Subjects";
 }
 
-<style>
+@* <style>
     .breadcrumb {
         display: flex;
         align-items: center;
@@ -194,4 +196,175 @@ else
         <h3>Chưa có chapter nào</h3>
         <p>Môn học này chưa có chapter nào được tạo.</p>
     </div>
+} *@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EduManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+        
+        :root {
+            --pink: #eb2f64; --yellow: #f4cf45; --green: #5cb85c; 
+            --blue: #4fa8db; --black: #000; --white: #fff; --bg: #f4f4f6;
+            --border: 3px solid var(--black);
+            --shadow: 4px 4px 0px 0px var(--black);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        
+        body {
+            background-color: var(--bg);
+            display: flex; min-height: 100vh; color: var(--black);
+            background-image: radial-gradient(#d1d1d1 2px, transparent 2px);
+          
+        }
+
+        /* Tùy chỉnh thanh Sidebar */
+        .sidebar {
+            width: 260px; background: var(--white); border-right: var(--border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 15px;
+            position: sticky; top: 0; height: 100vh;
+        }
+        .logo { color: var(--pink); font-size: 22px; font-weight: 900; margin-bottom: 20px; }
+        .nav-item {
+            padding: 12px 15px; font-weight: 800; color: var(--black);
+            text-decoration: none; display: flex; align-items: center; gap: 12px;
+            border: 3px solid transparent; transition: 0.1s;
+        }
+        .nav-item.active {
+            background: var(--pink); color: var(--white);
+            border-color: var(--black); box-shadow: var(--shadow);
+        }
+        .nav-item:not(.active):hover { border-color: var(--black); transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+
+        /* Vùng nội dung chính */
+        .main-content { flex: 1; padding: 40px; }
+        
+        /* Các class tiện ích dùng chung (Utility Classes) */
+        .title-page { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; }
+        .brutal-box { background: var(--white); border: var(--border); box-shadow: 6px 6px 0px 0px var(--black); padding: 25px; }
+        .brutal-btn { border: 2px solid var(--black); font-weight: 800; cursor: pointer; box-shadow: 2px 2px 0px 0px var(--black); padding: 8px 15px; }
+        .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--black); }
+        .badge { border: 2px solid var(--black); padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--yellow); }
+    /* Thêm thuộc tính này để đẩy phần tử con cuối cùng xuống đáy */
+.sidebar {
+    display: flex;
+    flex-direction: column;
 }
+
+/* ========================================================
+   STYLE KHỐI USER PROFILE (NEO-BRUTALISM BOX)
+   ======================================================== */
+.user-profile {
+    margin-top: auto; /* Tuyệt chiêu đẩy khối này xuống đáy sidebar */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background-color: var(--white);
+    border: 3px solid var(--black);
+    box-shadow: 4px 4px 0px 0px var(--black); /* Đổ bóng phẳng đặc trưng */
+}
+
+/* Khung Avatar vuông vắn, viền dày */
+.avatar-box {
+    width: 36px;
+    height: 36px;
+    background-color: var(--pink); /* Đổi màu nền avatar theo ý thích */
+    border: 2px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 14px;
+    flex-shrink: 0; /* Giữ ảnh không bị bóp méo */
+}
+
+.avatar-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Cụm thông tin Text */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Cắt chữ nếu tên quá dài */
+}
+
+.user-info .username {
+    font-weight: 800;
+    font-size: 12px;
+    color: var(--black);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.user-info .role {
+    font-weight: 700;
+    font-size: 10px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+        </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i> EduManager</div>
+        <a asp-controller="Home" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Overview" ? "active" : "")"><i class="fa-solid fa-border-all"></i> TỔNG QUAN</a>
+        <a asp-controller="StudentDocument" asp-action="Subjects" class="nav-item @(ViewBag.ActiveMenu == "Subjects" ? "active" : "")"><i class="fa-solid fa-book-open"></i> MÔN HỌC</a>
+        <a asp-controller="StudentDocument" asp-action="Documents"  class="nav-item @(ViewBag.ActiveMenu == "Docs" ? "active" : "")"><i class="fa-regular fa-file-lines"></i> TÀI LIỆU</a>
+        <a asp-controller="Home" asp-action="Chat"  class="nav-item @(ViewBag.ActiveMenu == "AI" ? "active" : "")"><i class="fa-solid fa-robot"></i> CHAT AI</a>
+       <a asp-controller="Subscription" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Subscription" ? "active" : "")"><i class="fa-solid fa-crown"></i> GÓI HỘI VIÊN</a>
+        
+                <div class="user-profile">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                    var roleClass = "role-student";
+                    if (User.IsInRole("Admin")) roleClass = "role-admin";
+                    else if (User.IsInRole("Lecturer")) roleClass = "role-lecturer";
+                    <div class="avatar-box">
+                        <i class="fa-solid fa-user"></i> 
+                    </div>
+
+                    <div class="user-info">
+                        <div class="username">@User.Identity.Name</div>
+                        <div class="role">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</div>
+
+                    </div>
+                    
+                     }
+     </div>
+     <a asp-controller="Auth" asp-action="Logout"  class="nav-item" style="border:dashed 2px var(--black);">Log out</a>      
+    </div>
+    
+    
+    <div class="main-content">
+       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
+    <h1 class="title-page" style="margin: 0;">DANH SÁCH CHƯƠNG</h1>
+    <span class="badge">MÔN: @ViewBag.SubjectName</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+    @foreach (var chapter in Model)
+    {
+        <div class="brutal-box" style="display: flex; flex-direction: column;">
+            <span style="background: #000; color: #fff; font-weight: 900; font-size: 11px; padding: 3px 8px; align-self: flex-start; margin-bottom: 10px;">CHƯƠNG @chapter.Id</span>
+            <h3 style="color: var(--pink); font-weight: 900; margin-bottom: 10px;">@chapter.ChapterTitle</h3>
+            <p style="font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; flex-grow: 1;">@chapter.Description</p>
+            <a asp-action="DocumentInChapter" asp-controller="StudentDocument" asp-route-chapterId="@chapter.Id" class="brutal-btn" style="background: var(--yellow); width: 100%;">
+                Xem Tài liệu <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    }
+</div>
+    </div>
+</body>
+</html>

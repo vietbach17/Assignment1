@@ -1,361 +1,388 @@
 @model IEnumerable<BussinessLayer.DTOs.DocumentDto>
 @using BussinessLayer.DTOs
 @{
+    Layout = null;
     ViewData["Title"] = "Trang quản trị Admin";
 }
-
-<div class="dashboard-container">
-    <div class="welcome-banner glass-card">
-        <div class="banner-text">
-            <h1>Bảng Điều Khiển Hệ Thống (Admin)</h1>
-            <p>Chào mừng Admin! Đây là trang bảo mật cao dành riêng cho việc cấu hình, kiểm soát hệ thống và phân quyền.</p>
-        </div>
-        <span class="banner-badge role-badge role-admin">Quyền Tối Cao</span>
-    </div>
-
-    <!-- Analytics Cards -->
-    <div class="stats-grid">
-        <div class="glass-card stat-card">
-            <div class="stat-header">
-                <span class="stat-growth">+12%</span>
-            </div>
-            <h3 class="stat-value">1,248</h3>
-            <p class="stat-label">Tổng người dùng</p>
-        </div>
-        <div class="glass-card stat-card">
-            <div class="stat-header">
-                <span class="stat-growth font-emerald">Hoạt động</span>
-            </div>
-            <h3 class="stat-value">3 Roles</h3>
-            <p class="stat-label">Nhóm quyền Seed sẵn</p>
-        </div>
-        <div class="glass-card stat-card">
-            <div class="stat-header">
-                <span class="stat-growth">PostgreSQL</span>
-            </div>
-            <h3 class="stat-value">99.9%</h3>
-            <p class="stat-label">Uptime Cơ sở dữ liệu</p>
-        </div>
-        <div class="glass-card stat-card">
-            <div class="stat-header">
-                <span class="stat-growth">+4.2%</span>
-            </div>
-            <h3 class="stat-value">0.12 ms</h3>
-            <p class="stat-label">Tốc độ truy vấn</p>
-        </div>
-    </div>
-
-    <div class="details-grid">
-        <!-- Seed Roles Info Table -->
-        <div class="glass-card table-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 class="card-title" style="margin-bottom: 0;">Quản lý vai trò (Role List)</h2>
-                <a asp-action="CreateRole" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; text-decoration: none;">+ Thêm Vai Trò</a>
-            </div>
-            
-            @if(TempData["SuccessMsg"] != null) {
-                <div class="info-alert" style="border-left-color: #10b981; background-color: rgba(16, 185, 129, 0.05); margin-bottom: 1rem;">
-                    <p style="color: #34d399; margin: 0;">@TempData["SuccessMsg"]</p>
-                </div>
-            }
-            @if(TempData["ErrorMsg"] != null) {
-                <div class="info-alert" style="border-left-color: #ef4444; background-color: rgba(239, 68, 68, 0.05); margin-bottom: 1rem;">
-                    <p style="color: #fca5a5; margin: 0;">@TempData["ErrorMsg"]</p>
-                </div>
-            }
-
-            <table class="premium-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Tên vai trò</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (ViewBag.Roles != null)
-                    {
-                        foreach (var role in ViewBag.Roles)
-                        {
-                            bool isDefault = role.RoleName == "Admin" || role.RoleName == "Lecturer" || role.RoleName == "Student";
-                            string roleClass = role.RoleName switch {
-                                "Admin" => "role-admin",
-                                "Lecturer" => "role-lecturer",
-                                "Student" => "role-student",
-                                _ => ""
-                            };
-                            
-                            <tr>
-                                <td>@role.Id</td>
-                                <td>
-                                    <span class="role-badge @roleClass" style="@(roleClass == "" ? "background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;" : "")">@role.RoleName</span>
-                                    @if(isDefault) {
-                                        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.5rem;">(Mặc định)</span>
-                                    }
-                                </td>
-                                <td><span class="badge-active">Hoạt động</span></td>
-                                <td>
-                                    @if(!isDefault) {
-                                        <div style="display: flex; gap: 0.5rem;">
-                                            <a asp-action="EditRole" asp-route-id="@role.Id" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; text-decoration: none;">Sửa</a>
-                                            <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xoá vai trò này?');" style="display: inline; margin: 0;">
-                                                <button type="submit" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer;">Xoá</button>
-                                            </form>
-                                        </div>
-                                    } else {
-                                        <span style="color: var(--text-secondary); font-size: 0.8rem;">Không thể sửa/xoá</span>
-                                    }
-                                </td>
-                            </tr>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#1e3b31',
+                            active: '#2c5344',
+                            button: '#376b56',
+                            text: '#222222',
+                            gray: '#f4f6f8'
                         }
                     }
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Quick Settings / Info -->
-        <div class="glass-card actions-card">
-            <h2 class="card-title">Tác vụ quản trị nhanh</h2>
-            <div class="action-buttons-list">
-                <button class="btn-primary" onclick="alert('Đã đồng bộ PostgreSQL database thành công!')">Đồng bộ Database</button>
-                <button class="btn-secondary" onclick="alert('Tạo sao lưu backup.sql thành công!')">Backup Dữ liệu</button>
-                <button class="btn-secondary" onclick="alert('Hệ thống hoạt động bình thường!')">Health Check</button>
-            </div>
-            <div class="info-alert">
-                <p><strong>Bảo mật thông tin:</strong> Cookie xác thực phiên đăng nhập của Admin được cấu hình với thuộc tính <code>HttpOnly</code> và <code>Secure</code> giúp chống lại các cuộc tấn công XSS chiếm đoạt session.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quản lý tài liệu (Document List) -->
-    <div class="glass-card table-card" style="margin-top: 2rem;">
-        <h2 class="card-title">Quản lý tài liệu đã tải lên</h2>
-        
-        @if (!Model.Any())
-        {
-            <div class="info-alert" style="border-left-color: var(--accent-orange); background-color: rgba(249, 115, 22, 0.05);">
-                <p>Hiện chưa có tài liệu nào được tải lên hệ thống.</p>
-            </div>
+                }
+            }
         }
-        else
-        {
-            <div style="overflow-x: auto;">
-                <table class="premium-table">
-                    <thead>
-                        <tr>
-                            <th>Định dạng</th>
-                            <th>Tiêu đề</th>
-                            <th>Môn học</th>
-                            <th>Người tải lên</th>
-                            <th>Ngày tải lên</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var doc in Model)
-                        {
-                            <tr>
-                                <td>
-                                    @switch (doc.FileType)
-                                    {
-                                        case "pdf":  <span class="role-badge" style="background: rgba(239,68,68,0.15); color: #f87171;">PDF</span>  break;
-                                        case "docx": <span class="role-badge" style="background: rgba(59,130,246,0.15); color: #60a5fa;">DOCX</span> break;
-                                        case "pptx": <span class="role-badge" style="background: rgba(249,115,22,0.15); color: #fb923c;">PPTX</span> break;
-                                        default:     <span class="role-badge">FILE</span>      break;
-                                    }
-                                </td>
-                                <td><strong>@doc.Title</strong><br/><span style="font-size: 0.8rem; color: var(--text-secondary);">@doc.FileSizeDisplay</span></td>
-                                <td>@doc.SubjectCode</td>
-                                <td>@doc.UploadedByUsername</td>
-                                <td>@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>
-                                    @switch (doc.Status)
-                                    {
-                                        case DocumentStatus.Pending: <span class="badge-active" style="color: #facc15; background: rgba(234,179,8,0.1);">🟡 Pending</span>  break;
-                                        case DocumentStatus.Indexed: <span class="badge-active" style="color: #4ade80; background: rgba(34,197,94,0.1);">🟢 Indexed</span>  break;
-                                        case DocumentStatus.Failed:  <span class="badge-active" style="color: #f87171; background: rgba(239,68,68,0.1);">🔴 Failed</span>   break;
-                                    }
-                                </td>
-                                <td>
-                                    <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; text-decoration: none; border-radius: 6px;">Chi tiết</a>
-                                </td>
+    </script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-brand-dark text-white flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-shield-halved text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
+                <p class="text-xs text-gray-300">Admin Portal</p>
+            </div>
+        </div>
+
+        <div class="px-4 py-2">
+            <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+            <ul class="space-y-1">
+                <li>
+                    <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
+                        <i class="fa-solid fa-chart-line w-5"></i>
+                        <span>Bảng điều khiển</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-users w-5"></i>
+                        <span>Người Dùng</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-arrow-left w-5"></i>
+                        <span>Về trang chủ</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="px-4 py-6 border-t border-white/5 mt-auto">
+            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
+            <div class="relative w-96">
+            </div>
+            
+            <div class="flex items-center space-x-5">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="text-gray-400 hover:text-gray-600 relative">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 cursor-pointer">
+                        <div class="w-9 h-9 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
+                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="mb-8 flex justify-between items-start">
+                <div>
+                    <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">
+                        Hệ thống
+                    </p>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Bảng Điều Khiển</h2>
+                    <p class="text-gray-500 text-sm">Chào mừng Admin! Nơi cấu hình, kiểm soát hệ thống và phân quyền.</p>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="flex justify-end mb-2">
+                        <span class="bg-blue-50 text-blue-600 text-xs font-semibold px-2 py-1 rounded-full">+12%</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-800">1,248</h3>
+                    <p class="text-sm text-gray-500 mt-1">Tổng người dùng</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="flex justify-end mb-2">
+                        <span class="bg-green-50 text-green-600 text-xs font-semibold px-2 py-1 rounded-full">Giao dịch</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-800">@ViewBag.SuccessTransactionCount</h3>
+                    <p class="text-sm text-gray-500 mt-1">Giao dịch thành công</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="flex justify-end mb-2">
+                        <span class="bg-purple-50 text-purple-600 text-xs font-semibold px-2 py-1 rounded-full">VNPay</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-purple-700">@(((decimal)ViewBag.TotalRevenue).ToString("N0")) đ</h3>
+                    <p class="text-sm text-gray-500 mt-1">Tổng doanh thu</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="flex justify-end mb-2">
+                        <span class="bg-emerald-50 text-emerald-600 text-xs font-semibold px-2 py-1 rounded-full">85% Margin</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-emerald-600">@(((decimal)ViewBag.NetProfit).ToString("N0")) đ</h3>
+                    <p class="text-sm text-gray-500 mt-1">Lợi nhuận ròng (85%)</p>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- Roles Table -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-lg font-bold text-gray-800">Quản lý Vai trò (Roles)</h3>
+                        <a asp-action="CreateRole" class="text-sm bg-brand-button hover:bg-brand-active text-white px-4 py-2 rounded-lg font-medium transition shadow-sm">
+                            + Thêm Vai Trò
+                        </a>
+                    </div>
+                    
+                    @if(TempData["SuccessMsg"] != null) {
+                        <div class="mx-6 mt-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg text-green-700 text-sm">
+                            <i class="fa-solid fa-check-circle mr-2"></i>@TempData["SuccessMsg"]
+                        </div>
+                    }
+                    @if(TempData["ErrorMsg"] != null) {
+                        <div class="mx-6 mt-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg text-red-700 text-sm">
+                            <i class="fa-solid fa-exclamation-circle mr-2"></i>@TempData["ErrorMsg"]
+                        </div>
+                    }
+
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-white">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên Vai Trò</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng Thái</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao Tác</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @if (ViewBag.Roles != null)
+                            {
+                                foreach (var role in ViewBag.Roles)
+                                {
+                                    bool isDefault = role.RoleName == "Admin" || role.RoleName == "Lecturer" || role.RoleName == "Student";
+                                    string roleClass = role.RoleName switch {
+                                        "Admin" => "bg-purple-100 text-purple-700",
+                                        "Lecturer" => "bg-blue-100 text-blue-700",
+                                        "Student" => "bg-green-100 text-green-700",
+                                        _ => "bg-gray-100 text-gray-700"
+                                    };
+                                    
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-4 text-sm text-gray-600">@role.Id</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold @roleClass">
+                                                @role.RoleName
+                                            </span>
+                                            @if(isDefault) {
+                                                <span class="text-xs text-gray-400 ml-2 italic">(Mặc định)</span>
+                                            }
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-block px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-semibold">
+                                                Hoạt động
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            @if(!isDefault) {
+                                                <div class="flex items-center space-x-2">
+                                                    <a asp-action="EditRole" asp-route-id="@role.Id" class="px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 bg-white border border-blue-200 rounded-md transition">Sửa</a>
+                                                    <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xoá vai trò này?');" class="m-0">
+                                                        <button type="submit" class="px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 bg-white border border-red-200 rounded-md transition">Xoá</button>
+                                                    </form>
+                                                </div>
+                                            } else {
+                                                <span class="text-xs text-gray-400 italic">Không thể sửa/xoá</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Quick Actions / System Info -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-6">
+                    <h3 class="text-lg font-bold text-gray-800">Tác Vụ Nhanh</h3>
+                    <div class="flex flex-col gap-3">
+                        <button onclick="alert('Đã đồng bộ PostgreSQL database thành công!')" class="w-full bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate"></i> Đồng Bộ Database
+                        </button>
+                        <button onclick="alert('Tạo sao lưu backup.sql thành công!')" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Backup Dữ Liệu
+                        </button>
+                        <button onclick="alert('Hệ thống hoạt động bình thường!')" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-heart-pulse"></i> Health Check
+                        </button>
+                    </div>
+                    
+                    <div class="mt-auto p-4 bg-purple-50 rounded-xl border border-purple-100">
+                        <h4 class="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-check"></i> Bảo Mật Info
+                        </h4>
+                        <p class="text-xs text-purple-700 leading-relaxed">
+                            Cookie xác thực phiên đăng nhập của Admin được cấu hình với thuộc tính <code>HttpOnly</code> và <code>Secure</code> giúp chống lại các cuộc tấn công XSS chiếm đoạt session.
+                        </p>
+                    </div>
+                </div>
             </div>
-        }
-    </div>
-</div>
 
-<style>
-    .dashboard-container {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
+            <!-- Transactions Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800">Lịch sử Giao dịch mua gói cước (Student Payments)</h3>
+                    <span class="text-xs bg-emerald-50 text-emerald-600 font-semibold px-3 py-1 rounded-full">Tổng: @ViewBag.SuccessTransactionCount thành công</span>
+                </div>
 
-    .welcome-banner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 2.5rem;
-        background: linear-gradient(135deg, rgba(22, 30, 49, 0.7) 0%, rgba(168, 85, 247, 0.1) 100%);
-    }
+                @if (ViewBag.Transactions == null || !((List<DataAccessLayer.Models.PaymentTransaction>)ViewBag.Transactions).Any())
+                {
+                    <div class="p-12 text-center">
+                        <i class="fa-solid fa-receipt text-5xl text-gray-300 mb-4 block"></i>
+                        <p class="text-gray-500 text-sm font-medium">Chưa có giao dịch thanh toán nào được thực hiện.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-white">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã GD</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sinh Viên</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Gói Cước</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Số Tiền (VND)</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thời Gian</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng Thế</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach (var tx in (List<DataAccessLayer.Models.PaymentTransaction>)ViewBag.Transactions)
+                            {
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4 text-sm font-mono text-gray-600">#TX-@tx.Id</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 font-medium">@(tx.User?.Username ?? "N/A")</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        @switch(tx.SubscriptionPlanId)
+                                        {
+                                            case 1: <span class="text-gray-600">Gói Free (Học sinh)</span> break;
+                                            case 2: <span class="text-blue-600 font-medium">Gói Standard</span> break;
+                                            case 3: <span class="text-purple-600 font-bold">Gói Premium</span> break;
+                                            default: <span class="text-gray-600">Gói #@tx.SubscriptionPlanId</span> break;
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-800">@tx.Amount.ToString("N0") đ</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">@tx.TransactionDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    <td class="px-6 py-4">
+                                        @if (tx.Status == "Success")
+                                        {
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                🟢 Success
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                🔴 Failed
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
 
-    .banner-text h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
+            <!-- Documents Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-lg font-bold text-gray-800">Quản lý Tài Liệu Hệ Thống</h3>
+                </div>
 
-    .banner-text p {
-        color: var(--text-secondary);
-        font-size: 1rem;
-    }
+                @if (!Model.Any())
+                {
+                    <div class="p-12 text-center">
+                        <i class="fa-regular fa-folder-open text-5xl text-gray-300 mb-4 block"></i>
+                        <p class="text-gray-500 text-sm">Hiện chưa có tài liệu nào được tải lên hệ thống.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-white">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Định Dạng</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tiêu Đề</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Môn Học</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tác Giả</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày Tải</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng Thái</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach (var doc in Model)
+                            {
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4">
+                                        @switch (doc.FileType.ToLower())
+                                        {
+                                            case "pdf":  <span class="inline-block px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-bold">PDF</span> break;
+                                            case "docx": <span class="inline-block px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs font-bold">DOCX</span> break;
+                                            case "pptx": <span class="inline-block px-2 py-1 bg-orange-100 text-orange-600 rounded text-xs font-bold">PPTX</span> break;
+                                            default:     <span class="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-bold">FILE</span> break;
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="font-semibold text-gray-800 text-sm mb-1">@doc.Title</div>
+                                        <div class="text-xs text-gray-500">@doc.FileSizeDisplay</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">@doc.SubjectCode</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">@doc.UploadedByUsername</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="px-6 py-4">
+                                        @switch (doc.Status)
+                                        {
+                                            case DocumentStatus.Pending: <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">🟡 Pending</span> break;
+                                            case DocumentStatus.Indexed: <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">🟢 Indexed</span> break;
+                                            case DocumentStatus.Failed:  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">🔴 Failed</span> break;
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" class="inline-block bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-brand-button px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm">
+                                            Xem
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
 
-    .banner-badge {
-        font-size: 0.9rem;
-        padding: 0.4rem 1rem;
-    }
-
-    /* Stats Grid */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .stat-card {
-        padding: 1.75rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .stat-header {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-    }
-
-    .stat-growth {
-        font-size: 0.75rem;
-        font-weight: 600;
-        background-color: rgba(59, 130, 246, 0.1);
-        color: #60a5fa;
-        padding: 0.15rem 0.5rem;
-        border-radius: 9999px;
-    }
-
-    .font-emerald {
-        background-color: rgba(16, 185, 129, 0.1) !important;
-        color: #34d399 !important;
-    }
-
-    .stat-value {
-        font-size: 2.25rem;
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    .stat-label {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-    }
-
-    /* Details Grid */
-    .details-grid {
-        display: grid;
-        grid-template-columns: 1.4fr 1fr;
-        gap: 2rem;
-    }
-
-    @@media (max-width: 900px) {
-        .details-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .card-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-    }
-
-    /* Table */
-    .table-card {
-        padding: 2rem;
-    }
-
-    .premium-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-    }
-
-    .premium-table th {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding: 1rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .premium-table td {
-        padding: 1.2rem 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        font-size: 0.95rem;
-    }
-
-    .badge-active {
-        background-color: rgba(16, 185, 129, 0.1);
-        color: #34d399;
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-
-    /* Actions */
-    .actions-card {
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .action-buttons-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-    }
-
-    .action-buttons-list button {
-        width: 100%;
-    }
-
-    .info-alert {
-        background-color: rgba(168, 85, 247, 0.05);
-        border-left: 3px solid var(--accent-purple);
-        padding: 1rem;
-        border-radius: 0 8px 8px 0;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        color: var(--text-secondary);
-    }
-
-    .info-alert strong {
-        color: #ffffff;
-    }
-
-    .info-alert code {
-        color: #c084fc;
-        background-color: rgba(255, 255, 255, 0.05);
-        padding: 0.1rem 0.2rem;
-        border-radius: 4px;
-    }
-</style>
+        </div>
+    </main>
+</body>
+</html>

@@ -77,6 +77,7 @@ namespace PresentationLayer.Controllers
         // ─────────────────────────────────────────────────────────────────────
 
         [HttpGet]
+        [Authorize(Roles = "Lecturer")]
         public async Task<IActionResult> Upload()
         {
             await PopulateDropdowns();
@@ -90,6 +91,7 @@ namespace PresentationLayer.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Lecturer")]
         public async Task<IActionResult> Upload(DocumentUploadViewModel viewModel)
         {
             if (!ModelState.IsValid)
@@ -118,6 +120,29 @@ namespace PresentationLayer.Controllers
 
             TempData["SuccessMessage"] = message;
             return RedirectToAction(nameof(Index));
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // POST: /Document/UploadChunk
+        // Xử lý chunk upload cho Lecturer
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpPost]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> UploadChunk(
+            Microsoft.AspNetCore.Http.IFormFile file, int chunkIndex, int totalChunks, string fileName, string fileGuid,
+            string title, int subjectId, int? chapterId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Json(new { success = false, message = "Không thể xác định người dùng hiện tại." });
+            }
+
+            var wwwrootPath = _webHostEnvironment.WebRootPath;
+            var (success, message, document) = await _documentService.ProcessChunkAsync(
+                file, chunkIndex, totalChunks, fileName, fileGuid, title, subjectId, chapterId, userId.Value, wwwrootPath);
+
+            return Json(new { success, message, document });
         }
 
         // ─────────────────────────────────────────────────────────────────────

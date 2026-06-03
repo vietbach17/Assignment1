@@ -54,6 +54,8 @@ namespace BussinessLayer.DTOs
 
         public bool IsDeleted { get; set; }
 
+        public string? FileHash { get; set; }
+
         /// <summary>Định dạng FileSize thành chuỗi dễ đọc (KB, MB)</summary>
         public string FileSizeDisplay
         {
