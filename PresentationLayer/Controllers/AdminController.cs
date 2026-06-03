@@ -11,18 +11,18 @@ namespace PresentationLayer.Controllers
     {
         private readonly IDocumentService _documentService;
         private readonly IRoleService _roleService;
-        private readonly DataAccessLayer.Repositories.IUserRepository _userRepository;
+        private readonly IUserService _userService;
         private readonly ISubscriptionService _subscriptionService;
 
         public AdminController(
             IDocumentService documentService,
             IRoleService roleService,
-            DataAccessLayer.Repositories.IUserRepository userRepository,
+            IUserService userService,
             ISubscriptionService subscriptionService)
         {
             _documentService = documentService;
             _roleService = roleService;
-            _userRepository = userRepository;
+            _userService = userService;
             _subscriptionService = subscriptionService;
         }
 
@@ -128,14 +128,14 @@ namespace PresentationLayer.Controllers
         [HttpGet]
         public async Task<IActionResult> Users()
         {
-            var users = await _userRepository.GetAllUsersAsync();
+            var users = await _userService.GetAllUsersAsync();
             return View(users);
         }
 
         [HttpGet]
         public async Task<IActionResult> UserDetails(int id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             if (user == null) return NotFound();
             return View(user);
         }

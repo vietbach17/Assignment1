@@ -49,6 +49,7 @@ namespace BussinessLayer
             services.AddScoped<ISubscriptionService, SubscriptionService>();
 
             services.AddScoped<IDocumentService, DocumentService>();
+            services.AddScoped<IUserService, UserService>();
 
             return services;
         }
