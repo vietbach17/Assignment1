@@ -40,5 +40,13 @@ namespace BussinessLayer.Services
         /// Cập nhật trạng thái xử lý của tài liệu: Pending / Indexed / Failed
         /// </summary>
         Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatus newStatus);
+
+        /// <summary>Tìm tài liệu theo mã băm SHA-256 nội dung</summary>
+        Task<DocumentDto?> GetDocumentByHashAsync(string fileHash);
+
+        /// <summary>Xử lý upload phân đoạn (Chunk Upload)</summary>
+        Task<(bool Success, string Message, DocumentDto? Document)> ProcessChunkAsync(
+            Microsoft.AspNetCore.Http.IFormFile chunk, int chunkIndex, int totalChunks, string fileName, string fileGuid,
+            string title, int subjectId, int? chapterId, int uploadedByUserId, string wwwrootPath);
     }
 }

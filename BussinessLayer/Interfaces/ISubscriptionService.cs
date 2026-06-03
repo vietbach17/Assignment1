@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using DataAccessLayer.Models;
 using Microsoft.AspNetCore.Http; // Thêm để dùng HttpContext
 
@@ -16,6 +16,7 @@ namespace BussinessLayer.Interfaces
 
         void SaveStudentSubscription(StudentSubscription sub);
         void AddTransaction(PaymentTransaction transaction);
+        List<PaymentTransaction> GetAllTransactions();
 
         // 2 HÀM MỚI CHO VNPAY:
         string CreateVnPayPaymentUrl(int userId, int planId, HttpContext httpContext, string returnUrl);

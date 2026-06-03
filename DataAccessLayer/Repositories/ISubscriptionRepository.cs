@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.Models;
+using DataAccessLayer.Models;
 
 namespace DataAccessLayer.Repositories
 {
@@ -17,5 +17,6 @@ namespace DataAccessLayer.Repositories
 
         // Ghi nhận giao dịch
         void AddTransaction(PaymentTransaction transaction);
+        List<PaymentTransaction> GetAllTransactions();
     }
 }

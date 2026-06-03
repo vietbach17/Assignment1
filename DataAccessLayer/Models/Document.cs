@@ -52,6 +52,11 @@ namespace DataAccessLayer.Models
         [MaxLength(10)]
         public string FileType { get; set; } = null!;
 
+        /// <summary>Mã băm SHA-256 nội dung file để tránh upload trùng lặp</summary>
+        [Required]
+        [MaxLength(64)]
+        public string FileHash { get; set; } = null!;
+
         /// <summary>Trạng thái xử lý tài liệu: Pending / Indexed / Failed</summary>
         [Required]
         public DocumentStatus Status { get; set; } = DocumentStatus.Pending;

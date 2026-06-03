@@ -200,5 +200,10 @@ namespace BussinessLayer.Services
         {
             _repository.AddTransaction(transaction);
         }
+
+        public List<PaymentTransaction> GetAllTransactions()
+        {
+            return _repository.GetAllTransactions();
+        }
     }
 }

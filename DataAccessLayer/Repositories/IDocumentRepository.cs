@@ -30,5 +30,8 @@ namespace DataAccessLayer.Repositories
 
         /// <summary>Cập nhật trạng thái xử lý của tài liệu</summary>
         Task<bool> UpdateStatusAsync(int id, DocumentStatus status);
+
+        /// <summary>Tìm tài liệu theo mã băm SHA-256 để tránh trùng lặp</summary>
+        Task<Document?> GetByHashAsync(string fileHash);
     }
 }

@@ -188,6 +188,30 @@
                         <div id="fileSizeError" class="text-red-500 text-xs mt-1 hidden">File vượt quá giới hạn 50 MB.</div>
                     </div>
 
+                    <!-- Progress & Console Logs (Hidden by default) -->
+                    <div id="uploadProgressSection" class="hidden mb-6 space-y-4">
+                        <!-- Progress Bar -->
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold text-gray-700 mb-1">
+                                <span id="progressStatusText">Đang chuẩn bị tải lên...</span>
+                                <span id="progressPercentText">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div id="progressBarFill" class="bg-brand-button h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Terminal-like Console Log Panel -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                💻 Tiến trình xử lý hệ thống (Real-time Logs)
+                            </label>
+                            <div id="terminalLog" class="w-full bg-gray-900 text-green-400 font-mono text-[11px] p-4 rounded-xl h-48 overflow-y-auto border border-gray-800 shadow-inner space-y-1 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-gray-900">
+                                <div class="text-gray-500">[System] Sẵn sàng tải lên tài liệu...</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Actions -->
                     <div class="flex gap-3">
                         <button type="submit" class="flex-1 bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm" id="submitBtn">
@@ -202,10 +226,6 @@
         </div>
     </main>
 
-</body>
-</html>
-
-@section Scripts {
     <script>
         const MAX_SIZE_MB = 50;
         const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
@@ -300,5 +320,163 @@
                 console.warn('Không thể load chapters:', e);
             }
         });
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        const uploadForm = document.getElementById('uploadForm');
+        uploadForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const titleInput = document.getElementById('Title');
+            const subjectInput = document.getElementById('subjectSelect');
+            const chapterInput = document.getElementById('chapterSelect');
+            
+            // Clear validation messages
+            document.querySelectorAll('[data-valmsg-for]').forEach(span => span.textContent = '');
+
+            let hasError = false;
+            if (!titleInput.value.trim()) {
+                const titleErrorSpan = document.querySelector('[data-valmsg-for="Title"]');
+                if (titleErrorSpan) titleErrorSpan.textContent = 'Vui lòng nhập tiêu đề tài liệu';
+                hasError = true;
+            }
+            if (!subjectInput.value) {
+                const subjectErrorSpan = document.querySelector('[data-valmsg-for="SubjectId"]');
+                if (subjectErrorSpan) subjectErrorSpan.textContent = 'Vui lòng chọn môn học';
+                hasError = true;
+            }
+            if (!fileInput.files || fileInput.files.length === 0) {
+                const fileErrorSpan = document.querySelector('[data-valmsg-for="File"]');
+                if (fileErrorSpan) fileErrorSpan.textContent = 'Vui lòng chọn file để tải lên';
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            const file = fileInput.files[0];
+            
+            // Show progress and console section
+            const progressSection = document.getElementById('uploadProgressSection');
+            const progressStatusText = document.getElementById('progressStatusText');
+            const progressPercentText = document.getElementById('progressPercentText');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const terminalLog = document.getElementById('terminalLog');
+            
+            progressSection.classList.remove('hidden');
+            terminalLog.innerHTML = '';
+            
+            function logToTerminal(message, type = 'info') {
+                const div = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                let colorClass = 'text-green-400';
+                if (type === 'error') colorClass = 'text-red-400';
+                if (type === 'success') colorClass = 'text-teal-300 font-semibold';
+                if (type === 'system') colorClass = 'text-gray-500';
+                
+                div.className = `${colorClass} leading-relaxed`;
+                div.innerHTML = `<span class="text-gray-600">[${timestamp}]</span> ${message}`;
+                terminalLog.appendChild(div);
+                terminalLog.scrollTop = terminalLog.scrollHeight;
+            }
+
+            logToTerminal('Khởi tạo kết nối upload phân đoạn...', 'system');
+            logToTerminal(`Thông tin file: ${file.name} (${formatSize(file.size)})`, 'info');
+
+            // Slicing parameters: 2MB per chunk
+            const CHUNK_SIZE = 2 * 1024 * 1024;
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            const fileGuid = generateUUID();
+            
+            logToTerminal(`Cấu hình Chunk Size: 2MB. Tổng số mảnh sẽ cắt: ${totalChunks}`, 'info');
+
+            // Disable buttons
+            submitBtn.disabled = true;
+            const cancelBtn = submitBtn.nextElementSibling;
+            if (cancelBtn) {
+                cancelBtn.classList.add('pointer-events-none', 'opacity-50');
+            }
+
+            // Sequential upload
+            for (let i = 0; i < totalChunks; i++) {
+                const start = i * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                const chunk = file.slice(start, end);
+
+                logToTerminal(`[Cắt file] Tiến hành cắt phân đoạn ${i+1}/${totalChunks} (Bytes: ${start} - ${end})...`, 'info');
+
+                const formData = new FormData();
+                formData.append('file', chunk);
+                formData.append('chunkIndex', i);
+                formData.append('totalChunks', totalChunks);
+                formData.append('fileName', file.name);
+                formData.append('fileGuid', fileGuid);
+                formData.append('title', titleInput.value.trim());
+                formData.append('subjectId', subjectInput.value);
+                if (chapterInput.value) {
+                    formData.append('chapterId', chapterInput.value);
+                }
+
+                progressStatusText.textContent = `Đang tải lên phân đoạn ${i+1}/${totalChunks}...`;
+                
+                try {
+                    const response = await fetch('/Document/UploadChunk', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const percent = Math.round(((i + 1) / totalChunks) * 100);
+                        progressBarFill.style.width = `${percent}%`;
+                        progressPercentText.textContent = `${percent}%`;
+                        
+                        logToTerminal(`[Tải lên] Truyền tải thành công mảnh ${i+1}/${totalChunks}.`, 'success');
+                        
+                        if (i === totalChunks - 1) {
+                            logToTerminal('[Máy chủ] Đang tiến hành ghép các phân đoạn tệp tin thành file hoàn chỉnh...', 'system');
+                            logToTerminal('[Máy chủ] Đang tạo mã SHA-256 và kiểm tra trùng lặp trên CSDL...', 'system');
+                            
+                            if (result.document) {
+                                logToTerminal(`[Kiểm tra] Thành công! Không trùng lặp tài liệu nào khác.`, 'success');
+                                logToTerminal(`[SHA-256 Hash] ${result.document.fileHash}`, 'success');
+                                logToTerminal(`[Cơ sở dữ liệu] Ghi nhận metadata thành công. Document ID: ${result.document.id}`, 'success');
+                                progressStatusText.textContent = 'Tải lên hoàn tất!';
+                                logToTerminal('Tải lên thành công! Đang tự động chuyển hướng về trang danh sách...', 'system');
+                                setTimeout(() => {
+                                    window.location.href = '/Document/Index';
+                                }, 2000);
+                            } else {
+                                logToTerminal(`[Lỗi] Phản hồi thành công nhưng thiếu thông tin chi tiết tài liệu từ máy chủ.`, 'error');
+                                submitBtn.disabled = false;
+                                if (cancelBtn) cancelBtn.classList.remove('pointer-events-none', 'opacity-50');
+                            }
+                        }
+                    } else {
+                        logToTerminal(`[Thất bại] Lỗi từ máy chủ: ${result.message}`, 'error');
+                        progressStatusText.textContent = 'Tải lên thất bại.';
+                        submitBtn.disabled = false;
+                        if (cancelBtn) cancelBtn.classList.remove('pointer-events-none', 'opacity-50');
+                        return; // Stop the loop
+                    }
+                } catch (error) {
+                    logToTerminal(`[Lỗi mạng] Không thể kết nối hoặc lỗi truyền tải phân đoạn ${i+1}. Lỗi: ${error.message}`, 'error');
+                    progressStatusText.textContent = 'Lỗi kết nối mạng.';
+                    submitBtn.disabled = false;
+                    if (cancelBtn) cancelBtn.classList.remove('pointer-events-none', 'opacity-50');
+                    return; // Stop the loop
+                }
+            }
+        });
     </script>
-}
+</body>
+</html>
