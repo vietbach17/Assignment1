@@ -62,3 +62,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+// dotnet ef database update --project DataAccessLayer --startup-project PresentationLayer
