@@ -1,0 +1,323 @@
+@using BussinessLayer.DTOs
+@model IEnumerable<SubscriptionPlanDTO>
+@{
+    Layout = null;
+    ViewData["Title"] = "Quản lý Gói Subscription";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#1e3b31',
+                            active: '#2c5344',
+                            button: '#376b56',
+                            text: '#222222',
+                            gray: '#f4f6f8'
+                        }
+                    }
+                }
+            }
+        }
+
+        // Functions to toggle modals
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        
+        function openEditModal(id, name, price, limit, desc) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-price').value = price;
+            document.getElementById('edit-limit').value = limit;
+            document.getElementById('edit-desc').value = desc;
+            openModal('editModal');
+        }
+
+        function openDeleteModal(id, name) {
+            document.getElementById('delete-id').value = id;
+            document.getElementById('delete-name').innerText = name;
+            openModal('deleteModal');
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-brand-dark text-white flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-shield-halved text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
+                <p class="text-xs text-gray-300">Admin Portal</p>
+            </div>
+        </div>
+
+        <div class="px-4 py-2">
+            <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+            <ul class="space-y-1">
+                <li>
+                    <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-chart-line w-5"></i>
+                        <span>Bảng điều khiển</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-users w-5"></i>
+                        <span>Người Dùng</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-arrow-left w-5"></i>
+                        <span>Môn Học</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Admin" asp-controller="Subscription" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
+                        <i class="fa-solid fa-box-open w-5"></i>
+                        <span>Gói Subscription</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-arrow-left w-5"></i>
+                        <span>Về trang chủ</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="px-4 py-6 border-t border-white/5 mt-auto">
+            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
+            <div class="relative w-96">
+            </div>
+            
+            <div class="flex items-center space-x-5">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="text-gray-400 hover:text-gray-600 relative">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 cursor-pointer">
+                        <div class="w-9 h-9 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
+                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">
+                        Hệ thống
+                    </p>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Quản Lý Gói Subscription</h2>
+                    <p class="text-gray-500 text-sm">Xem danh sách, thêm, sửa, xóa các gói dịch vụ AI Pro cho học sinh.</p>
+                </div>
+                <div>
+                    <button onclick="openModal('addModal')" class="bg-brand-button hover:bg-brand-active text-white px-4 py-2.5 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Thêm gói mới</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800">Danh sách Gói Subscription</h3>
+                </div>
+
+                @if (Model == null || !Model.Any())
+                {
+                    <div class="p-12 text-center">
+                        <i class="fa-solid fa-box-open text-5xl text-gray-300 mb-4 block"></i>
+                        <p class="text-gray-500 text-sm">Hiện chưa có gói subscription nào.</p>
+                        <button onclick="openModal('addModal')" class="mt-4 inline-block bg-brand-button hover:bg-brand-active text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                            Tạo gói đầu tiên
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-white">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên Gói</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Giá (VNĐ)</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Giới hạn câu hỏi</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mô tả</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach (var plan in Model)
+                            {
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4">
+                                        <span class="font-bold text-gray-800">@plan.Name</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-green-600">
+                                        @plan.Price.ToString("N0") đ
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">@plan.QuestionLimit câu/ngày</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="@plan.Description">
+                                        @plan.Description
+                                    </td>
+                                    <td class="px-6 py-4 flex space-x-2">
+                                        <button onclick="openEditModal(@plan.Id, '@plan.Name', @plan.Price, @plan.QuestionLimit, '@plan.Description')" class="bg-white border border-gray-200 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm">
+                                            Sửa
+                                        </button>
+                                        <button onclick="openDeleteModal(@plan.Id, '@plan.Name')" class="bg-white border border-gray-200 text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm">
+                                            Xóa
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add Modal -->
+    <div id="addModal" class="hidden fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/50">
+        <div class="relative w-full max-w-md p-4">
+            <div class="relative bg-white rounded-2xl shadow">
+                <div class="flex items-center justify-between p-4 border-b rounded-t">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                        Thêm Gói Mới
+                    </h3>
+                    <button type="button" onclick="closeModal('addModal')" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <form asp-action="CreateSubscriptionPlan" asp-controller="Admin" method="post" class="p-4 md:p-5">
+                    <div class="grid gap-4 mb-4 grid-cols-2">
+                        <div class="col-span-2">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Tên Gói</label>
+                            <input type="text" name="Name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-active focus:border-brand-active block w-full p-2.5" placeholder="Ví dụ: Pro Plan" required>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Giá (VNĐ)</label>
+                            <input type="number" name="Price" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-active focus:border-brand-active block w-full p-2.5" placeholder="100000" required>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Giới hạn câu hỏi/ngày</label>
+                            <input type="number" name="QuestionLimit" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-active focus:border-brand-active block w-full p-2.5" placeholder="50" required>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Mô tả</label>
+                            <textarea name="Description" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-brand-active focus:border-brand-active" placeholder="Viết mô tả gói..."></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="text-white inline-flex items-center bg-brand-button hover:bg-brand-active focus:ring-4 focus:outline-none focus:ring-brand-active/30 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition">
+                        <i class="fa-solid fa-plus mr-2"></i>
+                        Thêm gói
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/50">
+        <div class="relative w-full max-w-md p-4">
+            <div class="relative bg-white rounded-2xl shadow">
+                <div class="flex items-center justify-between p-4 border-b rounded-t">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                        Chỉnh sửa Gói
+                    </h3>
+                    <button type="button" onclick="closeModal('editModal')" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <form asp-action="EditSubscriptionPlan" asp-controller="Admin" method="post" class="p-4 md:p-5">
+                    <input type="hidden" name="Id" id="edit-id" />
+                    <div class="grid gap-4 mb-4 grid-cols-2">
+                        <div class="col-span-2">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Tên Gói</label>
+                            <input type="text" name="Name" id="edit-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-active focus:border-brand-active block w-full p-2.5" required>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Giá (VNĐ)</label>
+                            <input type="number" name="Price" id="edit-price" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-active focus:border-brand-active block w-full p-2.5" required>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Giới hạn câu hỏi/ngày</label>
+                            <input type="number" name="QuestionLimit" id="edit-limit" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-active focus:border-brand-active block w-full p-2.5" required>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Mô tả</label>
+                            <textarea name="Description" id="edit-desc" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-brand-active focus:border-brand-active"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="text-white inline-flex items-center bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition">
+                        <i class="fa-solid fa-save mr-2"></i>
+                        Lưu thay đổi
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/50">
+        <div class="relative w-full max-w-md p-4">
+            <div class="relative bg-white rounded-2xl shadow">
+                <button type="button" onclick="closeModal('deleteModal')" class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <i class="fa-solid fa-circle-exclamation text-gray-400 text-5xl mb-4"></i>
+                    <h3 class="mb-5 text-lg font-normal text-gray-500">Bạn có chắc chắn muốn xóa gói "<span id="delete-name" class="font-bold text-gray-800"></span>" không?</h3>
+                    <form asp-action="DeleteSubscriptionPlan" asp-controller="Admin" method="post" class="inline">
+                        <input type="hidden" name="Id" id="delete-id" />
+                        <button type="submit" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                            Đồng ý xóa
+                        </button>
+                    </form>
+                    <button onclick="closeModal('deleteModal')" type="button" class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
