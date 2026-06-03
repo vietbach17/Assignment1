@@ -121,6 +121,11 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Bảng Điều Khiển</h2>
                     <p class="text-gray-500 text-sm">Chào mừng Admin! Nơi cấu hình, kiểm soát hệ thống và phân quyền.</p>
                 </div>
+                <div class="flex space-x-3">
+                    <a asp-controller="Auth" asp-action="Register" class="bg-brand-button hover:bg-brand-active text-white font-medium py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-user-plus"></i> Cấp tài khoản mới
+                    </a>
+                </div>
             </div>
 
             <!-- Stats Grid -->
@@ -240,7 +245,10 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-6">
                     <h3 class="text-lg font-bold text-gray-800">Tác Vụ Nhanh</h3>
                     <div class="flex flex-col gap-3">
-                        <button onclick="alert('Đã đồng bộ PostgreSQL database thành công!')" class="w-full bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                        <a asp-controller="Auth" asp-action="Register" class="w-full bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-center text-sm">
+                            <i class="fa-solid fa-user-plus"></i> Cấp tài khoản mới
+                        </a>
+                        <button onclick="alert('Đã đồng bộ PostgreSQL database thành công!')" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-rotate"></i> Đồng Bộ Database
                         </button>
                         <button onclick="alert('Tạo sao lưu backup.sql thành công!')" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2">

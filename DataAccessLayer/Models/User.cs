@@ -20,6 +20,10 @@ namespace DataAccessLayer.Models
         public string PasswordHash { get; set; } = null!;
 
         [Required]
+        [MaxLength(150)]
+        public string Email { get; set; } = null!;
+
+        [Required]
         public int RoleId { get; set; }
 
         // Khóa ngoại liên kết tới thực thể Role

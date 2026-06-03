@@ -53,6 +53,7 @@ namespace DataAccessLayer.DbContexts
                 Id = 1,
                 Username = "admin",
                 PasswordHash = "$2a$11$p7e/dWqp3/H5V2hA8gfj4egjrUGPAPfbZqBqMcSvnBcc/Qc8qpjcq", // Mật khẩu gốc: admin123
+                Email = "admin@studymind.edu.vn",
                 RoleId = 1
             };
 
@@ -61,6 +62,7 @@ namespace DataAccessLayer.DbContexts
                 Id = 2,
                 Username = "lecturer",
                 PasswordHash = "$2a$11$.V0CPaW.aVn4ajd6qwur7eF84ysDgtwM6iTNNiVTUaC77F2nMaNji", // Mật khẩu gốc: lecturer123
+                Email = "lecturer@studymind.edu.vn",
                 RoleId = 2
             };
 
@@ -69,6 +71,7 @@ namespace DataAccessLayer.DbContexts
                 Id = 3,
                 Username = "student",
                 PasswordHash = "$2a$11$9Eg5STUA/KUfGzB3ubcC0OGv7Mph4h14Lj3lSBPgznmpJ4Sh73oAi", // Mật khẩu gốc: student123
+                Email = "student@studymind.edu.vn",
                 RoleId = 3
             };
 

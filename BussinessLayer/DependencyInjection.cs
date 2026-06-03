@@ -50,6 +50,7 @@ namespace BussinessLayer
 
             services.AddScoped<IDocumentService, DocumentService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             return services;
         }
