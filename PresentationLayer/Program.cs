@@ -62,3 +62,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+// Lệnh cập nhật Database bằng EF Core Migration (chạy tại thư mục gốc D:\Assignment1):
+// dotnet ef database update --project DataAccessLayer --startup-project PresentationLayer
