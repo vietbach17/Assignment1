@@ -211,6 +211,13 @@ namespace PresentationLayer.Controllers
             return View(plans);
         }
 
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult Admin()
+        {
+            var plans = _subscriptionService.GetAllPlans();
+            return View(plans);
+        }
         [Authorize(Roles = "Admin")]
         public IActionResult Create() => View();
 

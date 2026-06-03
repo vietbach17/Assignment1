@@ -257,23 +257,39 @@
                 <p style="color: #666; font-weight: 700;">Đang tải tài liệu...</p>
             </div>
 
-            @if ((fileType ?? Model.FileType)?.ToLower() == "pdf")
+            @{
+                var currentFileType = (fileType ?? Model.FileType)?.ToLower();
+            }
+
+            @if (currentFileType == "pdf")
             {
                 <iframe id="documentFrame" class="viewer-iframe" 
                     src="@Url.Action("PreviewFile", "StudentDocument", new { id = Model.Id })" 
                     onload="hideLoading()"></iframe>
             }
-            else if ((fileType ?? Model.FileType)?.ToLower() == "docx" || (fileType ?? Model.FileType)?.ToLower() == "pptx")
+            else if (currentFileType == "docx")
             {
-                var fullUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{fileUrl}";
-                var viewerUrl = $"https://view.officeapps.live.com/op/embed.aspx?src={Uri.EscapeDataString(fullUrl)}";
-                <iframe id="documentFrame" class="viewer-iframe" 
-                    src="@viewerUrl" 
-                    onload="hideLoading()"></iframe>
+                <!-- DOCX: render bằng mammoth.js trực tiếp trong browser -->
+                <div id="docxViewer" style="flex:1; overflow-y:auto; padding: 30px 40px; background: #fff; font-family: 'Times New Roman', serif; font-size: 15px; line-height: 1.7; display:none;"></div>
+            }
+            else if (currentFileType == "pptx")
+            {
+                <!-- PPTX: không có viewer client-side, hiển thị thông báo thân thiện -->
+                <div class="no-preview" style="flex:1; padding:40px;">
+                    <div class="no-preview-icon"></div>
+                    <div style="font-weight: 800; font-size: 16px;">Không thể xem trước file PPTX</div>
+                    <p style="font-size: 13px; text-align: center; color: #555; max-width: 360px;">
+                        File PowerPoint (.pptx) cần Microsoft Office để xem đầy đủ.<br>
+                        Vui lòng tải về máy để mở bằng PowerPoint hoặc LibreOffice.
+                    </p>
+                    <a asp-action="Download" asp-route-id="@Model.Id" class="brutal-btn primary" style="margin-top: 10px;">
+                        ⬇ Tải xuống để xem
+                    </a>
+                </div>
             }
             else
             {
-                <div class="no-preview">
+                <div class="no-preview" style="flex:1;">
                     <div class="no-preview-icon">🚫</div>
                     <div style="font-weight: 700;">Không thể xem trước loại file này</div>
                     <p style="font-size: 13px; text-align: center;">Vui lòng tải về để xem trên máy tính</p>
@@ -285,6 +301,43 @@
         </div>
     </div>
 
+    @if ((fileType ?? Model.FileType)?.ToLower() == "docx")
+    {
+        <!-- mammoth.js: convert DOCX → HTML trong browser, không cần server public -->
+        <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+        <script>
+            const previewUrl = '@Url.Action("PreviewFile", "StudentDocument", new { id = Model.Id })';
+
+            fetch(previewUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error('Không thể tải file.');
+                    return res.arrayBuffer();
+                })
+                .then(arrayBuffer => mammoth.convertToHtml({ arrayBuffer }))
+                .then(result => {
+                    const viewer = document.getElementById('docxViewer');
+                    viewer.innerHTML = result.value;
+                    viewer.style.display = 'block';
+                    hideLoading();
+                })
+                .catch(err => {
+                    hideLoading();
+                    const viewer = document.getElementById('docxViewer');
+                    viewer.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:60px 20px;color:#666;">
+                            <div style="font-size:48px;">⚠️</div>
+                            <div style="font-weight:800;font-size:15px;">Không thể render tài liệu</div>
+                            <p style="font-size:13px;text-align:center;">${err.message}</p>
+                            <a href="@Url.Action("Download", "StudentDocument", new { id = Model.Id })" 
+                               style="background:var(--pink);color:#fff;border:2px solid #000;font-weight:800;padding:10px 20px;cursor:pointer;box-shadow:2px 2px 0 #000;text-decoration:none;">
+                               ⬇ Tải xuống để xem
+                            </a>
+                        </div>`;
+                    viewer.style.display = 'block';
+                });
+        </script>
+    }
+
     <script>
         function hideLoading() {
             const loadingIndicator = document.getElementById('loadingIndicator');
@@ -292,8 +345,17 @@
                 loadingIndicator.style.display = 'none';
             }
         }
-        // Hide loading after 10 seconds if iframe doesn't load
-        setTimeout(hideLoading, 10000);
+
+        // Với PPTX và các loại không preview được: ẩn loading ngay
+        const fileType = '@((fileType ?? Model.FileType)?.ToLower())';
+        if (fileType === 'pptx' || (fileType !== 'pdf' && fileType !== 'docx')) {
+            hideLoading();
+        }
+
+        // Ẩn loading sau 15s nếu iframe không load được (PDF)
+        if (fileType === 'pdf') {
+            setTimeout(hideLoading, 15000);
+        }
     </script>
 </body>
 </html>
