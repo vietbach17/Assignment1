@@ -11,12 +11,14 @@ namespace PresentationLayer.Controllers
     {
         private readonly ISubscriptionService _subscriptionService;
         private readonly IDocumentService _documentService;
+        private readonly ISubjectService _subjectService;
 
         // Tiêm dịch vụ quản lý gói vào HomeController (Subcription)
-        public HomeController(ISubscriptionService subscriptionService, IDocumentService documentService)
+        public HomeController(ISubscriptionService subscriptionService, IDocumentService documentService, ISubjectService subjectService)
         {
             _subscriptionService = subscriptionService;
             _documentService = documentService;
+            _subjectService = subjectService;
         }
 
         // Hàm Helper lấy nhanh UserId từ Cookie đăng nhập
@@ -35,6 +37,14 @@ namespace PresentationLayer.Controllers
                 {
                     return View(await _documentService.GetAllDocumentsAsync(includeDeleted: false));
                 }
+
+                if (User.IsInRole("Student"))
+                {
+                    // Lấy tổng số môn học từ DB
+                    var subjects = await _subjectService.GetAllSubjectsAsync(includeDeleted: false);
+                    ViewBag.SubjectCount = subjects.Count();
+                }
+
                     //    return RedirectToAction("Dashboard", "Admin");
                     //if (User.IsInRole("Lecturer"))
                     //    return RedirectToAction("Index", "Document");
