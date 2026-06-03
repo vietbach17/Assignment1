@@ -706,14 +706,14 @@ else
                             <td style="padding: 12px 15px; text-align: center;">
                                 <div style="display: flex; gap: 8px; justify-content: center;">
                                     <!-- Download Button -->
-                                    <a asp-controller="Document" asp-action="Download" asp-route-id="@doc.Id" 
+                                    <a asp-controller="StudentDocument" asp-action="Download" asp-route-id="@doc.Id" 
                                        class="brutal-btn" 
                                        style="background: #5cb85c; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
                                         ⬇ Tải
                                     </a>
                                     
                                     <!-- Details Button -->
-                                    <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" 
+                                    <a asp-controller="StudentDocument" asp-action="ViewDocument" asp-route-id="@doc.Id" 
                                        class="brutal-btn" 
                                        style="background: #4fa8db; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
                                         👁 Chi Tiết
