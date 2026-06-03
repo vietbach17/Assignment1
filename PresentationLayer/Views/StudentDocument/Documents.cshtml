@@ -1,3 +1,4 @@
+@using BussinessLayer.DTOs
 @model IEnumerable<BussinessLayer.DTOs.DocumentDto>
 @{
     Layout = null;
@@ -191,9 +192,21 @@
                                     }
                                     <span>@doc.FileSizeDisplay</span>
                                     <span>@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
-                                    <span style="background: var(--yellow); border-color: var(--black); color: var(--black);">
-                                        🟢 Sẵn sàng
-                                    </span>
+                                    
+                                    @switch (doc.Status)
+                                    {
+                                    case DocumentStatus.Pending:
+                                        <span class="inline-block px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">🟡 Pending</span>
+                                        break;
+                                    case DocumentStatus.Indexed:
+                                        <span class="inline-block px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">🟢 Indexed</span>
+                                        break;
+                                    case DocumentStatus.Failed:
+                                        <span class="inline-block px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">🔴 Failed</span>
+                                        break;
+                                    }
+                                    
+                                    
                                 </div>
                             </div>
                         </div>
