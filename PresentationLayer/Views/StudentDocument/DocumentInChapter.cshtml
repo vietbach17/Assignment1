@@ -1,0 +1,739 @@
+@* @model IEnumerable<BussinessLayer.DTOs.DocumentDto>
+
+@{
+    ViewData["Title"] = $"Tài liệu - Chapter {ViewBag.ChapterNumber}";
+}
+
+<style>
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+
+    .breadcrumb a:hover {
+        color: #ffffff;
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+    }
+
+    .chapter-header {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chapter-number-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+    }
+
+    .chapter-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .chapter-desc {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .document-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: var(--transition-smooth);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .document-card:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .document-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .document-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .document-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .document-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-type-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .file-type-pdf {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .file-type-docx {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .file-type-pptx {
+        background-color: rgba(249, 115, 22, 0.15);
+        color: #fdba74;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .document-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: auto;
+    }
+
+    .btn-view, .btn-download {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-download {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-download:hover {
+        background-color: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+
+<div class="breadcrumb">
+    <a asp-action="Subjects">Môn học</a>
+    <span class="breadcrumb-separator">›</span>
+    <a asp-action="Chapters" asp-route-subjectId="@ViewBag.SubjectId">@ViewBag.SubjectName</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Chapter @ViewBag.ChapterNumber</span>
+</div>
+
+<div class="chapter-header">
+    <div class="chapter-number-badge">Chapter @ViewBag.ChapterNumber</div>
+    <h1 class="chapter-title">@ViewBag.ChapterTitle</h1>
+    @if (!string.IsNullOrEmpty(ViewBag.ChapterDescription))
+    {
+        <p class="chapter-desc">@ViewBag.ChapterDescription</p>
+    }
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@if (Model.Any())
+{
+    <div class="documents-grid">
+        @foreach (var doc in Model)
+        {
+            var iconEmoji = doc.FileType switch
+            {
+                "pdf" => "📕",
+                "docx" => "📘",
+                "pptx" => "📙",
+                _ => "📄"
+            };
+
+            var fileTypeClass = $"file-type-{doc.FileType}";
+
+            <div class="document-card">
+                <div class="document-icon">@iconEmoji</div>
+                <h3 class="document-title">@doc.Title</h3>
+                <div class="document-meta">
+                    <div class="document-meta-item">
+                        <span class="file-type-badge @fileTypeClass">@doc.FileType.ToUpper()</span>
+                        <span>@((doc.FileSize / 1024.0 / 1024.0).ToString("F2")) MB</span>
+                    </div>
+                    <div class="document-meta-item">
+                        📅 @doc.UploadedDate.ToString("dd/MM/yyyy")
+                    </div>
+                    @if (!string.IsNullOrEmpty(doc.UploadedByUsername))
+                    {
+                        <div class="document-meta-item">
+                            👤 @doc.UploadedByUsername
+                        </div>
+                    }
+                </div>
+                <div class="document-actions">
+                    <a asp-action="ViewFile" asp-route-id="@doc.Id" class="btn-view" title="Xem trực tuyến">
+                        👁 Xem
+                    </a>
+                    <a asp-action="Download" asp-route-id="@doc.Id" class="btn-download" title="Tải về máy">
+                        ⬇ Tải
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Chưa có tài liệu nào</h3>
+        <p>Chapter này chưa có tài liệu nào được upload hoặc tài liệu chưa được xử lý.</p>
+    </div>
+} *@
+@* @model IEnumerable<BussinessLayer.DTOs.SubjectDto>
+
+@{
+    ViewData["Title"] = "Danh sách môn học";
+}
+
+<style>
+    .page-header {
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    .subjects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .subject-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: var(--transition-smooth);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .subject-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        transform: scaleX(0);
+        transition: var(--transition-smooth);
+    }
+
+    .subject-card:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .subject-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .subject-code {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--accent-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .subject-name {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1rem;
+    }
+
+    .subject-description {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .subject-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-view-chapters, .btn-view-all-docs {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-view-chapters {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-view-chapters:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-view-all-docs {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-view-all-docs:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">📚 Tài liệu học tập</h1>
+    <p class="page-subtitle">Chọn môn học để xem tài liệu và bài giảng</p>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@if (Model.Any())
+{
+    <div class="subjects-grid">
+        @foreach (var subject in Model)
+        {
+            <div class="subject-card">
+                <div class="subject-code">@subject.SubjectCode</div>
+                <h3 class="subject-name">@subject.SubjectName</h3>
+                @if (!string.IsNullOrEmpty(subject.Description))
+                {
+                    <p class="subject-description">@subject.Description</p>
+                }
+                <div class="subject-actions">
+                    <a asp-action="Chapters" asp-route-subjectId="@subject.Id" class="btn-view-chapters">
+                        Xem Chapters
+                    </a>
+                    <a asp-action="SubjectDocuments" asp-route-subjectId="@subject.Id" class="btn-view-all-docs">
+                        Tất cả tài liệu
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Chưa có môn học nào</h3>
+        <p>Hiện tại chưa có môn học nào được tạo trong hệ thống.</p>
+    </div>
+} *@
+@model IEnumerable<BussinessLayer.DTOs.DocumentDto>
+@{
+
+    ViewBag.ActiveMenu = "Subjects";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EduManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+        
+        :root {
+            --pink: #eb2f64; --yellow: #f4cf45; --green: #5cb85c; 
+            --blue: #4fa8db; --black: #000; --white: #fff; --bg: #f4f4f6;
+            --border: 3px solid var(--black);
+            --shadow: 4px 4px 0px 0px var(--black);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        
+        body {
+            background-color: var(--bg);
+            display: flex; min-height: 100vh; color: var(--black);
+            background-image: radial-gradient(#d1d1d1 2px, transparent 2px);
+          
+        }
+
+        /* Tùy chỉnh thanh Sidebar */
+        .sidebar {
+            width: 260px; background: var(--white); border-right: var(--border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 15px;
+            position: sticky; top: 0; height: 100vh;
+        }
+        .logo { color: var(--pink); font-size: 22px; font-weight: 900; margin-bottom: 20px; }
+        .nav-item {
+            padding: 12px 15px; font-weight: 800; color: var(--black);
+            text-decoration: none; display: flex; align-items: center; gap: 12px;
+            border: 3px solid transparent; transition: 0.1s;
+        }
+        .nav-item.active {
+            background: var(--pink); color: var(--white);
+            border-color: var(--black); box-shadow: var(--shadow);
+        }
+        .nav-item:not(.active):hover { border-color: var(--black); transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+
+        /* Vùng nội dung chính */
+        .main-content { flex: 1; padding: 40px; }
+        
+        /* Các class tiện ích dùng chung (Utility Classes) */
+        .title-page { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; }
+        .brutal-box { background: var(--white); border: var(--border); box-shadow: 6px 6px 0px 0px var(--black); padding: 25px; }
+        .brutal-btn { border: 2px solid var(--black); font-weight: 800; cursor: pointer; box-shadow: 2px 2px 0px 0px var(--black); padding: 8px 15px; }
+        .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--black); }
+        .badge { border: 2px solid var(--black); padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--yellow); }
+    /* Thêm thuộc tính này để đẩy phần tử con cuối cùng xuống đáy */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================================
+   STYLE KHỐI USER PROFILE (NEO-BRUTALISM BOX)
+   ======================================================== */
+.user-profile {
+    margin-top: auto; /* Tuyệt chiêu đẩy khối này xuống đáy sidebar */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background-color: var(--white);
+    border: 3px solid var(--black);
+    box-shadow: 4px 4px 0px 0px var(--black); /* Đổ bóng phẳng đặc trưng */
+}
+
+/* Khung Avatar vuông vắn, viền dày */
+.avatar-box {
+    width: 36px;
+    height: 36px;
+    background-color: var(--pink); /* Đổi màu nền avatar theo ý thích */
+    border: 2px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 14px;
+    flex-shrink: 0; /* Giữ ảnh không bị bóp méo */
+}
+
+.avatar-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Cụm thông tin Text */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Cắt chữ nếu tên quá dài */
+}
+
+.user-info .username {
+    font-weight: 800;
+    font-size: 12px;
+    color: var(--black);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.user-info .role {
+    font-weight: 700;
+    font-size: 10px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+        </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i> EduManager</div>
+        <a asp-controller="Home" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Overview" ? "active" : "")"><i class="fa-solid fa-border-all"></i> TỔNG QUAN</a>
+        <a asp-controller="StudentDocument" asp-action="Subjects" class="nav-item @(ViewBag.ActiveMenu == "Subjects" ? "active" : "")"><i class="fa-solid fa-book-open"></i> MÔN HỌC</a>
+        <a asp-controller="StudentDocument" asp-action="Documents"  class="nav-item @(ViewBag.ActiveMenu == "Docs" ? "active" : "")"><i class="fa-regular fa-file-lines"></i> TÀI LIỆU</a>
+        <a asp-controller="Home" asp-action="Chat"  class="nav-item @(ViewBag.ActiveMenu == "AI" ? "active" : "")"><i class="fa-solid fa-robot"></i> CHAT AI</a>
+        <a asp-controller="Subscription" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Subscription" ? "active" : "")"><i class="fa-solid fa-crown"></i> GÓI HỘI VIÊN</a>
+        
+                <div class="user-profile">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                    var roleClass = "role-student";
+                    if (User.IsInRole("Admin")) roleClass = "role-admin";
+                    else if (User.IsInRole("Lecturer")) roleClass = "role-lecturer";
+                    <div class="avatar-box">
+                        <i class="fa-solid fa-user"></i> 
+                    </div>
+
+                    <div class="user-info">
+                        <div class="username">@User.Identity.Name</div>
+                        <div class="role">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</div>
+
+                    </div>
+                    
+                     }
+     </div>
+     <a asp-controller="Auth" asp-action="Logout"  class="nav-item" style="border:dashed 2px var(--black);">Log out</a>      
+    </div>
+    <!-- ===== BACK BUTTON ===== -->
+        
+    
+    <div class="main-content">
+        <div style="margin-bottom: 20px;">
+            <a asp-controller="StudentDocument" asp-action="Chapters" asp-route-id="@ViewBag.SubjectId" 
+               class="brutal-btn" 
+               style="background: #4fa8db; color: white; padding: 8px 16px; font-size: 13px; text-decoration: none; display: inline-block;">
+                ← Quay lại Chapters
+            </a>
+        </div>
+        <!-- ===== HEADER: Chapter Title & Subject Info ===== -->
+        <h1 class="title-page">TÀI LIỆU CHƯƠNG</h1>
+
+        <div style="margin-bottom: 30px;">
+            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">Môn học</div>
+            <div style="font-size: 18px; font-weight: 900; margin-bottom: 15px;">[@ViewBag.SubjectCode] @ViewBag.SubjectName</div>
+            
+            <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">Chapter</div>
+            <div style="font-size: 20px; font-weight: 900;">Chapter @ViewBag.ChapterNumber: @ViewBag.ChapterTitle</div>
+            
+            @if (!string.IsNullOrEmpty(ViewBag.ChapterDescription))
+            {
+                <div style="color: #666; margin-top: 12px; font-size: 14px; line-height: 1.5;">
+                    @ViewBag.ChapterDescription
+                </div>
+            }
+        </div>
+
+        <!-- ===== ERROR MESSAGE ===== -->
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div style="background: #ffb3b3; border: 2px solid #000; box-shadow: 3px 3px 0px #000; padding: 15px; margin-bottom: 20px; font-weight: 700;">
+                ⚠️ @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- ===== DOCUMENTS TABLE ===== -->
+        @if (Model != null && Model.Any())
+        {
+            <table style="width: 100%; border-collapse: collapse; border: 3px solid #000; box-shadow: 6px 6px 0px #000;">
+                <thead>
+                    <tr style="background: #eb2f64; color: white;">
+                        <th style="padding: 12px 15px; text-align: left; font-weight: 900; border-bottom: 2px solid #000;">Tên File</th>
+                        <th style="padding: 12px 15px; text-align: center; font-weight: 900; border-bottom: 2px solid #000; width: 80px;">Loại</th>
+                        <th style="padding: 12px 15px; text-align: center; font-weight: 900; border-bottom: 2px solid #000; width: 80px;">Kích Thước</th>
+                        <th style="padding: 12px 15px; text-align: center; font-weight: 900; border-bottom: 2px solid #000; width: 120px;">Ngày Upload</th>
+                        <th style="padding: 12px 15px; text-align: center; font-weight: 900; border-bottom: 2px solid #000; width: 180px;">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model)
+                    {
+                        var iconEmoji = doc.FileType switch
+                        {
+                            "pdf" => "📕",
+                            "docx" => "📘",
+                            "pptx" => "📙",
+                            _ => "📄"
+                        };
+
+                        var fileTypeBg = doc.FileType switch
+                        {
+                            "pdf" => "#ffb3b3",
+                            "docx" => "#b3d9ff",
+                            "pptx" => "#ffd9b3",
+                            _ => "#e5e5e5"
+                        };
+
+                        var fileTypeColor = doc.FileType switch
+                        {
+                            "pdf" => "#c00",
+                            "docx" => "#003d99",
+                            "pptx" => "#996600",
+                            _ => "#666"
+                        };
+
+                        <tr style="border-bottom: 1px solid #ddd; background: #fff;">
+                            <td style="padding: 12px 15px; font-weight: 700;">
+                                @iconEmoji @doc.Title
+                            </td>
+                            <td style="padding: 12px 15px; text-align: center;">
+                                <span style="background: @fileTypeBg; color: @fileTypeColor; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; text-transform: uppercase;">@doc.FileType.ToUpper()</span>
+                            </td>
+                            <td style="padding: 12px 15px; text-align: center; font-weight: 700;">
+                                @((doc.FileSize / 1024.0 / 1024.0).ToString("F2")) MB
+                            </td>
+                            <td style="padding: 12px 15px; text-align: center; font-weight: 700;">
+                                @doc.UploadedDate.ToString("dd/MM/yyyy")
+                            </td>
+                            <td style="padding: 12px 15px; text-align: center;">
+                                <div style="display: flex; gap: 8px; justify-content: center;">
+                                    <!-- Download Button -->
+                                    <a asp-controller="Document" asp-action="Download" asp-route-id="@doc.Id" 
+                                       class="brutal-btn" 
+                                       style="background: #5cb85c; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
+                                        ⬇ Tải
+                                    </a>
+                                    
+                                    <!-- Details Button -->
+                                    <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" 
+                                       class="brutal-btn" 
+                                       style="background: #4fa8db; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
+                                        👁 Chi Tiết
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div style="text-align: center; padding: 40px; background: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px #000;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
+                <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 8px;">Chưa có tài liệu nào</h3>
+                <p style="color: #666; font-weight: 700;">Chapter này chưa có tài liệu hoặc tài liệu chưa được xử lý.</p>
+            </div>
+        }
+    </div>
+</body>
+</html>

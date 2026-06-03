@@ -27,16 +27,20 @@ namespace PresentationLayer.Controllers
         }
 
         // Trang chủ mặc định: Chuyển hướng người dùng về trang đăng nhập nếu chưa xác thực, hoặc trang chức năng của họ
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             if (User.Identity?.IsAuthenticated == true)
             {
                 if (User.IsInRole("Admin"))
-                    return RedirectToAction("Dashboard", "Admin");
-                if (User.IsInRole("Lecturer"))
-                    return RedirectToAction("Index", "Document");
-                if (User.IsInRole("Student"))
-                    return RedirectToAction("Chat", "Home");
+                {
+                    return View(await _documentService.GetAllDocumentsAsync(includeDeleted: false));
+                }
+                    //    return RedirectToAction("Dashboard", "Admin");
+                    //if (User.IsInRole("Lecturer"))
+                    //    return RedirectToAction("Index", "Document");
+                    //if (User.IsInRole("Student"))
+                    //    return RedirectToAction("Chat", "Home");
+                    return View();
             }
             return RedirectToAction("Login", "Auth");
         }

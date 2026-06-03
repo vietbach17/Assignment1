@@ -1,9 +1,15 @@
-@model IEnumerable<BussinessLayer.DTOs.DocumentDto>
-@using BussinessLayer.DTOs
+﻿
 @{
     Layout = null;
-    ViewData["Title"] = "Trang quản trị Admin";
 }
+
+@if (User.IsInRole("Admin")){
+@model IEnumerable<BussinessLayer.DTOs.DocumentDto>
+@using BussinessLayer.DTOs
+
+   
+    ViewData["Title"] = "Trang quản trị Admin";
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -321,3 +327,400 @@
     </main>
 </body>
 </html>
+    
+
+}
+@if (User.IsInRole("Lecturer"))
+{
+    
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý tài liệu giảng dạy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+        theme: {
+        extend: {
+        colors: {
+        brand: {
+        dark: '#1e3b31', // Màu nền sidebar
+        active: '#2c5344', // Màu menu active
+        button: '#376b56', // Màu nút bấm
+        text: '#222222',
+        gray: '#f4f6f8'
+        }
+        }
+        }
+        }
+        }
+    </script>
+    <style>
+        body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-brand-dark text-white flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-book-open text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
+                <p class="text-xs text-gray-300">Học tập thông minh</p>
+            </div>
+        </div>
+
+        <div class="px-4 py-2">
+            <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+            <ul class="space-y-1">
+                <li>
+                    <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
+                        <i class="fa-solid fa-border-all w-5"></i>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-book w-5"></i>
+                        <span>Môn Học</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-regular fa-file-lines w-5"></i>
+                        <span>Tài liệu</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="px-4 py-6 border-t border-white/5 mt-auto">
+            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+       
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
+            <div class="relative w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Tìm kiếm khóa học, tài liệu..." class="w-full bg-gray-50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-button">
+            </div>
+            
+            <div class="flex items-center space-x-5">
+                @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        var roleClass = "role-student";
+                    if (User.IsInRole("Admin")) roleClass = "role-admin";
+                    else if (User.IsInRole("Lecturer")) roleClass = "role-lecturer";
+                <button class="text-gray-400 hover:text-gray-600 relative">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <div class="flex items-center space-x-3 cursor-pointer">
+                        <div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
+                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="mb-8">
+                <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">Không gian giảng viên</p>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Quản lý tài liệu giảng dạy</h2>
+                <p class="text-gray-500 text-sm">Tải lên tài liệu mới và theo dõi hiệu quả học tập của lớp.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+                
+                <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Tải tài liệu mới</h3>
+                            <p class="text-sm text-gray-500 mt-1">Hỗ trợ PDF, DOCX, PPTX tối đa 50MB</p>
+                        </div>
+                        <button class="w-10 h-10 rounded-full bg-brand-gray flex items-center justify-center text-brand-button hover:bg-gray-200 transition">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </button>
+                    </div>
+                    <button onclick="window.location.href='@Url.Action("Upload", "Document")'" class="w-full bg-brand-button hover:bg-brand-active text-white font-medium py-3 rounded-xl transition shadow-sm">
+                        Tiến hành tải tài liệu
+                    </button>
+                </div>
+
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Tài liệu gần đây</h3>
+                        <a asp-action="Index" asp-controller="Document" class="text-sm text-gray-500 hover:text-brand-button font-medium">Quản lý</a>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-700">Bài giảng Kinh tế vi mô tuần 4.pdf</p>
+                                    <p class="text-xs text-gray-500">2.4 MB • Cập nhật hôm nay</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-file-powerpoint"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-700">Slide ôn tập chương 2.pptx</p>
+                                    <p class="text-xs text-gray-500">4.1 MB • Hôm qua</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-file-word"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-700">Tài liệu tham khảo.docx</p>
+                                    <p class="text-xs text-gray-500">1.8 MB • 2 ngày trước</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="text-2xl font-bold text-gray-800 mb-1">16</h4>
+                    <p class="text-sm text-gray-500">Khóa học phụ trách</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="text-2xl font-bold text-gray-800 mb-1">428</h4>
+                    <p class="text-sm text-gray-500">Sinh viên theo học</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="text-2xl font-bold text-gray-800 mb-1">39</h4>
+                    <p class="text-sm text-gray-500">Tài liệu đã tải</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="text-2xl font-bold text-gray-800 mb-1">92%</h4>
+                    <p class="text-sm text-gray-500">Mức độ tham gia</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>
+
+}
+
+@if (User.IsInRole("Student"))
+{
+    ViewBag.ActiveMenu = "Overview";
+    Layout = null;
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EduManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+        
+        :root {
+            --pink: #eb2f64; --yellow: #f4cf45; --green: #5cb85c; 
+            --blue: #4fa8db; --black: #000; --white: #fff; --bg: #f4f4f6;
+            --border: 3px solid var(--black);
+            --shadow: 4px 4px 0px 0px var(--black);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        
+        body {
+            background-color: var(--bg);
+            display: flex; min-height: 100vh; color: var(--black);
+            background-image: radial-gradient(#d1d1d1 2px, transparent 2px);
+          
+        }
+
+        /* Tùy chỉnh thanh Sidebar */
+        .sidebar {
+            width: 260px; background: var(--white); border-right: var(--border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 15px;
+            position: sticky; top: 0; height: 100vh;
+        }
+        .logo { color: var(--pink); font-size: 22px; font-weight: 900; margin-bottom: 20px; }
+        .nav-item {
+            padding: 12px 15px; font-weight: 800; color: var(--black);
+            text-decoration: none; display: flex; align-items: center; gap: 12px;
+            border: 3px solid transparent; transition: 0.1s;
+        }
+        .nav-item.active {
+            background: var(--pink); color: var(--white);
+            border-color: var(--black); box-shadow: var(--shadow);
+        }
+        .nav-item:not(.active):hover { border-color: var(--black); transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+
+        /* Vùng nội dung chính */
+        .main-content { flex: 1; padding: 40px; }
+        
+        /* Các class tiện ích dùng chung (Utility Classes) */
+        .title-page { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; }
+        .brutal-box { background: var(--white); border: var(--border); box-shadow: 6px 6px 0px 0px var(--black); padding: 25px; }
+        .brutal-btn { border: 2px solid var(--black); font-weight: 800; cursor: pointer; box-shadow: 2px 2px 0px 0px var(--black); padding: 8px 15px; }
+        .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--black); }
+        .badge { border: 2px solid var(--black); padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--yellow); }
+    /* Thêm thuộc tính này để đẩy phần tử con cuối cùng xuống đáy */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================================
+   STYLE KHỐI USER PROFILE (NEO-BRUTALISM BOX)
+   ======================================================== */
+.user-profile {
+    margin-top: auto; /* Tuyệt chiêu đẩy khối này xuống đáy sidebar */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background-color: var(--white);
+    border: 3px solid var(--black);
+    box-shadow: 4px 4px 0px 0px var(--black); /* Đổ bóng phẳng đặc trưng */
+}
+
+/* Khung Avatar vuông vắn, viền dày */
+.avatar-box {
+    width: 36px;
+    height: 36px;
+    background-color: var(--pink); /* Đổi màu nền avatar theo ý thích */
+    border: 2px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 14px;
+    flex-shrink: 0; /* Giữ ảnh không bị bóp méo */
+}
+
+.avatar-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Cụm thông tin Text */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Cắt chữ nếu tên quá dài */
+}
+
+.user-info .username {
+    font-weight: 800;
+    font-size: 12px;
+    color: var(--black);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.user-info .role {
+    font-weight: 700;
+    font-size: 10px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+        </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i> EduManager</div>
+        <a asp-controller="Home" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Overview" ? "active" : "")"><i class="fa-solid fa-border-all"></i> TỔNG QUAN</a>
+        <a asp-controller="StudentDocument" asp-action="Subjects" class="nav-item @(ViewBag.ActiveMenu == "Subjects" ? "active" : "")"><i class="fa-solid fa-book-open"></i> MÔN HỌC</a>
+        <a asp-controller="StudentDocument" asp-action="Documents"  class="nav-item @(ViewBag.ActiveMenu == "Docs" ? "active" : "")"><i class="fa-regular fa-file-lines"></i> TÀI LIỆU</a>
+        <a asp-controller="Home" asp-action="Chat"  class="nav-item @(ViewBag.ActiveMenu == "AI" ? "active" : "")"><i class="fa-solid fa-robot"></i> CHAT AI</a>
+       <a asp-controller="Subscription" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Subscription" ? "active" : "")"><i class="fa-solid fa-crown"></i> GÓI HỘI VIÊN</a>
+        
+                <div class="user-profile">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                    var roleClass = "role-student";
+                    if (User.IsInRole("Admin")) roleClass = "role-admin";
+                    else if (User.IsInRole("Lecturer")) roleClass = "role-lecturer";
+                    <div class="avatar-box">
+                        <i class="fa-solid fa-user"></i> 
+                    </div>
+
+                    <div class="user-info">
+                        <div class="username">@User.Identity.Name</div>
+                        <div class="role">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</div>
+
+                    </div>
+                    
+                     }
+     </div>
+     <a asp-controller="Auth" asp-action="Logout"  class="nav-item" style="border:dashed 2px var(--black);">Log out</a>      
+    </div>
+    
+    
+    <div class="main-content">
+        <h1 class="title-page" style="color: var(--pink);">XIN CHÀO! 👋</h1>
+<p style="font-weight: 700; margin-bottom: 30px;">Chào mừng bạn trở lại dashboard học tập</p>
+
+<div style="display: flex; gap: 20px; margin-bottom: 30px;">
+    <div class="brutal-box" style="background: var(--yellow); flex: 1; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 14px;">MÔN HỌC <i class="fa-solid fa-book" style="background:#000; color:#fff; padding:5px;"></i></div>
+        <div style="font-size: 40px; font-weight: 900; margin-top: 20px;">6</div>
+    </div>
+    <div class="brutal-box" style="background: var(--green); color: white; flex: 1; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 14px;">TÀI LIỆU ĐÃ NỘP <i class="fa-solid fa-file" style="background:#000; color:#fff; padding:5px;"></i></div>
+        <div style="font-size: 40px; font-weight: 900; margin-top: 20px;">0</div>
+    </div>
+    <div class="brutal-box" style="background: var(--pink); color: white; flex: 1; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 14px;">TIN NHẮN AI <i class="fa-solid fa-comment" style="background:#000; color:#fff; padding:5px;"></i></div>
+        <div style="font-size: 40px; font-weight: 900; margin-top: 20px;">0</div>
+    </div>
+</div>
+
+<div class="brutal-box" style="background: var(--white);">
+    <h3 style="font-weight: 800; margin-bottom: 15px; color: #c95d46;"><i class="fa-regular fa-clock"></i> Tài liệu gần đây</h3>
+    <p style="font-weight: 600; font-style: italic;">Chưa có tài liệu nào</p>
+</div>
+    </div>
+</body>
+</html>
+}

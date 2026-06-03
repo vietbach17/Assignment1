@@ -1,270 +1,163 @@
 @model BussinessLayer.DTOs.ChapterDto
-
 @{
-    ViewData["Title"] = "Delete Chapter";
+    ViewData["Title"] = "Xóa Chương Học";
+    Layout = null;
 }
-
-<style>
-    .breadcrumb {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        font-size: 0.9rem;
-    }
-
-    .breadcrumb a {
-        color: var(--accent-blue);
-        text-decoration: none;
-        transition: var(--transition-smooth);
-    }
-
-    .breadcrumb a:hover {
-        color: var(--accent-purple);
-    }
-
-    .breadcrumb-separator {
-        color: var(--text-secondary);
-    }
-
-    .page-header {
-        margin-bottom: 2rem;
-    }
-
-    .page-title {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--danger);
-        margin-bottom: 0.5rem;
-    }
-
-    .page-subtitle {
-        color: var(--text-secondary);
-        font-size: 1rem;
-    }
-
-    .warning-card {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: start;
-        gap: 1rem;
-    }
-
-    .warning-icon {
-        font-size: 2rem;
-        flex-shrink: 0;
-    }
-
-    .warning-content h3 {
-        color: #fca5a5;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .warning-content p {
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .details-card {
-        background: var(--bg-card);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .detail-row {
-        display: flex;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .detail-row:last-child {
-        border-bottom: none;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: var(--text-secondary);
-        width: 200px;
-        flex-shrink: 0;
-    }
-
-    .detail-value {
-        color: var(--text-primary);
-        flex: 1;
-    }
-
-    .chapter-badge {
-        display: inline-block;
-        background-color: rgba(168, 85, 247, 0.15);
-        color: #c084fc;
-        border: 1px solid rgba(168, 85, 247, 0.3);
-        padding: 0.25rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .subject-info {
-        background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 0.5rem;
-    }
-
-    .subject-code {
-        font-weight: 700;
-        color: var(--accent-purple);
-        margin-right: 0.5rem;
-    }
-
-    .subject-name {
-        color: var(--text-primary);
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-    }
-
-    .btn-delete {
-        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-        color: #ffffff;
-        padding: 0.75rem 2rem;
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: var(--transition-smooth);
-    }
-
-    .btn-delete:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-    }
-
-    .btn-cancel {
-        background-color: rgba(255, 255, 255, 0.05);
-        color: #ffffff;
-        border: 1px solid var(--border-color);
-        padding: 0.75rem 2rem;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: var(--transition-smooth);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-cancel:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .soft-delete-note {
-        background-color: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 1.5rem;
-        font-size: 0.9rem;
-        color: #60a5fa;
-    }
-
-    .soft-delete-note strong {
-        color: var(--accent-blue);
-    }
-</style>
-
-<div class="breadcrumb">
-    <a asp-controller="Subjects" asp-action="Index">Subjects</a>
-    <span class="breadcrumb-separator">›</span>
-    <a asp-controller="Chapters" asp-action="Index" asp-route-subjectId="@Model.SubjectId">@Model.SubjectCode - Chapters</a>
-    <span class="breadcrumb-separator">›</span>
-    <span>Delete</span>
-</div>
-
-<div class="page-header">
-    <h1 class="page-title">Delete Chapter</h1>
-    <p class="page-subtitle">Confirm deletion of this chapter</p>
-</div>
-
-<div class="warning-card">
-    <div class="warning-icon">⚠️</div>
-    <div class="warning-content">
-        <h3>Are you sure you want to delete this chapter?</h3>
-        <p>This action will soft delete the chapter. The chapter will be marked as deleted but preserved in the database for audit trails.</p>
-    </div>
-</div>
-
-<div class="details-card">
-    <div class="detail-row">
-        <div class="detail-label">Chapter Number</div>
-        <div class="detail-value">
-            <span class="chapter-badge">Chapter @Model.ChapterNumber</span>
-        </div>
-    </div>
-    <div class="detail-row">
-        <div class="detail-label">Chapter Title</div>
-        <div class="detail-value">@Model.ChapterTitle</div>
-    </div>
-    <div class="detail-row">
-        <div class="detail-label">Description</div>
-        <div class="detail-value">
-            @if (!string.IsNullOrEmpty(Model.Description))
-            {
-                @Model.Description
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#1e3b31',
+                            active: '#2c5344',
+                            button: '#376b56',
+                            text: '#222222',
+                            gray: '#f4f6f8'
+                        }
+                    }
+                }
             }
-            else
-            {
-                <span style="font-style: italic; opacity: 0.5;">No description provided</span>
-            }
-        </div>
-    </div>
-    <div class="detail-row">
-        <div class="detail-label">Parent Subject</div>
-        <div class="detail-value">
-            <div class="subject-info">
-                <span class="subject-code">@Model.SubjectCode</span>
-                <span class="subject-name">@Model.SubjectName</span>
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-brand-dark text-white flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-book-open text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
+                <p class="text-xs text-gray-300">Quản lý nội dung</p>
             </div>
         </div>
-    </div>
-    <div class="detail-row">
-        <div class="detail-label">Created Date</div>
-        <div class="detail-value">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</div>
-    </div>
-    @if (!string.IsNullOrEmpty(Model.CreatedByUsername))
-    {
-        <div class="detail-row">
-            <div class="detail-label">Created By</div>
-            <div class="detail-value">@Model.CreatedByUsername</div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="px-4 py-2">
+                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-chart-line w-5"></i>
+                            <span>Bảng điều khiển</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-users w-5"></i>
+                            <span>Người Dùng</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-arrow-left w-5"></i>
+                            <span>Về trang chủ</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        }
+        else if (User.IsInRole("Lecturer"))
+        {
+            <div class="px-4 py-2">
+                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-border-all w-5"></i>
+                            <span>Tổng quan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-book w-5"></i>
+                            <span>Môn Học</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-regular fa-file-lines w-5"></i>
+                            <span>Tài liệu</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        }
+
+        <div class="px-4 py-6 border-t border-white/5 mt-auto">
+            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i>
+                <span>Đăng xuất</span>
+            </a>
         </div>
-    }
-</div>
+    </aside>
 
-<form asp-action="Delete" method="post">
-    <input type="hidden" asp-for="Id" />
-    
-    <div class="soft-delete-note">
-        <strong>Note:</strong> This is a soft delete operation. The chapter will be marked as deleted but will remain in the database for audit purposes.
-    </div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+                <a asp-controller="Subjects" asp-action="Index" class="hover:text-brand-active transition">Môn học</a>
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+                <a asp-action="Index" asp-route-subjectId="@Model.SubjectId" class="hover:text-brand-active transition">Các chương</a>
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+                <span class="font-semibold text-gray-800">Xóa chương</span>
+            </div>
+        </header>
 
-    <div class="form-actions">
-        <button type="submit" class="btn-delete">Yes, Delete Chapter</button>
-        <a asp-action="Index" asp-route-subjectId="@Model.SubjectId" class="btn-cancel">Cancel</a>
-    </div>
-</form>
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+                    <div class="bg-red-50 p-6 flex items-start gap-4 border-b border-red-100">
+                        <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center flex-shrink-0 text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-red-700">Cảnh báo: Bạn đang chuẩn bị xóa chương học!</h2>
+                            <p class="text-sm text-red-600 mt-1">Hành động này không thể hoàn tác và các tài liệu thuộc chương này có thể bị mất.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-5 mb-6">
+                            <div class="text-xs font-bold text-brand-active mb-1 uppercase tracking-wider">Chương @Model.ChapterNumber</div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-2">@Model.ChapterTitle</h3>
+                            
+                            @if (!string.IsNullOrEmpty(Model.Description))
+                            {
+                                <div class="text-sm text-gray-600 p-3 bg-white rounded border border-gray-100">
+                                    @(Model.Description.Length > 150 ? Model.Description.Substring(0, 150) + "..." : Model.Description)
+                                </div>
+                            }
+                        </div>
+
+                        <form asp-action="Delete" method="post">
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="SubjectId" />
+                            <div class="flex gap-4">
+                                <a asp-action="Index" asp-route-subjectId="@Model.SubjectId" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition text-center">
+                                    Hủy bỏ, quay lại
+                                </a>
+                                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition shadow-sm flex justify-center items-center gap-2">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    Xác nhận xóa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

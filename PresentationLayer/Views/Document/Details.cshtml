@@ -3,187 +3,376 @@
 @{
     ViewData["Title"] = "Chi tiết tài liệu - " + Model.Document.Title;
     var doc = Model.Document;
+    Layout = null;
 }
-
-<div class="detail-container">
-
-    @* Header *@
-    <div class="page-header glass-card">
-        <div class="header-left">
-            @switch (doc.FileType)
-            {
-                case "pdf":  <span class="file-badge-lg pdf">PDF</span>  break;
-                case "docx": <span class="file-badge-lg docx">DOCX</span> break;
-                case "pptx": <span class="file-badge-lg pptx">PPTX</span> break;
-                default:     <span class="file-badge-lg">FILE</span>      break;
-            }
-            <div>
-                <h1>@doc.Title</h1>
-                <p class="original-name">📎 @doc.FileName</p>
-            </div>
-        </div>
-        <div class="header-actions">
-            <a asp-action="Download" asp-route-id="@doc.Id" class="btn-primary btn-download-main">Tải về</a>
-            <a asp-action="Index" class="btn-back">← Quay lại</a>
-        </div>
-    </div>
-
-    @* Alerts *@
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success">✅ @TempData["SuccessMessage"]</div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger">❌ @TempData["ErrorMessage"]</div>
-    }
-
-    <div class="detail-grid">
-
-        @* ─── Metadata Card ─── *@
-        <div class="glass-card meta-card">
-            <h2 class="card-section-title">Thông tin tài liệu</h2>
-            <div class="meta-table">
-                <div class="meta-row">
-                    <span class="meta-key">Tiêu đề</span>
-                    <span class="meta-val">@doc.Title</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Môn học</span>
-                    <span class="meta-val">
-                        <strong>@doc.SubjectCode</strong> — @doc.SubjectName
-                    </span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Chương</span>
-                    <span class="meta-val">
-                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "—" : doc.ChapterTitle)
-                    </span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Định dạng</span>
-                    <span class="meta-val">@doc.FileType.ToUpperInvariant()</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Dung lượng</span>
-                    <span class="meta-val">@doc.FileSizeDisplay</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Ngày upload</span>
-                    <span class="meta-val">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Người upload</span>
-                    <span class="meta-val">👤 @doc.UploadedByUsername</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-key">Trạng thái</span>
-                    <span class="meta-val">
-                        @switch (doc.Status)
-                        {
-                            case DocumentStatus.Pending: <span class="status-badge pending">🟡 Pending</span>  break;
-                            case DocumentStatus.Indexed: <span class="status-badge indexed">🟢 Indexed</span>  break;
-                            case DocumentStatus.Failed:  <span class="status-badge failed">🔴 Failed</span>   break;
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#1e3b31',
+                            active: '#2c5344',
+                            button: '#376b56',
+                            text: '#222222',
+                            gray: '#f4f6f8'
                         }
-                    </span>
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-brand-dark text-white flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-book-open text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
+                <p class="text-xs text-gray-300">Chi tiết tài liệu</p>
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="px-4 py-2">
+                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-chart-line w-5"></i>
+                            <span>Bảng điều khiển</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-users w-5"></i>
+                            <span>Người Dùng</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-arrow-left w-5"></i>
+                            <span>Về trang chủ</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        }
+        else if (User.IsInRole("Lecturer"))
+        {
+            <div class="px-4 py-2">
+                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-border-all w-5"></i>
+                            <span>Tổng quan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-solid fa-book w-5"></i>
+                            <span>Môn Học</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                            <i class="fa-regular fa-file-lines w-5"></i>
+                            <span>Tài liệu</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        }
+
+        <div class="px-4 py-6 border-t border-white/5 mt-auto">
+            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
+            <div class="relative w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Tìm kiếm..." class="w-full bg-gray-50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-button">
+            </div>
+            
+            <div class="flex items-center space-x-5">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="text-gray-400 hover:text-gray-600 relative">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 cursor-pointer">
+                        <div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
+                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="mb-8 flex justify-between items-start">
+                <div class="flex items-center space-x-4">
+                    @switch (doc.FileType)
+                    {
+                        case "pdf":
+                            <div class="w-14 h-14 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-pdf text-2xl"></i>
+                            </div>
+                            break;
+                        case "docx":
+                            <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-word text-2xl"></i>
+                            </div>
+                            break;
+                        case "pptx":
+                            <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-powerpoint text-2xl"></i>
+                            </div>
+                            break;
+                    }
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">@doc.Title</h2>
+                        <p class="text-sm text-gray-500 mt-1">📎 @doc.FileName</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <a asp-action="Download" asp-route-id="@doc.Id" class="inline-flex items-center space-x-2 bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Tải về</span>
+                    </a>
+                    <a asp-action="Index" class="inline-flex items-center space-x-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-xl transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Quay lại</span>
+                    </a>
                 </div>
             </div>
-        </div>
 
-        <div class="detail-sidebar">
-            @* ─── Update Status Card ─── *@
-            <div class="glass-card status-card">
-                <h2 class="card-section-title">Cập nhật trạng thái</h2>
-                <form asp-action="UpdateStatus" asp-route-id="@doc.Id" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="form-group">
-                        <label class="form-label">Trạng thái mới</label>
-                        <select name="newStatus" class="form-select">
-                            @{
-                                var isPending = doc.Status == DocumentStatus.Pending;
-                                var isIndexed = doc.Status == DocumentStatus.Indexed;
-                                var isFailed  = doc.Status == DocumentStatus.Failed;
-                            }
-                            <option value="0" selected="@isPending">🟡 Pending</option>
-                            <option value="1" selected="@isIndexed">🟢 Indexed</option>
-                            <option value="2" selected="@isFailed">🔴 Failed</option>
-                        </select>
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                    <i class="fa-solid fa-check-circle mr-2"></i>@TempData["SuccessMessage"]
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    <i class="fa-solid fa-exclamation-circle mr-2"></i>@TempData["ErrorMessage"]
+                </div>
+            }
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                @if (User.IsInRole("Admin"))
+                {
+
+
+
+
+                        <!-- Main Content -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">Thông tin tài liệu</h3>
+
+                            <div class="space-y-4">
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Tiêu đề</span>
+                                    <span class="text-sm text-gray-800 font-medium">@doc.Title</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Môn học</span>
+                                    <span class="text-sm text-gray-800">
+                                        <strong>@doc.SubjectCode</strong> — @doc.SubjectName
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Chương</span>
+                                    <span class="text-sm text-gray-800">
+                                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "—" : doc.ChapterTitle)
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Định dạng</span>
+                                    <span class="text-sm text-gray-800 font-mono uppercase">@doc.FileType</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Dung lượng</span>
+                                    <span class="text-sm text-gray-800 font-medium">@doc.FileSizeDisplay</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Ngày upload</span>
+                                    <span class="text-sm text-gray-800">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Người upload</span>
+                                    <span class="text-sm text-gray-800">
+                                        <i class="fa-solid fa-user text-xs mr-1"></i>@doc.UploadedByUsername
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between py-3">
+                                    <span class="text-sm font-medium text-gray-600">Trạng thái</span>
+                                    <span>
+                                        @switch (doc.Status)
+                                        {
+                                            case DocumentStatus.Pending:
+                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">🟡 Pending</span>
+                                                break;
+                                            case DocumentStatus.Indexed:
+                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">🟢 Indexed</span>
+                                                break;
+                                            case DocumentStatus.Failed:
+                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">🔴 Failed</span>
+                                                break;
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar -->
+
+
+
+                    }
+                    else if (User.IsInRole("Lecturer"))
+                    {
+
+
+
+
+                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">Thông tin tài liệu</h3>
+
+                            <div class="space-y-4">
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Tiêu đề</span>
+                                    <span class="text-sm text-gray-800 font-medium">@doc.Title</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Môn học</span>
+                                    <span class="text-sm text-gray-800">
+                                        <strong>@doc.SubjectCode</strong> — @doc.SubjectName
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Chương</span>
+                                    <span class="text-sm text-gray-800">
+                                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "—" : doc.ChapterTitle)
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Định dạng</span>
+                                    <span class="text-sm text-gray-800 font-mono uppercase">@doc.FileType</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Dung lượng</span>
+                                    <span class="text-sm text-gray-800 font-medium">@doc.FileSizeDisplay</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Ngày upload</span>
+                                    <span class="text-sm text-gray-800">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                                </div>
+
+                                <div class="flex justify-between py-3 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-600">Người upload</span>
+                                    <span class="text-sm text-gray-800">
+                                        <i class="fa-solid fa-user text-xs mr-1"></i>@doc.UploadedByUsername
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between py-3">
+                                    <span class="text-sm font-medium text-gray-600">Trạng thái</span>
+                                    <span>
+                                        @switch (doc.Status)
+                                        {
+                                            case DocumentStatus.Pending:
+                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">🟡 Pending</span>
+                                                break;
+                                            case DocumentStatus.Indexed:
+                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">🟢 Indexed</span>
+                                                break;
+                                            case DocumentStatus.Failed:
+                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">🔴 Failed</span>
+                                                break;
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <!-- Update Status Card -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">Cập nhật trạng thái</h3>
+
+                                <form asp-action="UpdateStatus" asp-route-id="@doc.Id" method="post" class="space-y-4">
+                                    @Html.AntiForgeryToken()
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái mới</label>
+                                        <select name="newStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-button">
+                                            @{
+                                                    var isPending = doc.Status == DocumentStatus.Pending;
+                                                    var isIndexed = doc.Status == DocumentStatus.Indexed;
+                                                    var isFailed = doc.Status == DocumentStatus.Failed;
+                                                }
+                                                <option value="0" selected="@isPending">🟡 Pending</option>
+                                    <option value="1" selected="@isIndexed">🟢 Indexed</option>
+                                    <option value="2" selected="@isFailed">🔴 Failed</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="w-full bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i>Lưu trạng thái
+                            </button>
+                        </form>
                     </div>
-                    <button type="submit" class="btn-primary btn-block">💾 Lưu trạng thái</button>
-                </form>
-            </div>
 
-            @* ─── Danger Zone ─── *@
-            <div class="glass-card danger-card">
-                <h2 class="card-section-title danger-title">Vùng nguy hiểm</h2>
-                <p class="danger-desc">Xoá tài liệu sẽ xoá cả file khỏi server. Hành động này không thể khôi phục.</p>
-                <a asp-action="Delete" asp-route-id="@doc.Id" class="btn-danger btn-block">Xoá tài liệu</a>
+                    <!-- Danger Zone -->
+                    <div class="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
+                        <h3 class="text-lg font-bold text-red-600 mb-3">⚠️ Vùng nguy hiểm</h3>
+                        <p class="text-sm text-red-700 mb-4">
+                            Xoá tài liệu sẽ xoá cả file khỏi server. Hành động này không thể khôi phục.
+                        </p>
+                        <a asp-action="Delete" asp-route-id="@doc.Id" class="block w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 px-4 rounded-xl transition text-center shadow-sm">
+                            <i class="fa-solid fa-trash mr-2"></i>Xoá tài liệu
+                        </a>
+                    </div>
+                </div>
+                }
             </div>
         </div>
-    </div>
-</div>
+    </main>
 
-<style>
-    .detail-container { display: flex; flex-direction: column; gap: 1.5rem; }
-
-    /* Header */
-    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 1.75rem 2rem; gap: 1rem; }
-    .header-left { display: flex; align-items: center; gap: 1.25rem; }
-    .page-header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.2rem; }
-    .original-name { font-size: 0.82rem; color: var(--text-secondary); }
-    .header-actions { display: flex; gap: 0.75rem; align-items: center; flex-shrink: 0; }
-    .btn-download-main { padding: 0.6rem 1.3rem; text-decoration: none; border-radius: 8px; font-size: 0.88rem; }
-    .btn-back { color: var(--text-secondary); font-size: 0.85rem; text-decoration: none; padding: 0.5rem 0.9rem; border: 1px solid var(--border-color); border-radius: 8px; transition: var(--transition-smooth); }
-    .btn-back:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
-
-    /* Alerts */
-    .alert { padding: 0.9rem 1.25rem; border-radius: 10px; font-size: 0.9rem; }
-    .alert-success { background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3);  color: #4ade80; }
-    .alert-danger  { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
-
-    /* Grid layout */
-    .detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
-    @@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
-
-    /* Meta card */
-    .meta-card { padding: 2rem; }
-    .card-section-title { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
-    .meta-table { display: flex; flex-direction: column; gap: 0; }
-    .meta-row { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-    .meta-row:last-child { border-bottom: none; }
-    .meta-key { font-size: 0.82rem; color: var(--text-secondary); align-self: center; }
-    .meta-val { font-size: 0.88rem; color: #e2e8f0; }
-
-    /* File badges */
-    .file-badge-lg { display: inline-block; padding: 0.5rem 0.9rem; border-radius: 8px; font-size: 0.95rem; font-weight: 800; flex-shrink: 0; }
-    .file-badge-lg.pdf  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-    .file-badge-lg.docx { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-    .file-badge-lg.pptx { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
-
-    /* Status badges */
-    .status-badge { font-size: 0.82rem; padding: 0.3rem 0.8rem; border-radius: 20px; }
-    .status-badge.pending { background: rgba(234,179,8,0.1);   color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
-    .status-badge.indexed { background: rgba(34,197,94,0.1);   color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-    .status-badge.failed  { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-
-    /* Sidebar */
-    .detail-sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
-    .status-card { padding: 1.5rem; }
-    .form-group { margin-bottom: 1rem; }
-    .form-label { font-size: 0.82rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem; }
-    .form-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; padding: 0.55rem 0.9rem; font-size: 0.88rem; outline: none; }
-    .form-select option { background-color: #1c1c21; color: #fff; }
-    .form-select:focus { border-color: var(--accent-orange); }
-    .btn-block { width: 100%; text-align: center; padding: 0.65rem; border-radius: 8px; font-size: 0.88rem; }
-
-    /* Danger zone */
-    .danger-card { padding: 1.5rem; border-color: rgba(239,68,68,0.2); }
-    .danger-title { color: #f87171; }
-    .danger-desc { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5; }
-    .btn-danger {
-        display: block; background: rgba(239,68,68,0.1); color: #f87171;
-        border: 1px solid rgba(239,68,68,0.3); text-decoration: none;
-        border-radius: 8px; transition: var(--transition-smooth); cursor: pointer;
-    }
-    .btn-danger:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); }
-</style>
+</body>
+</html>

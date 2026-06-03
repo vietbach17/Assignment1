@@ -3,179 +3,311 @@
     ViewData["Title"] = "Hội Viên Của Tôi";
     bool isFreePlan = Model.SubscriptionPlanId == 1 || Model.PlanName == "Free";
     bool isUnlimitedPlan = Model.QuestionLimit >= 9999;
+    ViewBag.ActiveMenu = "Subscription";
+    Layout = null;
 }
 
-<style>
-    .status-container {
-        max-width: 600px;
-        margin: 2rem auto;
-    }
-
-    .stat-box {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 2rem;
-        text-align: center;
-        margin: 1.5rem 0;
-    }
-
-    .remaining-count {
-        font-size: 4rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        line-height: 1;
-        margin: 0.5rem 0;
-    }
-
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-        .info-row:last-child {
-            border-bottom: none;
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EduManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+        
+        :root {
+            --pink: #eb2f64; --yellow: #f4cf45; --green: #5cb85c; 
+            --blue: #4fa8db; --black: #000; --white: #fff; --bg: #f4f4f6;
+            --border: 3px solid var(--black);
+            --shadow: 4px 4px 0px 0px var(--black);
         }
 
-    .alert-success-glass {
-        background: rgba(16, 185, 129, 0.1);
-        color: #6ee7b7;
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        padding: 1rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-
-    /* Countdown timer style */
-    .countdown-box {
-        background: rgba(251, 191, 36, 0.08);
-        border: 1px solid rgba(251, 191, 36, 0.2);
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
-        margin: 1rem 0;
-        text-align: center;
-    }
-
-    .countdown-label {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin-bottom: 0.3rem;
-    }
-
-    .countdown-timer {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #fbbf24;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .badge-permanent {
-        color: #22c55e;
-        font-weight: 600;
-    }
-</style>
-
-<div class="status-container">
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert-success-glass">
-            ✦ @TempData["SuccessMessage"]
-        </div>
-    }
-
-    <div class="glass-card">
-        <h2 style="text-align: center; margin-bottom: 1.5rem;">Thông tin <span style="color: var(--accent-blue)">Hội viên</span></h2>
-
-        <div class="stat-box">
-            <p style="color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
-                @(isUnlimitedPlan ? "Số lượt câu hỏi còn lại" : "Số lượt còn lại hôm nay")
-            </p>
-            <div class="remaining-count">
-                @(isUnlimitedPlan ? "∞" : Model.RemainingQuestions.ToString())
-            </div>
-            <p style="color: var(--text-secondary); font-size: 0.85rem;">
-                Dựa trên gói: <span style="color: #fff; font-weight: 600;">@Model.PlanName</span>
-                @if (!isUnlimitedPlan)
-                {
-                    <span> — @Model.QuestionLimit câu/ngày</span>
-                }
-            </p>
-        </div>
-
-        @* Countdown timer - chỉ hiện khi user đã dùng ít nhất 1 câu hỏi và gói không phải unlimited *@
-        @if (!isUnlimitedPlan && Model.DailyResetTime.HasValue)
-        {
-            <div class="countdown-box">
-                <div class="countdown-label">⏳ Lượt câu hỏi sẽ reset sau</div>
-                <div class="countdown-timer" id="countdown-timer">Đang tính...</div>
-            </div>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        
+        body {
+            background-color: var(--bg);
+            display: flex; min-height: 100vh; color: var(--black);
+            background-image: radial-gradient(#d1d1d1 2px, transparent 2px);
         }
 
-        <div class="info-section" style="margin-bottom: 2rem;">
-            <div class="info-row">
-                <span style="color: var(--text-secondary);">Ngày kích hoạt</span>
-                <span>@Model.StartDate.ToString("dd/MM/yyyy")</span>
-            </div>
-            <div class="info-row">
-                <span style="color: var(--text-secondary);">Ngày hết hạn</span>
-                @if (isFreePlan || Model.EndDate.Year >= 9000)
-                {
-                    <span class="badge-permanent">♾️ Vĩnh viễn</span>
-                }
-                else
-                {
-                    <span>@Model.EndDate.ToString("dd/MM/yyyy")</span>
-                }
-            </div>
-            <div class="info-row">
-                <span style="color: var(--text-secondary);">Tổng hạn mức gói</span>
-                <span>@(isUnlimitedPlan ? "Không giới hạn" : $"{Model.QuestionLimit} câu hỏi / ngày")</span>
-            </div>
-        </div>
+        /* Sidebar */
+        .sidebar {
+            width: 260px; background: var(--white); border-right: var(--border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 15px;
+            position: sticky; top: 0; height: 100vh;
+        }
+        .logo { color: var(--pink); font-size: 22px; font-weight: 900; margin-bottom: 20px; }
+        .nav-item {
+            padding: 12px 15px; font-weight: 800; color: var(--black);
+            text-decoration: none; display: flex; align-items: center; gap: 12px;
+            border: 3px solid transparent; transition: 0.1s;
+        }
+        .nav-item.active {
+            background: var(--pink); color: var(--white);
+            border-color: var(--black); box-shadow: var(--shadow);
+        }
+        .nav-item:not(.active):hover { border-color: var(--black); transform: translate(-2px, -2px); box-shadow: var(--shadow); }
 
-        <div class="action-buttons" style="display: flex; gap: 1rem;">
-            <a asp-action="Index" class="btn-primary" style="flex: 2;">Nâng cấp gói</a>
-            <a href="/" class="btn-secondary" style="flex: 1;">Về trang chủ</a>
+        /* Main Content */
+        .main-content { flex: 1; padding: 40px; }
+        .title-page { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; }
+        .brutal-box { background: var(--white); border: var(--border); box-shadow: 6px 6px 0px 0px var(--black); padding: 25px; }
+        .brutal-btn { border: 2px solid var(--black); font-weight: 800; cursor: pointer; box-shadow: 2px 2px 0px 0px var(--black); padding: 10px 20px; }
+        .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--black); }
+        .brutal-btn.primary { background: var(--pink); color: var(--white); }
+        .brutal-btn.secondary { background: var(--white); color: var(--black); border: 2px solid var(--black); }
+
+        /* User Profile */
+        .user-profile {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background-color: var(--white);
+            border: 3px solid var(--black);
+            box-shadow: 4px 4px 0px 0px var(--black);
+        }
+        .avatar-box {
+            width: 36px; height: 36px; background-color: var(--pink);
+            border: 2px solid var(--black); display: flex; align-items: center; justify-content: center;
+            color: var(--white); font-size: 14px; flex-shrink: 0;
+        }
+        .user-info { display: flex; flex-direction: column; }
+        .user-info .username { font-weight: 800; font-size: 12px; color: var(--black); }
+        .user-info .role { font-weight: 700; font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px; }
+
+        /* Status Container */
+        .status-box {
+            background: var(--yellow);
+            border: var(--border);
+            box-shadow: 6px 6px 0px var(--black);
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .remaining-count {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--pink);
+            margin: 15px 0;
+        }
+
+        .remaining-label {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .plan-name-display {
+            font-size: 14px;
+            font-weight: 700;
+            color: #666;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .info-item {
+            background: #f9f9f9;
+            border: 2px solid var(--black);
+            padding: 15px;
+            box-shadow: 3px 3px 0px var(--black);
+        }
+
+        .info-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--black);
+        }
+
+        .countdown-box {
+            background: var(--yellow);
+            border: 2px solid var(--black);
+            box-shadow: 3px 3px 0px var(--black);
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 700;
+        }
+
+        .countdown-timer {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--pink);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .action-section {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .action-section a {
+            flex: 1;
+            text-align: center;
+        }
+
+        .badge-permanent {
+            color: var(--green);
+            font-weight: 900;
+        }
+
+        .success-message {
+            background: var(--green);
+            border: var(--border);
+            box-shadow: 4px 4px 0px var(--black);
+            padding: 15px;
+            color: var(--white);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i> EduManager</div>
+        <a asp-controller="Home" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Overview" ? "active" : "")"><i class="fa-solid fa-border-all"></i> TỔNG QUAN</a>
+        <a asp-controller="StudentDocument" asp-action="Subjects" class="nav-item @(ViewBag.ActiveMenu == "Subjects" ? "active" : "")"><i class="fa-solid fa-book-open"></i> MÔN HỌC</a>
+        <a asp-controller="StudentDocument" asp-action="Documents" class="nav-item @(ViewBag.ActiveMenu == "Docs" ? "active" : "")"><i class="fa-regular fa-file-lines"></i> TÀI LIỆU</a>
+        <a asp-controller="Home" asp-action="Chat" class="nav-item @(ViewBag.ActiveMenu == "AI" ? "active" : "")"><i class="fa-solid fa-robot"></i> CHAT AI</a>
+        <a asp-controller="Subscription" asp-action="Index" class="nav-item @(ViewBag.ActiveMenu == "Subscription" ? "active" : "")"><i class="fa-solid fa-crown"></i> GÓI HỘI VIÊN</a>
+
+        <div style="margin-top:auto;">
+            <div class="brutal-box" style="display:flex;align-items:center;gap:12px;padding:10px;">
+                <div class="avatar-box">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <div class="username">@User.Identity?.Name</div>
+                    <div class="role">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</div>
+                </div>
+            </div>
+            <a asp-controller="Auth" asp-action="Logout" class="nav-item" style="border:dashed 2px var(--black);margin-top:10px">Log out</a>
         </div>
     </div>
-</div>
 
-@if (!isUnlimitedPlan && Model.DailyResetTime.HasValue)
-{
-    <script>
-        (function () {
-            // Thời gian reset = DailyResetTime + 24h (server trả về UTC)
-            var resetTimeUtc = new Date("@Model.DailyResetTime.Value.AddHours(24).ToString("o")");
-            var timerEl = document.getElementById('countdown-timer');
+    <div class="main-content">
+        <h1 class="title-page">GÓI HỘI VIÊN CỦA TÔI <i class="fa-solid fa-crown" style="color:#666;"></i></h1>
 
-            function updateCountdown() {
-                var now = new Date();
-                var diff = resetTimeUtc.getTime() - now.getTime();
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="success-message">
+                ✦ @TempData["SuccessMessage"]
+            </div>
+        }
 
-                if (diff <= 0) {
-                    timerEl.textContent = "🔄 Đã reset! Tải lại trang...";
-                    timerEl.style.color = "#22c55e";
-                    setTimeout(function () { location.reload(); }, 2000);
-                    return;
-                }
+        <div class="brutal-box">
+            <div style="text-align:center;margin-bottom:25px;">
+                <div style="font-size:14px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:10px;">
+                    @(isUnlimitedPlan ? "Số lượt câu hỏi" : "Số lượt còn lại hôm nay")
+                </div>
+                <div class="remaining-count">
+                    @(isUnlimitedPlan ? "∞" : Model.RemainingQuestions.ToString())
+                </div>
+                <div class="plan-name-display">
+                    Dựa trên gói: <strong>@Model.PlanName</strong>
+                    @if (!isUnlimitedPlan)
+                    {
+                        <span> — @Model.QuestionLimit câu/ngày</span>
+                    }
+                </div>
+            </div>
 
-                var hours = Math.floor(diff / (1000 * 60 * 60));
-                var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                timerEl.textContent = hours.toString().padStart(2, '0') + "h "
-                    + minutes.toString().padStart(2, '0') + "p "
-                    + seconds.toString().padStart(2, '0') + "s";
-
-                requestAnimationFrame(updateCountdown);
+            @if (!isUnlimitedPlan && Model.DailyResetTime.HasValue)
+            {
+                <div class="countdown-box">
+                    <div style="font-size:12px;color:#666;margin-bottom:8px;">⏳ Reset lượt hỏi sau</div>
+                    <div class="countdown-timer" id="countdown-timer">Đang tính...</div>
+                </div>
             }
 
-            updateCountdown();
-        })();
-    </script>
-}
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Ngày kích hoạt</div>
+                    <div class="info-value">@Model.StartDate.ToString("dd/MM/yyyy")</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Ngày hết hạn</div>
+                    <div class="info-value">
+                        @if (isFreePlan || Model.EndDate.Year >= 9000)
+                        {
+                            <span class="badge-permanent">♾️ Vĩnh viễn</span>
+                        }
+                        else
+                        {
+                            @Model.EndDate.ToString("dd/MM/yyyy")
+                        }
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Gói hạn mức</div>
+                    <div class="info-value">@(isUnlimitedPlan ? "Vô hạn" : $"{Model.QuestionLimit} câu/ngày")</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Trạng thái</div>
+                    <div class="info-value" style="color:var(--green);">✅ Hoạt động</div>
+                </div>
+            </div>
+
+            <div class="action-section">
+                <a asp-action="Index" class="brutal-btn primary" style="flex:2;">Nâng cấp gói</a>
+                <a href="/" class="brutal-btn secondary" style="flex:1;">Về trang chủ</a>
+            </div>
+        </div>
+    </div>
+
+    @if (!isUnlimitedPlan && Model.DailyResetTime.HasValue)
+    {
+        <script>
+            (function () {
+                var resetTimeUtc = new Date("@Model.DailyResetTime.Value.AddHours(24).ToString("o")");
+                var timerEl = document.getElementById('countdown-timer');
+
+                function updateCountdown() {
+                    var now = new Date();
+                    var diff = resetTimeUtc.getTime() - now.getTime();
+
+                    if (diff <= 0) {
+                        timerEl.textContent = "🔄 Đã reset!";
+                        timerEl.style.color = "var(--green)";
+                        setTimeout(function () { location.reload(); }, 2000);
+                        return;
+                    }
+
+                    var hours = Math.floor(diff / (1000 * 60 * 60));
+                    var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    timerEl.textContent = hours.toString().padStart(2, '0') + "h "
+                        + minutes.toString().padStart(2, '0') + "p "
+                        + seconds.toString().padStart(2, '0') + "s";
+
+                    requestAnimationFrame(updateCountdown);
+                }
+
+                updateCountdown();
+            })();
+        </script>
+    }
+</body>
+</html>

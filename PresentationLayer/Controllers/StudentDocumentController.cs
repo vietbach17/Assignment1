@@ -1,7 +1,9 @@
-using System.Security.Claims;
 using BussinessLayer.Services;
+using DataAccessLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Security.Claims;
 
 namespace PresentationLayer.Controllers
 {
@@ -50,16 +52,16 @@ namespace PresentationLayer.Controllers
         // ─────────────────────────────────────────────────────────────────────
 
         [HttpGet]
-        public async Task<IActionResult> Chapters(int subjectId)
+        public async Task<IActionResult> Chapters(int id)
         {
-            var subject = await _subjectService.GetSubjectByIdAsync(subjectId, includeDeleted: false);
+            var subject = await _subjectService.GetSubjectByIdAsync(id, includeDeleted: false);
             if (subject == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy môn học.";
                 return RedirectToAction(nameof(Subjects));
             }
 
-            var chapters = await _chapterService.GetChaptersBySubjectIdAsync(subjectId, includeDeleted: false);
+            var chapters = await _chapterService.GetChaptersBySubjectIdAsync(id, includeDeleted: false);
 
             ViewBag.SubjectId = subject.Id;
             ViewBag.SubjectCode = subject.SubjectCode;
@@ -73,10 +75,16 @@ namespace PresentationLayer.Controllers
         // GET: /StudentDocument/Documents?chapterId={id}
         // Hiển thị danh sách tài liệu trong một chapter
         // ─────────────────────────────────────────────────────────────────────
-
         [HttpGet]
-        public async Task<IActionResult> Documents(int chapterId)
+        public async Task<IActionResult> Documents()
         {
+            var allDocuments = await _documentService.GetAllDocumentsAsync();
+            return View(allDocuments);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DocumentInChapter(int chapterId)
+        {
+            TempData["ErrorMessage"] = null;
             var chapter = await _chapterService.GetChapterWithSubjectAsync(chapterId, includeDeleted: false);
             if (chapter == null)
             {
@@ -224,6 +232,7 @@ namespace PresentationLayer.Controllers
         [HttpGet]
         public async Task<IActionResult> SubjectDocuments(int subjectId)
         {
+            TempData["ErrorMessage"] = null;
             var subject = await _subjectService.GetSubjectByIdAsync(subjectId, includeDeleted: false);
             if (subject == null)
             {
