@@ -45,7 +45,7 @@ namespace BussinessLayer.Services
             };
         }
 
-        public async Task<bool> RegisterAsync(string username, string password)
+        public async Task<bool> RegisterAsync(string username, string password, string email, int roleId)
         {
             // Kiểm tra xem Username đã tồn tại chưa
             var existingUser = await _userRepository.GetByUsernameAsync(username);
@@ -54,10 +54,6 @@ namespace BussinessLayer.Services
                 return false; // Tên đăng nhập bị trùng lặp
             }
 
-            // Tìm thông tin Role "Student" để gán mặc định cho người đăng ký mới
-            var studentRole = await _roleRepository.GetByNameAsync("Student");
-            int defaultRoleId = studentRole?.Id ?? 3; // Fallback về ID 3 (Student) nếu không tìm thấy
-
             // Mã hóa mật khẩu bằng BCrypt để lưu trữ an toàn chống tấn công Rainbow Table
             string passwordHash = BCryptNet.HashPassword(password);
 
@@ -65,7 +61,8 @@ namespace BussinessLayer.Services
             {
                 Username = username,
                 PasswordHash = passwordHash,
-                RoleId = defaultRoleId
+                Email = email.Trim().ToLowerInvariant(),
+                RoleId = roleId
             };
 
             // Lưu người dùng mới vào Database thông qua Repository

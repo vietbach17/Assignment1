@@ -174,7 +174,7 @@
             color: var(--black);
         }
 
-        .input-wrapper input {
+        .input-wrapper input, .input-wrapper select {
             width: 100%;
             padding: 12px 40px;
             border: var(--border-width) solid var(--black);
@@ -184,9 +184,25 @@
             transition: all 0.1s;
         }
 
-        .input-wrapper input:focus {
+        .input-wrapper select {
+            background-color: var(--white);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .input-wrapper input:focus, .input-wrapper select:focus {
             box-shadow: 4px 4px 0px 0px var(--black);
             transform: translate(-2px, -2px);
+        }
+
+        .input-wrapper i.right-icon {
+            position: absolute;
+            right: 15px;
+            font-size: 16px;
+            color: var(--black);
+            pointer-events: none;
         }
 
         .input-wrapper input::placeholder {
@@ -310,6 +326,34 @@
                         <input asp-for="Username" placeholder="Nhập tên đăng nhập của bạn" required autocomplete="username">
                     </div>
                     <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div class="input-group">
+                    <label asp-for="Email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope left-icon"></i>
+                        <input asp-for="Email" type="email" placeholder="Nhập email của thành viên" required autocomplete="email">
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="input-group">
+                    <label asp-for="RoleId">Vai trò / Quyền hạn</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user-tag left-icon"></i>
+                        <select asp-for="RoleId" required>
+                            <option value="">-- Chọn vai trò --</option>
+                            @if (ViewBag.Roles != null)
+                            {
+                                foreach (var role in (IEnumerable<DataAccessLayer.Models.Role>)ViewBag.Roles)
+                                {
+                                    <option value="@role.Id">@role.RoleName</option>
+                                }
+                            }
+                        </select>
+                        <i class="fa-solid fa-chevron-down right-icon"></i>
+                    </div>
+                    <span asp-validation-for="RoleId" class="text-danger"></span>
                 </div>
 
                 <div class="input-group">

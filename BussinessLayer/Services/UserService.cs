@@ -19,7 +19,8 @@ namespace BussinessLayer.Services
             {
                 Id = u.Id,
                 Username = u.Username,
-                RoleName = u.Role?.RoleName ?? "N/A"
+                RoleName = u.Role?.RoleName ?? "N/A",
+                Email = u.Email
             }).ToList();
         }
 
@@ -32,7 +33,8 @@ namespace BussinessLayer.Services
             {
                 Id = u.Id,
                 Username = u.Username,
-                RoleName = u.Role?.RoleName ?? "N/A"
+                RoleName = u.Role?.RoleName ?? "N/A",
+                Email = u.Email
             };
         }
     }
