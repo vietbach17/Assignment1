@@ -56,7 +56,7 @@ namespace PresentationLayer.Controllers
                 {
                     var subjects = await _subjectService.GetAllSubjectsAsync(includeDeleted: false);
                     ViewBag.SubjectCount = subjects.Count();
-                    return View("StudentDashboard");
+                    return RedirectToAction("Chat");
                 }
             }
             return RedirectToAction("Login", "Auth");
