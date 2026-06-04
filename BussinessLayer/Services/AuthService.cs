@@ -21,22 +21,18 @@ namespace BussinessLayer.Services
 
         public async Task<UserDto?> LoginAsync(string username, string password)
         {
-            // Tìm kiếm người dùng theo username
             var user = await _userRepository.GetByUsernameAsync(username);
             if (user == null)
-            {
-                return null; // Không tồn tại tên đăng nhập
-            }
+                return null;
 
-            // Kiểm tra mật khẩu băm BCrypt.
-            // BCrypt.Verify tự động trích xuất Salt từ chuỗi hash và so khớp an toàn
+            // Tài khoản bị vô hiệu hóa (soft delete) — không thể đăng nhập
+            if (user.IsDeleted)
+                return new UserDto { Id = -1, Username = "__DISABLED__" };
+
             bool isPasswordValid = BCryptNet.Verify(password, user.PasswordHash);
             if (!isPasswordValid)
-            {
-                return null; // Mật khẩu không chính xác
-            }
+                return null;
 
-            // Đăng nhập thành công, chuyển đổi và trả về DTO an toàn (che giấu PasswordHash)
             return new UserDto
             {
                 Id = user.Id,

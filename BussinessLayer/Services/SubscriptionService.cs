@@ -79,7 +79,26 @@ namespace BussinessLayer.Services
                 existingPlan.Price = planDto.Price;
                 existingPlan.QuestionLimit = planDto.QuestionLimit;
 
-                _repository.UpdatePlan(existingPlan); // Hoặc _context.SaveChanges();
+                _repository.UpdatePlan(existingPlan);
+            }
+        }
+
+        public void UpdatePlanWithOptions(SubscriptionPlanDTO planDto, bool applyToExistingStudents)
+        {
+            var existingPlan = _repository.GetPlanById(planDto.Id);
+            if (existingPlan == null) return;
+
+            existingPlan.Name = planDto.Name;
+            existingPlan.Description = planDto.Description;
+            existingPlan.Price = planDto.Price;
+            existingPlan.QuestionLimit = planDto.QuestionLimit;
+
+            _repository.UpdatePlan(existingPlan);
+
+            // Nếu admin chọn áp dụng giới hạn mới ngay cho tất cả student đang dùng gói này
+            if (applyToExistingStudents)
+            {
+                _repository.UpdateStudentQuestionLimitByPlan(planDto.Id, planDto.QuestionLimit);
             }
         }
         public void DeletePlan(int id) => _repository.DeletePlan(id);

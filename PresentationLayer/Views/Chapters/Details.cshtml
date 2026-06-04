@@ -1,7 +1,10 @@
 @model BussinessLayer.DTOs.ChapterDto
+@using BussinessLayer.DTOs
 @{
     ViewData["Title"] = $"Chi tiết Chương {Model.ChapterNumber}";
     Layout = null;
+    var documents = ViewBag.Documents as IEnumerable<DocumentDto> ?? Enumerable.Empty<DocumentDto>();
+    var canManageChapter = ViewBag.CanManageChapter as bool? ?? false;
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -156,11 +159,54 @@
                             </div>
                         </div>
 
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                                <h3 class="text-lg font-semibold text-gray-800">Tài liệu đã upload</h3>
+                                <span class="text-xs font-semibold text-gray-500">@documents.Count() tài liệu</span>
+                            </div>
+
+                            @if (!documents.Any())
+                            {
+                                <div class="text-gray-500 bg-gray-50 p-4 rounded-xl text-sm">
+                                    Chương này chưa có tài liệu nào.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="space-y-3">
+                                    @foreach (var doc in documents)
+                                    {
+                                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-4">
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                <div class="w-10 h-10 rounded-lg flex items-center justify-center @(doc.FileType == "pdf" ? "bg-red-100 text-red-600" : doc.FileType == "docx" ? "bg-blue-100 text-blue-600" : "bg-orange-100 text-orange-600")">
+                                                    <i class="fa-solid @(doc.FileType == "pdf" ? "fa-file-pdf" : doc.FileType == "docx" ? "fa-file-word" : "fa-file-powerpoint")"></i>
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <h4 class="text-sm font-bold text-gray-800 truncate">@doc.Title</h4>
+                                                    <p class="text-xs text-gray-500 mt-1">
+                                                        @doc.FileSizeDisplay • @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                                                    <i class="fa-solid fa-eye mr-1"></i>Xem
+                                                </a>
+                                                <a asp-controller="Document" asp-action="Download" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 rounded-lg transition">
+                                                    <i class="fa-solid fa-download mr-1"></i>Tải về
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
                         <div class="flex justify-between items-center pt-4 border-t border-gray-100">
                             <a asp-action="Index" asp-route-subjectId="@Model.SubjectId" class="text-gray-500 hover:text-gray-800 font-medium py-2 px-4 transition flex items-center gap-2">
                                 <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách chương
                             </a>
-                            @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+                            @if (canManageChapter)
                             {
                                 <div class="flex gap-3">
                                     <a asp-action="Edit" asp-route-id="@Model.Id" class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-6 rounded-xl transition shadow-sm">

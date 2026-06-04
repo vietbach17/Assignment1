@@ -92,6 +92,24 @@ namespace DataAccessLayer.Repositories
             _context.SaveChanges();
         }
 
+        /// <summary>
+        /// Cập nhật RemainingQuestions cho tất cả StudentSubscription đang dùng gói planId.
+        /// Dùng khi admin muốn áp giới hạn mới ngay lập tức cho student hiện tại.
+        /// </summary>
+        public void UpdateStudentQuestionLimitByPlan(int planId, int newLimit)
+        {
+            var subs = _context.StudentSubscriptions
+                .Where(s => s.SubscriptionPlanId == planId)
+                .ToList();
+
+            foreach (var sub in subs)
+            {
+                sub.RemainingQuestions = newLimit;
+            }
+
+            _context.SaveChanges();
+        }
+
         public void AddTransaction(PaymentTransaction transaction)
         {
             _context.PaymentTransactions.Add(transaction);
