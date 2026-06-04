@@ -17,8 +17,14 @@ namespace BussinessLayer.DTOs
         [Range(0, double.MaxValue, ErrorMessage = "Giá gói phải lớn hơn hoặc bằng 0")]
         public decimal Price { get; set; }
 
+        /// <summary>
+        /// Giới hạn câu hỏi mỗi ngày. int.MaxValue = không giới hạn.
+        /// </summary>
         [Required(ErrorMessage = "Giới hạn câu hỏi không được để trống")]
         [Range(1, int.MaxValue, ErrorMessage = "Giới hạn câu hỏi phải lớn hơn 0")]
         public int QuestionLimit { get; set; }
+
+        /// <summary>Tiện ích hiển thị — không lưu DB</summary>
+        public bool IsUnlimited => QuestionLimit == int.MaxValue;
     }
 }

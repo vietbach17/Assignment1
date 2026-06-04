@@ -16,13 +16,16 @@ namespace PresentationLayer.Controllers
     public class SubjectsController : Controller
     {
         private readonly ISubjectService _subjectService;
+        private readonly IDocumentService _documentService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public SubjectsController(
             ISubjectService subjectService,
+            IDocumentService documentService,
             IHttpContextAccessor httpContextAccessor)
         {
             _subjectService = subjectService;
+            _documentService = documentService;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -53,6 +56,8 @@ namespace PresentationLayer.Controllers
                 TempData["ErrorMessage"] = "Subject not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            ViewBag.Documents = await _documentService.GetDocumentsBySubjectAsync(id);
 
             return View(subject);
         }
@@ -87,6 +92,13 @@ namespace PresentationLayer.Controllers
                 return View(dto);
             }
 
+            if (!assignedLecturerId.HasValue)
+            {
+                ModelState.AddModelError("assignedLecturerId", "Vui lòng chọn giảng viên phụ trách upload tài liệu.");
+                await PopulateLecturersDropdown();
+                return View(dto);
+            }
+
             // Lấy userId từ Claims
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -107,14 +119,10 @@ namespace PresentationLayer.Controllers
             }
 
             // Assign Lecturer nếu được chọn
-            if (assignedLecturerId.HasValue && subject != null)
+            if (subject != null)
             {
-                // Check if lecturer is already assigned to avoid duplicate
-                var isAlreadyAssigned = await _subjectService.IsLecturerAssignedToSubjectAsync(subject.Id, assignedLecturerId.Value);
-                if (!isAlreadyAssigned)
-                {
-                    await _subjectService.AssignLecturerAsync(subject.Id, assignedLecturerId.Value);
-                }
+                await _subjectService.ClearLecturerAssignmentsAsync(subject.Id);
+                await _subjectService.AssignLecturerAsync(subject.Id, assignedLecturerId.Value);
             }
 
             // Thành công - hiển thị success message và redirect về Index
@@ -180,6 +188,13 @@ namespace PresentationLayer.Controllers
                 return View(dto);
             }
 
+            if (!assignedLecturerId.HasValue)
+            {
+                ModelState.AddModelError("assignedLecturerId", "Vui lòng chọn giảng viên phụ trách upload tài liệu.");
+                await PopulateLecturersDropdown();
+                return View(dto);
+            }
+
             // Lấy userId từ Claims
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -199,14 +214,8 @@ namespace PresentationLayer.Controllers
                 return View(dto);
             }
 
-            // Update lecturer assignment nếu được chọn
-            if (assignedLecturerId.HasValue)
-            {
-                // Xóa tất cả assignments cũ
-                await _subjectService.ClearLecturerAssignmentsAsync(id);
-                // Thêm assignment mới
-                await _subjectService.AssignLecturerAsync(id, assignedLecturerId.Value);
-            }
+            await _subjectService.ClearLecturerAssignmentsAsync(id);
+            await _subjectService.AssignLecturerAsync(id, assignedLecturerId.Value);
 
             // Thành công - hiển thị success message và redirect về Index
             TempData["SuccessMessage"] = message;

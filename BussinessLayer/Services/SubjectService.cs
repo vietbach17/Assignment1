@@ -25,6 +25,12 @@ namespace BussinessLayer.Services
             return subjects.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<SubjectDto>> GetSubjectsByLecturerIdAsync(int lecturerId, bool includeDeleted = false)
+        {
+            var subjects = await _subjectRepository.GetByLecturerIdAsync(lecturerId, includeDeleted);
+            return subjects.Select(MapToDto);
+        }
+
         public async Task<SubjectDto?> GetSubjectByIdAsync(int id, bool includeDeleted = false)
         {
             var subject = await _subjectRepository.GetByIdAsync(id, includeDeleted);

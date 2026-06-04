@@ -10,6 +10,12 @@ namespace BussinessLayer.Interfaces
         SubscriptionPlanDTO? GetPlanById(int id);
         void CreatePlan(SubscriptionPlanDTO planDto);
         void UpdatePlan(SubscriptionPlanDTO planDto);
+
+        /// <summary>
+        /// Cập nhật gói và tuỳ chọn áp QuestionLimit mới cho tất cả student đang dùng gói đó.
+        /// </summary>
+        void UpdatePlanWithOptions(SubscriptionPlanDTO planDto, bool applyToExistingStudents);
+
         void DeletePlan(int id);
 
         StudentSubscriptionDTO? GetStudentSubscription(int userId);

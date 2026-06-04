@@ -69,6 +69,35 @@ namespace BussinessLayer.DTOs
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // ViewModel — Edit form
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// ViewModel cho form chỉnh sửa thông tin tài liệu (title, chapter)
+    /// </summary>
+    public class DocumentEditViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập tiêu đề tài liệu")]
+        [MaxLength(300, ErrorMessage = "Tiêu đề không được vượt quá 300 ký tự")]
+        [Display(Name = "Tiêu đề tài liệu")]
+        public string Title { get; set; } = null!;
+
+        [Required(ErrorMessage = "Vui lòng chọn môn học")]
+        [Display(Name = "Môn học")]
+        public int SubjectId { get; set; }
+
+        [Display(Name = "Chương (tuỳ chọn)")]
+        public int? ChapterId { get; set; }
+
+        // Thông tin read-only để hiển thị
+        public string? FileName { get; set; }
+        public string? FileType { get; set; }
+        public string? FileSizeDisplay { get; set; }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // ViewModel — Upload form
     // ─────────────────────────────────────────────────────────────────────────
 

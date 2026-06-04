@@ -19,6 +19,8 @@ namespace DataAccessLayer.Repositories
         /// <summary>Lấy danh sách tài liệu theo ChapterId</summary>
         Task<IEnumerable<Document>> GetByChapterIdAsync(int chapterId, bool includeDeleted = false);
 
+        Task<IEnumerable<Document>> GetByUploadedByUserIdAsync(int uploadedByUserId, bool includeDeleted = false);
+
         /// <summary>Thêm tài liệu mới vào database</summary>
         Task<Document> AddAsync(Document document);
 

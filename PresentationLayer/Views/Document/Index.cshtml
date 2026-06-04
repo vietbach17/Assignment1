@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Quản lý Tài liệu";
     Layout = null;
+    var canUploadDocuments = ViewBag.CanUploadDocuments as bool? ?? false;
+    var managedSubjectIds = ViewBag.ManagedSubjectIds as List<int> ?? new List<int>();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -164,6 +166,8 @@
             }
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+                @if (canUploadDocuments)
+                {
                 <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex justify-between items-start mb-6">
                         <div>
@@ -178,6 +182,8 @@
                         Tiến hành tải tài liệu
                     </a>
                 </div>
+
+                }
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">Bộ lọc</h3>
@@ -225,10 +231,13 @@
                 <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
                     <i class="fa-regular fa-folder-open text-4xl text-gray-300 mb-4 block"></i>
                     <h3 class="text-lg font-bold text-gray-800 mb-2">Chưa có tài liệu nào</h3>
-                    <p class="text-gray-500 text-sm mb-6">Nhấn nút bên trên để tải lên tài liệu đầu tiên.</p>
-                    <a asp-action="Upload" class="inline-block bg-brand-button hover:bg-brand-active text-white font-medium py-2 px-6 rounded-xl transition">
-                        Tải lên ngay
-                    </a>
+                    <p class="text-gray-500 text-sm mb-6">Chưa có tài liệu nào phù hợp với bộ lọc hiện tại.</p>
+                    @if (canUploadDocuments)
+                    {
+                        <a asp-action="Upload" class="inline-block bg-brand-button hover:bg-brand-active text-white font-medium py-2 px-6 rounded-xl transition">
+                            Tải lên ngay
+                        </a>
+                    }
                 </div>
             }
             else
@@ -298,9 +307,15 @@
                                     <a asp-action="Download" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition">
                                         <i class="fa-solid fa-download mr-1"></i>Tải về
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition">
-                                        <i class="fa-solid fa-trash mr-1"></i>Xoá
-                                    </a>
+                                    @if (managedSubjectIds.Contains(doc.SubjectId))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-lg transition">
+                                            <i class="fa-solid fa-pen mr-1"></i>Sửa
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition">
+                                            <i class="fa-solid fa-trash mr-1"></i>Xoá
+                                        </a>
+                                    }
                                 </div>
                             </div>
                         </div>

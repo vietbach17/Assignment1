@@ -227,6 +227,9 @@
                                                 <a asp-controller="Chapters" asp-action="Index" asp-route-subjectId="@subject.Id" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition" title="Quản lý Chương">
                                                     <i class="fa-solid fa-list"></i>
                                                 </a>
+                                            }
+                                            @if (User.IsInRole("Admin"))
+                                            {
                                                 <a asp-action="Edit" asp-route-id="@subject.Id" class="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition" title="Sửa">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>

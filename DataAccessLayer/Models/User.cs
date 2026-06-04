@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataAccessLayer.Models
 {
-    // Lớp thực thể đại diện cho Bảng User (Người dùng) trong Database
     [Table("Users")]
     public class User
     {
@@ -26,7 +25,12 @@ namespace DataAccessLayer.Models
         [Required]
         public int RoleId { get; set; }
 
-        // Khóa ngoại liên kết tới thực thể Role
+        /// <summary>Soft delete — tài khoản bị xóa mềm, không thể đăng nhập</summary>
+        public bool IsDeleted { get; set; } = false;
+
+        /// <summary>Ban — admin khóa tài khoản, không thể đăng nhập</summary>
+        public bool IsBanned { get; set; } = false;
+
         [ForeignKey(nameof(RoleId))]
         public virtual Role Role { get; set; } = null!;
     }

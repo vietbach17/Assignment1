@@ -53,8 +53,14 @@ namespace PresentationLayer.Controllers
 
             if (user == null)
             {
-                // Thêm lỗi ModelError hiển thị lên giao diện nếu đăng nhập thất bại
                 ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không chính xác.");
+                return View(model);
+            }
+
+            // Tài khoản bị vô hiệu hóa
+            if (user.Username == "__DISABLED__")
+            {
+                ModelState.AddModelError(string.Empty, "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.");
                 return View(model);
             }
 
