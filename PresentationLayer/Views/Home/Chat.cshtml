@@ -220,6 +220,14 @@
         }
         .send-btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px var(--black); }
 
+        .session-item {
+            transition: all 0.1s ease;
+        }
+        .session-item:hover {
+            background-color: #f5f5f5 !important;
+            transform: translate(-1px, -1px);
+        }
+
     </style>
 </head>
 <body>
@@ -251,55 +259,77 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
         
-        <!-- MIDDLE COLUMN (SOURCES) -->
-        <div class="middle-column">
-            <div class="section-title">Nguồn tài liệu</div>
-            <button class="brutal-btn-green"><i class="fa-solid fa-plus"></i> Thêm nguồn</button>
-
-            <div class="sources-list-box">
-                <div class="source-item">
-                    <span style="color: #d93856; font-weight:900;">PDF</span> Bộ đề thi thử khối đa diện - PDF
-                </div>
-                <div class="source-item">
-                    <span style="color: #2b579a; font-weight:900;">W</span> Sách Giáo Khoa Toán 12 - DOCX
-                </div>
-                <div class="source-item">
-                    <span style="color: #3b82f6; font-weight:900;">🌐</span> Đường link Wikipedia: Khối Đa Diện
-                </div>
-                <div class="source-item">
-                    <span style="color: #6b7280; font-weight:900;">📄</span> Tóm tắt công thức chương 1 - Text
+        <!-- MIDDLE COLUMN (SOURCES & HISTORY) -->
+        <div class="middle-column" style="width: 320px; padding: 25px 15px; border-right: var(--border); display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; height: 100vh; overflow: hidden;">
+            <!-- Nguồn tài liệu (Chiếm 45%) -->
+            <div style="display: flex; flex-direction: column; height: 42%;">
+                <div class="section-title" style="font-size: 15px; margin-bottom: 8px;">Nguồn tài liệu</div>
+                <div class="sources-list-box" style="flex: 1; overflow-y: auto; background: var(--white); border: var(--border); box-shadow: 3px 3px 0px var(--black); padding: 8px;">
+                    @if (ViewBag.Documents != null && ((List<BussinessLayer.DTOs.DocumentDto>)ViewBag.Documents).Any(d => d.Status == BussinessLayer.DTOs.DocumentStatus.Indexed))
+                    {
+                        @foreach (var doc in ((List<BussinessLayer.DTOs.DocumentDto>)ViewBag.Documents).Where(d => d.Status == BussinessLayer.DTOs.DocumentStatus.Indexed))
+                        {
+                            <div class="source-item" style="display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px dashed #eee;">
+                                <input type="checkbox" name="selectedDocs" value="@doc.Id" class="doc-checkbox" id="doc-@doc.Id" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--pink); flex-shrink: 0;" checked />
+                                <label for="doc-@doc.Id" style="cursor: pointer; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; margin-right: 4px;" title="@doc.Title">
+                                    <span style="color: @(doc.FileType.ToLower() == "pdf" ? "#d93856" : (doc.FileType.ToLower() == "docx" ? "#2b579a" : (doc.FileType.ToLower() == "pptx" ? "#d04423" : "#6b7280"))); font-weight:900; font-size: 10px;">
+                                        [@doc.FileType.ToUpper()]
+                                    </span> 
+                                    @doc.Title
+                                </label>
+                                <i class="fa-solid fa-eye" style="cursor: pointer; color: #555; transition: 0.1s; font-size: 11px; padding: 2px;" title="Xem nội dung AI đọc" onclick="previewDocumentText(@doc.Id)"></i>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="font-size: 11px; color: #777; font-style: italic; text-align: center; padding: 15px 0;">Không có tài liệu nào sẵn có để truy vấn.</div>
+                    }
                 </div>
             </div>
 
-            <div class="section-title" style="margin-top: auto; margin-bottom: 10px;">Hạn chế trả lời</div>
-            <div class="toggle-group">
-                <button class="toggle-btn">Tất cả</button>
-                <button class="toggle-btn active">Trong phạm vi tài liệu</button>
+            <!-- Lịch sử hội thoại (Chiếm 45%) -->
+            <div style="display: flex; flex-direction: column; height: 42%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div class="section-title" style="font-size: 15px; margin: 0;">Lịch sử Chat</div>
+                    <button onclick="createNewSession()" class="brutal-btn" style="padding: 3px 8px; font-size: 10px; font-weight: 800; background-color: var(--green); cursor: pointer; border: 2px solid #000; box-shadow: 1px 1px 0px #000; display: inline-flex; align-items: center; gap: 4px;" title="Tạo cuộc hội thoại mới">
+                        + MỚI
+                    </button>
+                </div>
+                <div id="sessionsListBox" style="flex: 1; overflow-y: auto; background: var(--white); border: var(--border); box-shadow: 3px 3px 0px var(--black); padding: 8px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="font-size: 11px; color: #777; font-style: italic; text-align: center; padding: 15px 0;">Đang tải...</div>
+                </div>
             </div>
-            <div class="restriction-hint">Hạn chế: Chỉ trả lời ĐÚNG phạm vi tài liệu.</div>
+
+            <!-- Hạn chế trả lời (Phần còn lại ở đáy) -->
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 4px;">
+                <div class="section-title" style="font-size: 14px; margin: 0;">Hạn chế trả lời</div>
+                <div class="toggle-group" style="margin-bottom: 2px; width: fit-content; display: flex;">
+                    <button class="toggle-btn" style="font-size: 11px; padding: 4px 10px;">Tất cả</button>
+                    <button class="toggle-btn active" style="font-size: 11px; padding: 4px 10px;">Trong phạm vi tài liệu</button>
+                </div>
+                <div class="restriction-hint" style="font-size: 10px; color: #555; font-weight: 700;">Hạn chế: Chỉ trả lời ĐÚNG phạm vi tài liệu.</div>
+            </div>
         </div>
 
         <!-- RIGHT COLUMN (CHAT) -->
         <div class="right-column">
             <div class="chat-container">
-                <div class="chat-header">
-                    TRỢ LÝ HỌC TẬP AI <i class="fa-solid fa-robot"></i>
+                <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                    <div style="flex: 1; text-align: center; margin-left: 100px;">
+                        TRỢ LÝ HỌC TẬP AI <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <button onclick="clearChatHistory()" class="brutal-btn" style="padding: 6px 12px; font-size: 11px; background-color: var(--white); font-weight: 800; border: 2px solid #000; box-shadow: 1px 1px 0px #000; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Xóa lịch sử trò chuyện">
+                        <i class="fa-solid fa-trash-can"></i> XÓA LỊCH SỬ
+                    </button>
                 </div>
 
                 <div class="chat-messages" id="chatMessages">
-                    <div class="message message-user">
-                        <div class="chat-avatar"><i class="fa-solid fa-user"></i></div>
-                        <div class="message-content">
-                            <div class="message-sender">Lan</div>
-                            <p class="message-text">Chào chatbot! Giúp mình ôn tập về Khối Đa Diện với.</p>
-                        </div>
-                    </div>
-
                     <div class="message message-bot">
                         <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
                         <div class="message-content">
-                            <div class="message-sender">Chatbot</div>
-                            <p class="message-text">Chào bạn! Dựa trên file "Bộ đề thi thử" bạn đã gửi, chương này gồm khái niệm đa diện đều và công thức tính thể tích. Bạn muốn bắt đầu từ phần nào?</p>
+                            <div class="message-sender">Trợ lý AI</div>
+                            <p class="message-text">Chào bạn! Tôi là trợ lý học tập AI của bạn. Hãy chọn tài liệu ôn tập ở cột bên trái và gửi câu hỏi để bắt đầu trò chuyện nhé!</p>
                         </div>
                     </div>
                 </div>
@@ -317,46 +347,310 @@
 
     <!-- SCRIPT -->
     <script>
+        // Setup toggle restrict state
+        let restrictToDocs = true;
+        const toggleButtons = document.querySelectorAll('.toggle-btn');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const text = this.textContent.trim();
+                const hint = document.querySelector('.restriction-hint');
+                if (text === 'Trong phạm vi tài liệu') {
+                    restrictToDocs = true;
+                    hint.textContent = 'Hạn chế: Chỉ trả lời ĐÚNG phạm vi tài liệu.';
+                } else {
+                    restrictToDocs = false;
+                    hint.textContent = 'Tất cả: Trả lời tự do bằng kiến thức của AI.';
+                }
+            });
+        });
+
+        // --- QUẢN LÝ LỊCH SỬ CHAT THEO PHIÊN (LOCALSTORAGE SESSIONS) ---
+        let sessions = [];
+        let currentSessionId = "";
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Lưu danh sách phiên vào localStorage
+        function saveSessions() {
+            localStorage.setItem('edu_chat_sessions', JSON.stringify(sessions));
+            localStorage.setItem('edu_current_session_id', currentSessionId);
+        }
+
+        // Khởi tạo các phiên hội thoại khi load trang
+        function initSessions() {
+            const savedSessions = localStorage.getItem('edu_chat_sessions');
+            const savedCurrentId = localStorage.getItem('edu_current_session_id');
+
+            if (savedSessions) {
+                try {
+                    sessions = JSON.parse(savedSessions);
+                } catch (e) {
+                    console.error('Lỗi nạp danh sách phiên chat:', e);
+                    sessions = [];
+                }
+            }
+
+            if (savedCurrentId) {
+                currentSessionId = savedCurrentId;
+            }
+
+            // Nếu chưa có phiên nào, tự động tạo phiên mặc định
+            if (sessions.length === 0) {
+                const defaultId = Date.now().toString();
+                sessions = [{
+                    id: defaultId,
+                    title: "Cuộc trò chuyện mới",
+                    messages: []
+                }];
+                currentSessionId = defaultId;
+                saveSessions();
+            } else if (!sessions.some(s => s.id === currentSessionId)) {
+                // Đảm bảo currentSessionId hợp lệ
+                currentSessionId = sessions[0].id;
+            }
+
+            renderSessionsList();
+            renderActiveSessionMessages();
+        }
+
+        // Hiển thị danh sách phiên ở cột giữa
+        function renderSessionsList() {
+            const container = document.getElementById('sessionsListBox');
+            if (!container) return;
+            container.innerHTML = '';
+
+            sessions.forEach(session => {
+                const isActive = session.id === currentSessionId;
+                
+                const item = document.createElement('div');
+                item.className = isActive ? 'session-item active' : 'session-item';
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.padding = '8px 10px';
+                item.style.border = '2px solid #000';
+                item.style.boxShadow = isActive ? '2px 2px 0px #000' : 'none';
+                item.style.fontSize = '12px';
+                item.style.fontWeight = '800';
+                item.style.cursor = 'pointer';
+                item.style.backgroundColor = 'var(--white)';
+                item.style.borderRadius = '0px';
+                
+                item.onclick = (e) => {
+                    // Tránh click nhầm vào nút xóa
+                    if (e.target.classList.contains('fa-trash-can') || e.target.closest('.delete-session-btn')) {
+                        return;
+                    }
+                    selectSession(session.id);
+                };
+
+                const titleSpan = document.createElement('span');
+                titleSpan.style.overflow = 'hidden';
+                titleSpan.style.textOverflow = 'ellipsis';
+                titleSpan.style.whiteSpace = 'nowrap';
+                titleSpan.style.flex = '1';
+                titleSpan.style.marginRight = '8px';
+                titleSpan.textContent = session.title;
+
+                const trashBtn = document.createElement('button');
+                trashBtn.className = 'delete-session-btn';
+                trashBtn.style.background = 'none';
+                trashBtn.style.border = 'none';
+                trashBtn.style.cursor = 'pointer';
+                trashBtn.style.padding = '2px 4px';
+                trashBtn.style.color = '#555';
+                trashBtn.style.display = 'flex';
+                trashBtn.style.alignItems = 'center';
+                trashBtn.innerHTML = '<i class="fa-solid fa-trash-can" style="font-size: 11px;"></i>';
+                
+                trashBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteSession(session.id);
+                };
+
+                item.appendChild(titleSpan);
+                item.appendChild(trashBtn);
+                container.appendChild(item);
+            });
+        }
+
+        // Hiển thị toàn bộ tin nhắn của phiên hiện tại
+        function renderActiveSessionMessages() {
+            const activeSession = sessions.find(s => s.id === currentSessionId);
+            chatMessages.innerHTML = '';
+
+            if (activeSession && activeSession.messages.length > 0) {
+                activeSession.messages.forEach(msg => {
+                    renderMessageUI(msg.role, msg.text);
+                });
+            } else {
+                // Hiển thị tin nhắn chào mặc định nếu phiên rỗng
+                chatMessages.innerHTML = `
+                    <div class="message message-bot">
+                        <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div class="message-content">
+                            <div class="message-sender">Trợ lý AI</div>
+                            <p class="message-text">Chào bạn! Tôi là trợ lý học tập AI của bạn. Hãy chọn tài liệu ôn tập ở cột bên trái và gửi câu hỏi để bắt đầu trò chuyện nhé!</p>
+                        </div>
+                    </div>
+                `;
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Hàm render giao diện tin nhắn thô lên màn hình
+        function renderMessageUI(role, text) {
+            const div = document.createElement('div');
+            const isUser = role === 'user';
+            div.className = isUser ? 'message message-user' : 'message message-bot';
+            
+            const avatarIcon = isUser ? 'fa-user' : 'fa-robot';
+            const senderName = isUser ? '@User.Identity?.Name' : 'Trợ lý AI';
+            const msgContent = isUser ? `<p class="message-text">${escapeHtml(text)}</p>` : 
+                                       `<div class="message-text" style="font-weight: 500; font-size: 14px; line-height: 1.6;">${formatMarkdown(text)}</div>`;
+
+            div.innerHTML = `
+                <div class="chat-avatar"><i class="fa-solid ${avatarIcon}"></i></div>
+                <div class="message-content">
+                    <div class="message-sender">${senderName}</div>
+                    ${msgContent}
+                </div>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Tạo cuộc hội thoại mới
+        function createNewSession() {
+            const newId = Date.now().toString();
+            sessions.push({
+                id: newId,
+                title: "Cuộc trò chuyện mới",
+                messages: []
+            });
+            currentSessionId = newId;
+            saveSessions();
+            renderSessionsList();
+            renderActiveSessionMessages();
+        }
+
+        // Chọn một cuộc hội thoại khác
+        function selectSession(id) {
+            currentSessionId = id;
+            saveSessions();
+            renderSessionsList();
+            renderActiveSessionMessages();
+        }
+
+        // Xóa một cuộc hội thoại cụ thể
+        function deleteSession(id) {
+            if (sessions.length <= 1) {
+                alert('Hệ thống yêu cầu giữ lại ít nhất một cuộc hội thoại.');
+                return;
+            }
+            if (confirm('Bạn có chắc chắn muốn xóa cuộc hội thoại này không?')) {
+                sessions = sessions.filter(s => s.id !== id);
+                if (currentSessionId === id) {
+                    currentSessionId = sessions[0].id;
+                }
+                saveSessions();
+                renderSessionsList();
+                renderActiveSessionMessages();
+            }
+        }
+
+        // Xóa toàn bộ nội dung tin nhắn trong cuộc hội thoại hiện tại
+        function clearChatHistory() {
+            if (confirm('Bạn có chắc chắn muốn xóa toàn bộ tin nhắn trong cuộc hội thoại này?')) {
+                const activeSession = sessions.find(s => s.id === currentSessionId);
+                if (activeSession) {
+                    activeSession.messages = [];
+                    activeSession.title = "Cuộc trò chuyện mới";
+                    saveSessions();
+                    renderSessionsList();
+                    renderActiveSessionMessages();
+                }
+            }
+        }
+
+        // Nạp và hiển thị lịch sử ngay lập tức
+        initSessions();
+
         function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             if (text === '') return;
 
-            const chatMessages = document.getElementById('chatMessages');
+            const activeSession = sessions.find(s => s.id === currentSessionId);
+            if (!activeSession) return;
 
-            // Render User Message UI
-            const sentDiv = document.createElement('div');
-            sentDiv.className = 'message message-user';
-            sentDiv.innerHTML = `
-                <div class="chat-avatar"><i class="fa-solid fa-user"></i></div>
-                <div class="message-content">
-                    <div class="message-sender">@User.Identity?.Name</div>
-                    <p class="message-text">${escapeHtml(text)}</p>
-                </div>
-            `;
-            chatMessages.appendChild(sentDiv);
+            // 1. Hiển thị tin nhắn người dùng lên giao diện
+            renderMessageUI('user', text);
+            
+            // Sao chép lịch sử hội thoại trước khi thêm tin nhắn mới để gửi lên server
+            const historyToSend = [...activeSession.messages];
+            
+            // Cập nhật tên cuộc trò chuyện theo câu hỏi đầu tiên
+            if (activeSession.messages.length === 0) {
+                activeSession.title = text.length > 22 ? text.substring(0, 22) + "..." : text;
+                renderSessionsList();
+            }
+
+            // Lưu tin nhắn mới của user vào bộ nhớ đệm
+            activeSession.messages.push({ role: 'user', text: text });
+            saveSessions();
 
             input.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // AJAX Request
-            fetch('/Home/VerifyAndDeductQuestion', {
+            // 2. Thu thập danh sách các documentId được chọn
+            const selectedDocIds = [];
+            document.querySelectorAll('.doc-checkbox:checked').forEach(cb => {
+                selectedDocIds.push(parseInt(cb.value));
+            });
+
+            // Hiển thị hiệu ứng AI đang suy nghĩ
+            showTypingIndicator();
+
+            const requestData = {
+                message: text,
+                history: historyToSend,
+                selectedDocIds: selectedDocIds,
+                restrictToDocs: restrictToDocs
+            };
+
+            // Gửi AJAX Request lên server
+            fetch('/Home/SendChatMessage', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
             })
             .then(response => response.json())
             .then(data => {
+                removeTypingIndicator();
+
                 if (data.success === false) {
-                    // Render Bot Error Message
+                    // Nếu lỗi hệ thống, hoàn tác tin nhắn của user để đồng bộ
+                    activeSession.messages.pop();
+                    if (activeSession.messages.length === 0) {
+                        activeSession.title = "Cuộc trò chuyện mới";
+                        renderSessionsList();
+                    }
+                    saveSessions();
+                    renderActiveSessionMessages();
+
+                    // Hiển thị thông báo lỗi từ hệ thống
                     const errDiv = document.createElement('div');
                     errDiv.className = 'message message-bot';
                     errDiv.innerHTML = `
                         <div class="chat-avatar" style="background-color: #d93856;"><i class="fa-solid fa-robot"></i></div>
                         <div class="message-content" style="border-color: #d93856;">
                             <div class="message-sender" style="color: #d93856;">Hệ thống</div>
-                            <p class="message-text">⚠️ ${data.message} <a href="/Subscription" style="color: #3b82f6; text-decoration: underline;">Nâng cấp gói</a></p>
+                            <p class="message-text">⚠️ ${data.message} ${data.outOfQuota ? '<a href="/Subscription" style="color: #3b82f6; text-decoration: underline;">Nâng cấp gói ngay</a>' : ''}</p>
                         </div>
                     `;
                     chatMessages.appendChild(errDiv);
@@ -364,24 +658,64 @@
                     return; 
                 }
 
-                // Render Bot Reply UI
-                setTimeout(() => {
-                    const replyDiv = document.createElement('div');
-                    replyDiv.className = 'message message-bot';
-                    replyDiv.innerHTML = `
-                        <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
-                        <div class="message-content">
-                            <div class="message-sender">Chatbot</div>
-                            <p class="message-text">Hệ thống đã ghi nhận câu hỏi của bạn. (Còn ${data.remaining >= 9999 ? '∞' : data.remaining} lượt hỏi)</p>
-                        </div>
-                    `;
-                    chatMessages.appendChild(replyDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }, 800);
+                // 3. Hiển thị câu trả lời từ AI lên giao diện và lưu
+                renderMessageUI('model', data.reply);
+                
+                activeSession.messages.push({ role: 'model', text: data.reply });
+                saveSessions();
+
+                // Hiển thị số lượt hỏi còn lại dưới chân tin nhắn mới nhất
+                const latestMsgContent = chatMessages.lastChild.querySelector('.message-content');
+                const quotaSpan = document.createElement('span');
+                quotaSpan.style.cssText = "font-size: 10px; color: #777; font-weight: bold; display: block; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 6px;";
+                quotaSpan.textContent = `(Còn ${data.remaining >= 9999 ? '∞' : data.remaining} lượt hỏi hôm nay)`;
+                latestMsgContent.appendChild(quotaSpan);
             })
             .catch(error => {
+                removeTypingIndicator();
                 console.error('Error:', error);
+                
+                // Hoàn tác tin nhắn của user nếu lỗi mạng
+                activeSession.messages.pop();
+                if (activeSession.messages.length === 0) {
+                    activeSession.title = "Cuộc trò chuyện mới";
+                    renderSessionsList();
+                }
+                saveSessions();
+                renderActiveSessionMessages();
+
+                const errDiv = document.createElement('div');
+                errDiv.className = 'message message-bot';
+                errDiv.innerHTML = `
+                    <div class="chat-avatar" style="background-color: #d93856;"><i class="fa-solid fa-robot"></i></div>
+                    <div class="message-content" style="border-color: #d93856;">
+                        <div class="message-sender" style="color: #d93856;">Lỗi mạng</div>
+                        <p class="message-text">⚠️ Không thể kết nối với máy chủ. Vui lòng thử lại sau.</p>
+                    </div>
+                `;
+                chatMessages.appendChild(errDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             });
+        }
+
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message message-bot typing-indicator-msg';
+            typingDiv.innerHTML = `
+                <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="message-content" style="background-color: #f7f7f9;">
+                    <div class="message-sender">Trợ lý AI</div>
+                    <p class="message-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Trợ lý AI đang suy nghĩ và phân tích tài liệu...</p>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicators = document.querySelectorAll('.typing-indicator-msg');
+            indicators.forEach(el => el.remove());
         }
 
         function handleKeyPress(event) {
@@ -398,6 +732,83 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+
+        function formatMarkdown(text) {
+            if (!text) return '';
+            
+            // Encode HTML characters first for safety
+            let html = escapeHtml(text);
+
+            // Bold
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Italic
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            // Inline code
+            html = html.replace(/`(.*?)`/g, '<code style="background-color: #f3f4f6; padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 90%; color: #c7254e;">$1</code>');
+            // Code block
+            html = html.replace(/```([\s\S]*?)```/g, '<pre style="background-color: #f8f9fa; padding: 12px; border: 2px solid #000; box-shadow: 2px 2px 0px #000; font-family: monospace; overflow-x: auto; margin: 10px 0; white-space: pre-wrap; font-size: 13px;">$1</pre>');
+            // Headers
+            html = html.replace(/^### (.*?)$/gm, '<h3 style="margin-top: 12px; margin-bottom: 6px; font-weight: 800;">$1</h3>');
+            html = html.replace(/^## (.*?)$/gm, '<h2 style="margin-top: 18px; margin-bottom: 8px; font-weight: 800;">$1</h2>');
+            html = html.replace(/^# (.*?)$/gm, '<h1 style="margin-top: 24px; margin-bottom: 10px; font-weight: 900;">$1</h1>');
+            
+            // Bullet list
+            html = html.replace(/^\s*-\s+(.*?)$/gm, '<li>$1</li>');
+            html = html.replace(/^\s*\*\s+(.*?)$/gm, '<li>$1</li>');
+            
+            // Wrap loose list items in <ul>
+            html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+            html = html.replace(/<\/ul>\s*<ul>/g, ''); // merge adjacent <ul>
+
+            // Line breaks (convert remaining \n to <br>)
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+
+        function previewDocumentText(docId) {
+            const modal = document.getElementById('previewModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.textContent = 'Đang trích xuất nội dung văn bản AI sẽ đọc...';
+            modalTitle.textContent = 'Đang tải...';
+            modal.style.display = 'flex';
+
+            fetch(`/Home/GetDocumentText?docId=${docId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    modalTitle.textContent = `[${data.fileType.toUpperCase()}] ${data.title}`;
+                    modalContent.textContent = data.text || '(Tài liệu rỗng hoặc không trích xuất được ký tự nào)';
+                } else {
+                    modalContent.textContent = `Lỗi: ${data.message}`;
+                }
+            })
+            .catch(err => {
+                modalContent.textContent = `Lỗi kết nối máy chủ: ${err.message}`;
+            });
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
     </script>
+
+    <!-- MODAL XEM TRƯỚC VĂN BẢN TRÍCH XUẤT (STYLE BRUTALISM) -->
+    <div id="previewModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+        <div style="background-color: #fff; border: 3px solid #000; box-shadow: 8px 8px 0px #000; width: 650px; max-width: 90%; padding: 25px; display: flex; flex-direction: column; max-height: 85vh; transform: translate(0, 0);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 id="modalTitle" style="font-weight: 900; font-size: 18px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%; color: var(--pink);">Xem trước nội dung</h3>
+                <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 24px; font-weight: 900; cursor: pointer; color: #000; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;">&times;</button>
+            </div>
+            <div id="modalContent" style="flex: 1; overflow-y: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; background-color: #f8f9fa; padding: 15px; border: 2px solid #000; line-height: 1.6; max-height: 55vh; color: #000; text-align: left;">
+                Đang tải nội dung...
+            </div>
+            <div style="margin-top: 20px; text-align: right; display: flex; justify-content: flex-end;">
+                <button onclick="closePreviewModal()" style="background-color: #000; color: #fff; border: 2px solid #000; padding: 8px 20px; font-weight: 900; cursor: pointer; box-shadow: 2px 2px 0px #000; font-family: 'Montserrat', sans-serif; transition: 0.1s;" onmousedown="this.style.transform='translate(2px, 2px)'; this.style.boxShadow='0px 0px 0px #000';" onmouseup="this.style.transform='translate(0,0)'; this.style.boxShadow='2px 2px 0px #000';">Đóng</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

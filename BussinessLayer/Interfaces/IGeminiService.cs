@@ -1,0 +1,28 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace BussinessLayer.Interfaces
+{
+    /// <summary>
+    /// Giao diện dịch vụ kết nối với Gemini AI API
+    /// </summary>
+    public interface IGeminiService
+    {
+        /// <summary>
+        /// Gửi yêu cầu generate content tới Gemini API kèm theo lịch sử chat và tài liệu nguồn
+        /// </summary>
+        /// <param name="prompt">Câu hỏi hiện tại của người dùng</param>
+        /// <param name="history">Lịch sử hội thoại trước đó</param>
+        /// <param name="documentPaths">Danh sách đường dẫn tuyệt đối đến tài liệu nguồn</param>
+        /// <param name="restrictToDocs">Có giới hạn câu trả lời trong tài liệu không</param>
+        /// <returns>Câu trả lời của Gemini AI dưới dạng text</returns>
+        Task<string> GenerateContentAsync(string prompt, IEnumerable<BussinessLayer.DTOs.ChatMessageDto> history, IEnumerable<string> documentPaths, bool restrictToDocs);
+
+        /// <summary>
+        /// Trích xuất nội dung văn bản thô từ tài liệu nguồn để học sinh xem trước những gì AI sẽ đọc
+        /// </summary>
+        /// <param name="path">Đường dẫn tuyệt đối đến tệp tài liệu</param>
+        /// <returns>Nội dung văn bản thô đã trích xuất</returns>
+        Task<string> GetDocumentTextAsync(string path);
+    }
+}
