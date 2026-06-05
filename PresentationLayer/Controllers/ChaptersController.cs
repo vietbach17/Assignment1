@@ -17,15 +17,18 @@ namespace PresentationLayer.Controllers
     {
         private readonly IChapterService _chapterService;
         private readonly ISubjectService _subjectService;
+        private readonly IDocumentService _documentService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ChaptersController(
             IChapterService chapterService, 
             ISubjectService subjectService, 
+            IDocumentService documentService,
             IHttpContextAccessor httpContextAccessor)
         {
             _chapterService = chapterService;
             _subjectService = subjectService;
+            _documentService = documentService;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -80,6 +83,9 @@ namespace PresentationLayer.Controllers
                 TempData["ErrorMessage"] = "Chapter not found.";
                 return RedirectToAction("Index", "Subjects");
             }
+
+            ViewBag.Documents = await _documentService.GetDocumentsByChapterAsync(id);
+            ViewBag.CanManageChapter = await IsAuthorizedForChapter(id);
 
             return View(chapter);
         }

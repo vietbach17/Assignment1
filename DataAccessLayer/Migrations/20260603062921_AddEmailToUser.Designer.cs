@@ -3,6 +3,7 @@ using System;
 using DataAccessLayer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603062921_AddEmailToUser")]
+    partial class AddEmailToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -498,12 +501,6 @@ namespace DataAccessLayer.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<bool>("IsBanned")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -531,8 +528,6 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = 1,
                             Email = "admin@studymind.edu.vn",
-                            IsBanned = false,
-                            IsDeleted = false,
                             PasswordHash = "$2a$11$p7e/dWqp3/H5V2hA8gfj4egjrUGPAPfbZqBqMcSvnBcc/Qc8qpjcq",
                             RoleId = 1,
                             Username = "admin"
@@ -541,8 +536,6 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = 2,
                             Email = "lecturer@studymind.edu.vn",
-                            IsBanned = false,
-                            IsDeleted = false,
                             PasswordHash = "$2a$11$.V0CPaW.aVn4ajd6qwur7eF84ysDgtwM6iTNNiVTUaC77F2nMaNji",
                             RoleId = 2,
                             Username = "lecturer"
@@ -551,8 +544,6 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = 3,
                             Email = "student@studymind.edu.vn",
-                            IsBanned = false,
-                            IsDeleted = false,
                             PasswordHash = "$2a$11$9Eg5STUA/KUfGzB3ubcC0OGv7Mph4h14Lj3lSBPgznmpJ4Sh73oAi",
                             RoleId = 3,
                             Username = "student"

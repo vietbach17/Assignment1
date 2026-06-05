@@ -1,7 +1,12 @@
 @model IEnumerable<BussinessLayer.DTOs.UserDto>
+@using BussinessLayer.DTOs
 @{
     Layout = null;
     ViewData["Title"] = "Quản lý Người Dùng";
+    var roles = ViewBag.Roles as IEnumerable<DataAccessLayer.Models.Role> ?? Enumerable.Empty<DataAccessLayer.Models.Role>();
+    int totalUsers  = Model.Count();
+    int activeCount = Model.Count(u => !u.IsDeleted);
+    int disabledCount = Model.Count(u => u.IsDeleted);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -16,95 +21,121 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            dark: '#1e3b31',
-                            active: '#2c5344',
-                            button: '#376b56',
-                            text: '#222222',
-                            gray: '#f4f6f8'
-                        }
+                        brand: { dark: '#1e3b31', active: '#2c5344', button: '#376b56', text: '#222222', gray: '#f4f6f8' }
                     }
                 }
             }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        /* ── EDIT MODAL ── */
+        function openEditModal(id, username, email, roleId) {
+            document.getElementById('edit-id').value       = id;
+            document.getElementById('edit-username').value = username;
+            document.getElementById('edit-email').value    = email;
+            document.getElementById('edit-role').value     = roleId;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        /* ── TOGGLE MODAL (vô hiệu hóa / khôi phục) ── */
+        function openToggleModal(id, username, isDisabled) {
+            document.getElementById('toggle-id').value = id;
+
+            if (isDisabled) {
+                // Đang bị vô hiệu → nút Khôi phục
+                document.getElementById('toggle-form').action    = '/Admin/RestoreUser';
+                document.getElementById('toggle-icon').className = 'fa-solid fa-rotate-left text-brand-button text-xl';
+                document.getElementById('toggle-icon-wrap').className = 'w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4';
+                document.getElementById('toggle-title').innerText = 'Khôi phục tài khoản';
+                document.getElementById('toggle-desc').innerText  = 'Tài khoản "' + username + '" sẽ được kích hoạt lại và có thể đăng nhập bình thường.';
+                document.getElementById('toggle-btn').innerText   = 'Khôi phục';
+                document.getElementById('toggle-btn').className   = 'bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm';
+            } else {
+                // Đang hoạt động → nút Vô hiệu hóa
+                document.getElementById('toggle-form').action    = '/Admin/DisableUser';
+                document.getElementById('toggle-icon').className = 'fa-solid fa-user-slash text-red-500 text-xl';
+                document.getElementById('toggle-icon-wrap').className = 'w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4';
+                document.getElementById('toggle-title').innerText = 'Vô hiệu hóa tài khoản';
+                document.getElementById('toggle-desc').innerText  = 'Tài khoản "' + username + '" sẽ bị vô hiệu hóa. Người dùng sẽ không thể đăng nhập cho đến khi được khôi phục.';
+                document.getElementById('toggle-btn').innerText   = 'Vô hiệu hóa';
+                document.getElementById('toggle-btn').className   = 'bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm';
+            }
+
+            document.getElementById('toggleModal').classList.remove('hidden');
         }
     </script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
 
+    <!-- Sidebar -->
     <aside class="w-64 bg-brand-dark text-white flex flex-col">
         <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-                <i class="fa-solid fa-shield-halved text-white"></i>
-            </div>
+            <div class="bg-white/20 p-2 rounded-lg"><i class="fa-solid fa-shield-halved text-white"></i></div>
             <div>
                 <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
                 <p class="text-xs text-gray-300">Admin Portal</p>
             </div>
         </div>
-
         <div class="px-4 py-2">
             <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
             <ul class="space-y-1">
                 <li>
-                    <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                        <i class="fa-solid fa-chart-line w-5"></i>
-                        <span>Bảng điều khiển</span>
+                    <a asp-action="Dashboard" asp-controller="Admin"
+                       class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-chart-line w-5"></i><span>Bảng điều khiển</span>
                     </a>
                 </li>
                 <li>
-                    <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-solid fa-users w-5"></i>
-                        <span>Người Dùng</span>
+                    <a asp-action="Users" asp-controller="Admin"
+                       class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
+                        <i class="fa-solid fa-users w-5"></i><span>Người Dùng</span>
                     </a>
                 </li>
                 <li>
-                    <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-solid fa-arrow-left w-5"></i>
-                        <span>Môn Học</span>
+                    <a asp-action="Index" asp-controller="Subjects"
+                       class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-book w-5"></i><span>Môn Học</span>
                     </a>
                 </li>
                 <li>
-                    <a asp-action="Admin" asp-controller="Subscription" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                        <i class="fa-solid fa-box-open w-5"></i>
-                        <span>Gói Subscription</span>
+                    <a asp-action="SubscriptionPlans" asp-controller="Admin"
+                       class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-box-open w-5"></i><span>Gói Subscription</span>
                     </a>
                 </li>
                 <li>
-                    <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-solid fa-arrow-left w-5"></i>
-                        <span>Về trang chủ</span>
+                    <a asp-action="Index" asp-controller="Home"
+                       class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                        <i class="fa-solid fa-house w-5"></i><span>Về trang chủ</span>
                     </a>
                 </li>
             </ul>
         </div>
-
         <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i>
-                <span>Đăng xuất</span>
+            <a asp-action="Logout" asp-controller="Auth"
+               class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
+                <i class="fa-solid fa-sign-out-alt w-5"></i><span>Đăng xuất</span>
             </a>
         </div>
     </aside>
 
+    <!-- Main -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden">
         <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div class="relative w-96">
-            </div>
-            
+            <div></div>
             <div class="flex items-center space-x-5">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <button class="text-gray-400 hover:text-gray-600 relative">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-                    <div class="flex items-center space-x-3 cursor-pointer">
+                    <div class="flex items-center space-x-3">
                         <div class="w-9 h-9 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-sm">
                             <i class="fa-solid fa-user-shield"></i>
                         </div>
                         <div>
                             <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
-                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                            <p class="text-xs text-gray-500">Admin</p>
                         </div>
                     </div>
                 }
@@ -112,61 +143,190 @@
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
-            <div class="mb-8">
-                <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">
-                    Hệ thống
-                </p>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Quản Lý Người Dùng</h2>
-                <p class="text-gray-500 text-sm">Xem danh sách toàn bộ người dùng trong hệ thống.</p>
+
+            <!-- Page header -->
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">Hệ thống</p>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-1">Quản Lý Người Dùng</h2>
+                    <p class="text-gray-500 text-sm">Cập nhật thông tin, vô hiệu hóa hoặc khôi phục tài khoản.</p>
+                </div>
+                <a asp-controller="Auth" asp-action="Register"
+                   class="inline-flex items-center gap-2 bg-brand-button hover:bg-brand-active text-white px-4 py-2.5 rounded-xl text-sm font-medium transition shadow-sm">
+                    <i class="fa-solid fa-user-plus"></i> Cấp tài khoản mới
+                </a>
             </div>
 
+            <!-- Alerts -->
+            @if (TempData["UserSuccessMsg"] != null)
+            {
+                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check flex-shrink-0"></i>
+                    <span>@TempData["UserSuccessMsg"]</span>
+                </div>
+            }
+            @if (TempData["UserErrorMsg"] != null)
+            {
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation flex-shrink-0"></i>
+                    <span>@TempData["UserErrorMsg"]</span>
+                </div>
+            }
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tổng tài khoản</span>
+                        <div class="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-users text-gray-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-800">@totalUsers</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Đang hoạt động</span>
+                        <div class="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-circle-check text-green-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-green-600">@activeCount</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Đã vô hiệu hóa</span>
+                        <div class="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-user-slash text-red-500 text-sm"></i>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-red-500">@disabledCount</p>
+                </div>
+            </div>
+
+            <!-- Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800">Danh sách Người Dùng</h3>
+                    <span class="text-xs bg-brand-button/10 text-brand-button font-semibold px-3 py-1 rounded-full">
+                        @totalUsers tài khoản
+                    </span>
                 </div>
 
                 @if (!Model.Any())
                 {
                     <div class="p-12 text-center">
                         <i class="fa-solid fa-users-slash text-5xl text-gray-300 mb-4 block"></i>
-                        <p class="text-gray-500 text-sm">Hiện chưa có người dùng nào trong hệ thống.</p>
+                        <p class="text-gray-500 text-sm">Hiện chưa có người dùng nào.</p>
                     </div>
                 }
                 else
                 {
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b border-gray-100 bg-white">
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                            <tr class="border-b border-gray-100 bg-gray-50/30">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">ID</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao Tác</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vai trò</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @foreach (var user in Model)
+                            @foreach (var u in Model)
                             {
-                                string roleClass = user.RoleName switch {
-                                    "Admin" => "bg-purple-100 text-purple-700",
+                                bool isRoot = u.Id == 1;
+
+                                // Encode JS-safe strings in C# — tránh lỗi dấu nháy trong onclick
+                                string jsUsername = u.Username.Replace("\\", "\\\\").Replace("'", "\\'");
+                                string jsEmail    = u.Email.Replace("\\", "\\\\").Replace("'", "\\'");
+                                string jsDisabled = u.IsDeleted ? "true" : "false";
+
+                                string roleClass = u.RoleName switch {
+                                    "Admin"    => "bg-purple-100 text-purple-700",
                                     "Lecturer" => "bg-blue-100 text-blue-700",
-                                    "Student" => "bg-green-100 text-green-700",
-                                    _ => "bg-gray-100 text-gray-700"
+                                    "Student"  => "bg-green-100 text-green-700",
+                                    _          => "bg-gray-100 text-gray-700"
                                 };
-                                
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 text-sm text-gray-600">@user.Id</td>
+
+                                <tr class="@(u.IsDeleted ? "opacity-50 bg-gray-50" : "hover:bg-gray-50") transition">
+                                    <td class="px-6 py-4 text-sm text-gray-400 font-mono">@u.Id</td>
+
                                     <td class="px-6 py-4">
-                                        <span class="font-bold text-gray-800">@user.Username</span>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                                                @(u.IsDeleted ? "bg-gray-100 text-gray-400" : "bg-brand-button/10 text-brand-button")">
+                                                @u.Username[0].ToString().ToUpper()
+                                            </div>
+                                            <span class="font-semibold text-gray-800">@u.Username</span>
+                                            @if (isRoot)
+                                            {
+                                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Root</span>
+                                            }
+                                        </div>
                                     </td>
+
+                                    <td class="px-6 py-4 text-sm text-gray-600">@u.Email</td>
+
                                     <td class="px-6 py-4">
                                         <span class="inline-block px-3 py-1 rounded-full text-xs font-bold @roleClass">
-                                            @user.RoleName
+                                            @u.RoleName
                                         </span>
                                     </td>
+
                                     <td class="px-6 py-4">
-                                        <a asp-action="UserDetails" asp-route-id="@user.Id" class="inline-block bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-brand-button px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm">
-                                            Chi tiết
-                                        </a>
+                                        @if (u.IsDeleted)
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                                <i class="fa-solid fa-user-slash"></i> Vô hiệu hóa
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                                <i class="fa-solid fa-circle-check"></i> Hoạt động
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td class="px-6 py-4">
+                                        @if (isRoot)
+                                        {
+                                            <span class="text-xs text-gray-400 italic">Không thể chỉnh sửa</span>
+                                        }
+                                        else
+                                        {
+                                            <div class="flex items-center gap-2">
+                                                @if (!u.IsDeleted)
+                                                {
+                                                    <!-- Nút Sửa — chỉ hiện khi tài khoản đang hoạt động -->
+                                                    <button type="button"
+                                                            onclick="openEditModal(@u.Id, '@jsUsername', '@jsEmail', @u.RoleId)"
+                                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition">
+                                                        <i class="fa-solid fa-pen"></i> Sửa
+                                                    </button>
+                                                }
+
+                                                <!-- Nút Vô hiệu / Khôi phục -->
+                                                @if (u.IsDeleted)
+                                                {
+                                                    <button type="button"
+                                                            onclick="openToggleModal(@u.Id, '@jsUsername', true)"
+                                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-brand-button bg-white border border-brand-button/30 rounded-lg hover:bg-green-50 transition">
+                                                        <i class="fa-solid fa-rotate-left"></i> Khôi phục
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button"
+                                                            onclick="openToggleModal(@u.Id, '@jsUsername', false)"
+                                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition">
+                                                        <i class="fa-solid fa-user-slash"></i> Vô hiệu hóa
+                                                    </button>
+                                                }
+                                            </div>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -176,5 +336,99 @@
             </div>
         </div>
     </main>
+
+    <!-- ═══════════════════════════════════════════
+         EDIT MODAL
+    ═══════════════════════════════════════════ -->
+    <div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="w-full max-w-sm mx-4 bg-white rounded-2xl shadow-xl">
+            <div class="flex items-center justify-between p-5 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900">
+                    <i class="fa-solid fa-pen text-blue-600 mr-2"></i>Cập nhật người dùng
+                </h3>
+                <button type="button" onclick="closeModal('editModal')"
+                        class="text-gray-400 hover:bg-gray-100 rounded-lg w-8 h-8 flex items-center justify-center transition">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form asp-action="UpdateUser" asp-controller="Admin" method="post" class="p-5 space-y-4">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="edit-id">
+
+                <div>
+                    <label class="block mb-1.5 text-sm font-medium text-gray-700">Username</label>
+                    <input id="edit-username" type="text" disabled
+                           class="w-full bg-gray-100 border border-gray-200 text-gray-500 text-sm rounded-lg p-2.5 cursor-not-allowed">
+                    <p class="text-xs text-gray-400 mt-1">Username không thể thay đổi.</p>
+                </div>
+
+                <div>
+                    <label class="block mb-1.5 text-sm font-medium text-gray-700">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input id="edit-email" name="Email" type="email" required
+                           class="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 p-2.5">
+                </div>
+
+                <div>
+                    <label class="block mb-1.5 text-sm font-medium text-gray-700">
+                        Vai trò <span class="text-red-500">*</span>
+                    </label>
+                    <select id="edit-role" name="RoleId" required
+                            class="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 p-2.5">
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role.Id">@role.RoleName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="flex gap-3 pt-1">
+                    <button type="submit"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                    </button>
+                    <button type="button" onclick="closeModal('editModal')"
+                            class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition">
+                        Huỷ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         TOGGLE MODAL (Vô hiệu hóa / Khôi phục)
+    ═══════════════════════════════════════════ -->
+    <div id="toggleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="w-full max-w-sm mx-4 bg-white rounded-2xl shadow-xl">
+            <button type="button" onclick="closeModal('toggleModal')"
+                    class="absolute top-3 right-3 text-gray-400 hover:bg-gray-100 rounded-lg w-8 h-8 flex items-center justify-center transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div class="p-6 text-center">
+                <div id="toggle-icon-wrap" class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i id="toggle-icon" class="fa-solid fa-user-slash text-red-500 text-xl"></i>
+                </div>
+                <h3 id="toggle-title" class="text-lg font-bold text-gray-800 mb-2"></h3>
+                <p id="toggle-desc" class="text-sm text-gray-500 mb-6"></p>
+
+                <form id="toggle-form" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="toggle-id">
+                    <div class="flex gap-3 justify-center">
+                        <button type="submit" id="toggle-btn"
+                                class="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
+                        </button>
+                        <button type="button" onclick="closeModal('toggleModal')"
+                                class="py-2.5 px-6 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition">
+                            Huỷ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Chỉnh sửa Môn Học";
     Layout = null;
+    var assignedLecturerIds = ViewBag.AssignedLecturerIds as List<int> ?? new List<int>();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -152,6 +153,19 @@
                             <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-2">Mô tả chi tiết</label>
                             <textarea asp-for="Description" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-active focus:bg-white transition resize-none"></textarea>
                             <span asp-validation-for="Description" class="text-red-500 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label for="assignedLecturerId" class="block text-sm font-medium text-gray-700 mb-2">Giảng viên phụ trách upload tài liệu <span class="text-red-500">*</span></label>
+                            <select id="assignedLecturerId" name="assignedLecturerId" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-active focus:bg-white transition">
+                                <option value="">-- Chọn giảng viên --</option>
+                                @foreach (var lecturer in ViewBag.Lecturers)
+                                {
+                                    var selected = assignedLecturerIds.Contains(lecturer.Id);
+                                    <option value="@lecturer.Id" selected="@selected">@lecturer.Username</option>
+                                }
+                            </select>
+                            @Html.ValidationMessage("assignedLecturerId", "", new { @class = "text-red-500 text-xs mt-1 block" })
                         </div>
 
                         <div class="pt-4 flex gap-4">

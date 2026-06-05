@@ -59,6 +59,18 @@ namespace BussinessLayer.Services
             return documents.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<DocumentDto>> GetDocumentsByChapterAsync(int chapterId)
+        {
+            var documents = await _documentRepository.GetByChapterIdAsync(chapterId, includeDeleted: false);
+            return documents.Select(MapToDto);
+        }
+
+        public async Task<IEnumerable<DocumentDto>> GetDocumentsByUploadedByUserAsync(int uploadedByUserId)
+        {
+            var documents = await _documentRepository.GetByUploadedByUserIdAsync(uploadedByUserId, includeDeleted: false);
+            return documents.Select(MapToDto);
+        }
+
         /// <summary>
         /// Upload tài liệu mới:
         /// 1. Validate: không rỗng, đúng định dạng (.pdf/.docx/.pptx), không vượt 50MB
@@ -218,6 +230,24 @@ namespace BussinessLayer.Services
         {
             var document = await _documentRepository.GetByHashAsync(fileHash);
             return document == null ? null : MapToDto(document);
+        }
+
+        /// <summary>
+        /// Cập nhật thông tin tài liệu: tiêu đề và chapter
+        /// </summary>
+        public async Task<(bool Success, string Message, DocumentDto? Document)> UpdateDocumentAsync(DocumentEditViewModel viewModel)
+        {
+            var document = await _documentRepository.GetByIdAsync(viewModel.Id, includeDeleted: false);
+            if (document == null)
+                return (false, "Không tìm thấy tài liệu.", null);
+
+            document.Title = viewModel.Title.Trim();
+            document.ChapterId = viewModel.ChapterId;
+
+            await _documentRepository.UpdateAsync(document);
+
+            var updatedDto = await GetDocumentByIdAsync(document.Id);
+            return (true, $"Tài liệu \"{document.Title}\" đã được cập nhật thành công.", updatedDto);
         }
 
         /// <summary>Xử lý upload phân đoạn (Chunk Upload)</summary>

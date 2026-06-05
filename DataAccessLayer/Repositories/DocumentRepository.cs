@@ -91,6 +91,22 @@ namespace DataAccessLayer.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Document>> GetByUploadedByUserIdAsync(int uploadedByUserId, bool includeDeleted = false)
+        {
+            var query = _context.Documents
+                .Include(d => d.Subject)
+                .Include(d => d.Chapter)
+                .Include(d => d.UploadedBy)
+                .Where(d => d.UploadedByUserId == uploadedByUserId);
+
+            if (!includeDeleted)
+                query = query.Where(d => !d.IsDeleted);
+
+            return await query
+                .OrderByDescending(d => d.UploadedDate)
+                .ToListAsync();
+        }
+
         /// <summary>
         /// Thêm tài liệu mới vào database
         /// </summary>

@@ -44,23 +44,30 @@ namespace PresentationLayer.Controllers
             if (User.Identity?.IsAuthenticated == true)
             {
                 if (User.IsInRole("Admin"))
+                    return RedirectToAction("Dashboard", "Admin");
+
+                if (User.IsInRole("Lecturer"))
                 {
-                    return View(await _documentService.GetAllDocumentsAsync(includeDeleted: false));
+                    var userId = GetCurrentUserId();
+                    var myDocs     = (await _documentService.GetDocumentsByUploadedByUserAsync(userId)).ToList();
+                    var mySubjects = (await _subjectService.GetSubjectsByLecturerIdAsync(userId, includeDeleted: false)).ToList();
+
+                    ViewBag.LecturerDocuments    = myDocs;
+                    ViewBag.LecturerRecentDocs   = myDocs.OrderByDescending(d => d.UploadedDate).Take(5).ToList();
+                    ViewBag.LecturerSubjects     = mySubjects;
+                    ViewBag.LecturerTotalDocs    = myDocs.Count;
+                    ViewBag.LecturerIndexedDocs  = myDocs.Count(d => d.Status == BussinessLayer.DTOs.DocumentStatus.Indexed);
+                    ViewBag.LecturerSubjectCount = mySubjects.Count;
+
+                    return View("LecturerDashboard");
                 }
 
                 if (User.IsInRole("Student"))
                 {
-                    // Lấy tổng số môn học từ DB
                     var subjects = await _subjectService.GetAllSubjectsAsync(includeDeleted: false);
                     ViewBag.SubjectCount = subjects.Count();
+                    return View("StudentDashboard");
                 }
-
-                    //    return RedirectToAction("Dashboard", "Admin");
-                    //if (User.IsInRole("Lecturer"))
-                    //    return RedirectToAction("Index", "Document");
-                    //if (User.IsInRole("Student"))
-                    //    return RedirectToAction("Chat", "Home");
-                    return View();
             }
             return RedirectToAction("Login", "Auth");
         }
