@@ -168,7 +168,8 @@ namespace BussinessLayer.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return $"[Lỗi API từ Google Gemini (HTTP {response.StatusCode})]: {responseString}";
+                    return GeminiErrorHandler.HandleErrorResponse(response.StatusCode, responseString);
+                    // thông báo trạng thái lỗi (tránh báo json để demo)
                 }
 
                 using var doc = JsonDocument.Parse(responseString);
