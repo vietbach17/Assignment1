@@ -207,18 +207,7 @@ namespace PresentationLayer.Controllers
             {
                 currentSubDto.RemainingQuestions = planDto.QuestionLimit;
                 currentSubDto.DailyResetTime = null;
-
-                var resetEntity = new DataAccessLayer.Models.StudentSubscription
-                {
-                    Id = currentSubDto.Id,
-                    UserId = currentSubDto.UserId,
-                    SubscriptionPlanId = currentSubDto.SubscriptionPlanId,
-                    StartDate = currentSubDto.StartDate,
-                    EndDate = currentSubDto.EndDate,
-                    RemainingQuestions = planDto.QuestionLimit,
-                    DailyResetTime = null
-                };
-                _subscriptionService.SaveStudentSubscription(resetEntity);
+                _subscriptionService.SaveStudentSubscription(currentSubDto);
             }
 
             // Kiểm tra xem học sinh còn lượt đặt câu hỏi không
@@ -244,20 +233,9 @@ namespace PresentationLayer.Controllers
             {
                 DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
 
-                var entity = new DataAccessLayer.Models.StudentSubscription
-                {
-                    Id = currentSubDto.Id,
-                    UserId = currentSubDto.UserId,
-                    SubscriptionPlanId = currentSubDto.SubscriptionPlanId,
-                    StartDate = currentSubDto.StartDate,
-                    EndDate = currentSubDto.EndDate,
-                    RemainingQuestions = currentSubDto.RemainingQuestions - 1,
-                    DailyResetTime = newDailyResetTime
-                };
-
-                _subscriptionService.SaveStudentSubscription(entity);
-                currentSubDto.RemainingQuestions = entity.RemainingQuestions;
+                currentSubDto.RemainingQuestions -= 1;
                 currentSubDto.DailyResetTime = newDailyResetTime;
+                _subscriptionService.SaveStudentSubscription(currentSubDto);
             }
 
             // 2. Lấy danh sách đường dẫn tuyệt đối của các tài liệu được tích chọn
