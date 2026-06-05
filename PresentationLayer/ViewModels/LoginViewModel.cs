@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PresentationLayer.Models
+namespace PresentationLayer.ViewModels
 {
     // Model nhận dữ liệu đăng nhập từ giao diện và thực hiện kiểm tra tính hợp lệ cơ bản
     public class LoginViewModel

@@ -14,19 +14,21 @@ namespace PresentationLayer.Controllers
         private readonly IRoleService _roleService;
         private readonly IUserService _userService;
         private readonly ISubscriptionService _subscriptionService;
+        private readonly BussinessLayer.Services.IEmailService _emailService;
         private readonly ISubjectService _subjectService;
-
         public AdminController(
             IDocumentService documentService,
             IRoleService roleService,
             IUserService userService,
             ISubscriptionService subscriptionService,
-            ISubjectService subjectService)
+            ISubjectService subjectService,
+            BussinessLayer.Services.IEmailService emailService)
         {
             _documentService = documentService;
             _roleService = roleService;
             _userService = userService;
             _subscriptionService = subscriptionService;
+            _emailService = emailService;
             _subjectService = subjectService;
         }
 
@@ -280,6 +282,63 @@ namespace PresentationLayer.Controllers
         {
             var plans = _subscriptionService.GetAllPlans();
             return View(plans);
+        }
+
+        // --- Notifications ---
+        [HttpGet]
+        public async Task<IActionResult> Notify()
+        {
+            // Provide available subscription plans for targeting
+            var plans = _subscriptionService.GetAllPlans();
+            ViewBag.Plans = plans;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendNotification(string title, string message, string target = "all", int? planId = null)
+        {
+            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(message))
+            {
+                TempData["ErrorMsg"] = "Tiêu đề và nội dung không được để trống.";
+                return RedirectToAction("Notify");
+            }
+
+            var users = (await _userService.GetAllUsersAsync()).Where(u => !u.IsDeleted && u.RoleName == "Student");
+            var recipients = new List<string>();
+
+            if (target == "plan" && planId.HasValue)
+            {
+                foreach (var u in users)
+                {
+                    var sub = _subscriptionService.GetStudentSubscription(u.Id);
+                    if (sub != null && sub.SubscriptionPlanId == planId.Value && !string.IsNullOrEmpty(u.Email))
+                    {
+                        recipients.Add(u.Email);
+                    }
+                }
+            }
+            else
+            {
+                recipients = users.Where(u => !string.IsNullOrEmpty(u.Email)).Select(u => u.Email).ToList();
+            }
+
+            int sent = 0;
+            foreach (var email in recipients)
+            {
+                try
+                {
+                    await _emailService.SendEmailAsync(email, title, message);
+                    sent++;
+                }
+                catch
+                {
+                    // ignore per-recipient errors
+                }
+            }
+
+            TempData["SuccessMsg"] = $"Đã gửi thông báo đến {sent} sinh viên.";
+            return RedirectToAction("Dashboard");
         }
     }
 }

@@ -1,0 +1,94 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Gửi Thông Báo";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+        :root{--primary-pink:#eb2f64;--brutal-yellow:#f4cf45;--black:#000;--white:#fff;--bg-color:#f8f8f8;--border-width:3px}
+        *{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',sans-serif}
+        body{background-color:var(--bg-color);min-height:100vh;display:flex;align-items:center;justify-content:center}
+        .login-wrapper{width:100%;max-width:560px}
+        .login-box{background:var(--white);border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 0 var(--black);padding:32px}
+        h1.title{color:var(--primary-pink);font-weight:900;font-size:24px;margin-bottom:6px}
+        .subtitle{font-weight:800;font-size:13px;color:var(--black);margin-bottom:18px}
+        label{display:block;font-weight:800;margin-bottom:8px;font-size:13px}
+        input[type=text], textarea, select{width:100%;padding:12px;border:var(--border-width) solid var(--black);font-weight:600}
+        .btn-brutal{width:100%;padding:12px;font-weight:900;border:var(--border-width) solid var(--black);cursor:pointer;box-shadow:4px 4px 0 0 var(--black);text-transform:uppercase}
+        .btn-primary{background:var(--primary-pink);color:var(--white);}
+        .btn-secondary{background:var(--white);color:var(--black);display:inline-block;text-decoration:none;padding:10px;border:var(--border-width) solid var(--black)}
+        .row{display:flex;gap:12px}
+        .col-1{flex:1}
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h1 class="title"><i class="fa-solid fa-bell"></i> Gửi Thông Báo</h1>
+            <p class="subtitle">Thông báo tới sinh viên về cập nhật gói hoặc thông báo hệ thống.</p>
+
+            @if (TempData["ErrorMsg"] != null)
+            {
+                <div style="margin-bottom:12px;padding:10px;border:2px solid #eb2f64;color:#eb2f64">@TempData["ErrorMsg"]</div>
+            }
+            @if (TempData["SuccessMsg"] != null)
+            {
+                <div style="margin-bottom:12px;padding:10px;border:2px solid #28a745;color:#155724">@TempData["SuccessMsg"]</div>
+            }
+
+            <form asp-action="SendNotification" asp-controller="Admin" method="post">
+                @Html.AntiForgeryToken()
+
+                <div style="margin-bottom:14px">
+                    <label>Tiêu đề</label>
+                    <input type="text" name="title" required />
+                </div>
+
+                <div style="margin-bottom:14px">
+                    <label>Nội dung</label>
+                    <textarea name="message" rows="6" required></textarea>
+                </div>
+
+                <div style="margin-bottom:14px">
+                    <label>Đối tượng</label>
+                    <div style="display:flex;gap:12px;margin-top:8px">
+                        <label style="font-weight:800"><input type="radio" name="target" value="all" checked /> <span style="margin-left:8px;font-weight:700">Tất cả sinh viên</span></label>
+                        <label style="font-weight:800"><input type="radio" name="target" value="plan" /> <span style="margin-left:8px;font-weight:700">Sinh viên theo gói</span></label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:18px">
+                    <label>Chọn gói (nếu chọn "Sinh viên theo gói")</label>
+                    <select name="planId">
+                        <option value="">-- Chọn gói --</option>
+                        @if (ViewBag.Plans != null)
+                        {
+                            foreach (var p in (List<BussinessLayer.DTOs.SubscriptionPlanDTO>)ViewBag.Plans)
+                            {
+                                <option value="@p.Id">@p.Name - @p.Price.ToString("N0") đ</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-1">
+                        <button type="submit" class="btn-brutal btn-primary">Gửi</button>
+                    </div>
+                    <div style="flex:0 0 140px;display:flex;align-items:center;justify-content:center">
+                        <a asp-action="Dashboard" class="btn-secondary">Huỷ</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div style="margin-top:12px;text-align:center;font-weight:700">Trở về <a asp-action="Dashboard">Dashboard</a></div>
+    </div>
+</body>
+</html>

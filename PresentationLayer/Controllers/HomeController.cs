@@ -4,6 +4,7 @@ using BussinessLayer.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Diagnostics;
 using System.Security.Claims;
 
 namespace PresentationLayer.Controllers
@@ -79,6 +80,16 @@ namespace PresentationLayer.Controllers
             var documents = await _documentService.GetAllDocumentsAsync(includeDeleted: false);
             ViewBag.Documents = documents.ToList();
             // Trả về giao diện chat tương tác hiện đại của Sinh viên
+            return View();
+        }
+
+        [Route("Home/Error")]
+        [AllowAnonymous]
+        public IActionResult Error()
+        {
+            var exceptionFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            ViewBag.ErrorMessage = exceptionFeature?.Error?.Message ?? "Đã có lỗi xảy ra.";
+            ViewBag.Path = exceptionFeature?.Path ?? HttpContext.Request.Path;
             return View();
         }
 

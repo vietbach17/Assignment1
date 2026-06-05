@@ -1,113 +1,260 @@
 @{
+    Layout = null;
     ViewData["Title"] = "Từ chối truy cập";
 }
 
-<div class="denied-wrapper">
-    <div class="glass-card denied-card">
-        <div class="denied-icon">🛑</div>
-        <h1 class="denied-code">403</h1>
-        <h2 class="denied-title">Truy Cập Bị Từ Chối</h2>
-        <p class="denied-message">
-            Tài khoản hiện tại của bạn không có đủ đặc quyền truy cập vào tài nguyên hoặc trang mà bạn vừa yêu cầu.
-        </p>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EduManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
 
-        <div class="user-status">
-            <p>Đang đăng nhập bằng: <strong>@User.Identity?.Name</strong></p>
-            <p>Quyền hiện tại: <span class="role-badge role-student">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</span></p>
+        :root {
+            --primary-pink: #eb2f64;
+            --brutal-yellow: #f4cf45;
+            --black: #000000;
+            --white: #ffffff;
+            --bg-color: #f8f8f8;
+            --border-width: 3px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+                              repeating-linear-gradient(45deg, #f0f0f0 25%, var(--bg-color) 25%, var(--bg-color) 75%, #f0f0f0 75%, #f0f0f0);
+            background-position: 0 0, 20px 20px;
+            background-size: 40px 40px;
+        }
+
+        .decor {
+            position: absolute;
+            z-index: 0;
+        }
+
+        .dec-tri-1 { top: 20%; left: 25%; transform: rotate(-15deg); }
+        .dec-squ-1 { top: 40%; left: 23%; transform: rotate(10deg); }
+        .dec-dot-1 { top: 50%; left: 26%; }
+        .dec-squ-2 { bottom: 30%; left: 25%; transform: rotate(-20deg); }
+        .dec-tri-2 { bottom: 20%; left: 28%; transform: rotate(45deg); width: 20px; height: 20px; }
+        .dec-tri-3 { top: 22%; right: 26%; transform: rotate(25deg); }
+        .dec-squ-3 { top: 38%; right: 24%; transform: rotate(-30deg); }
+        .dec-dot-2 { top: 50%; right: 25%; }
+        .dec-tri-4 { bottom: 25%; right: 22%; transform: rotate(-10deg); }
+
+        .shape-triangle {
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary-pink);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            border: 2px solid var(--black);
+            filter: drop-shadow(0px 0px 0px var(--black)) drop-shadow(2px 0px 0px var(--black)) drop-shadow(0px 2px 0px var(--black)) drop-shadow(-2px 0px 0px var(--black)) drop-shadow(0px -2px 0px var(--black));
+        }
+
+        .shape-triangle.yellow { background-color: var(--brutal-yellow); }
+
+        .shape-dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--black);
+            border-radius: 50%;
+        }
+
+        .top-logo {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            color: var(--primary-pink);
+            font-size: 24px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            text-decoration: none;
+        }
+
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .login-box {
+            background-color: var(--white);
+            border: var(--border-width) solid var(--black);
+            box-shadow: 8px 8px 0px 0px var(--black);
+            padding: 40px 35px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-box h1 {
+            color: var(--primary-pink);
+            font-weight: 900;
+            font-size: 32px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 30px;
+            color: var(--black);
+        }
+
+        .message-card {
+            border: var(--border-width) solid var(--black);
+            padding: 24px;
+            background: #fff0f4;
+            color: #111;
+            margin-bottom: 28px;
+            text-align: left;
+        }
+
+        .message-card strong {
+            color: var(--primary-pink);
+        }
+
+        .user-status {
+            background-color: #f9f1f6;
+            border: 2px solid var(--black);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 24px;
+            text-align: left;
+            color: #333;
+        }
+
+        .user-status p {
+            margin: 0 0 8px;
+            font-weight: 700;
+        }
+
+        .user-status span {
+            color: var(--primary-pink);
+        }
+
+        .btn-brutal {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 900;
+            border: var(--border-width) solid var(--black);
+            cursor: pointer;
+            box-shadow: 4px 4px 0px 0px var(--black);
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-brutal:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px var(--black);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-pink);
+            color: var(--white);
+            margin-bottom: 12px;
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--black);
+        }
+
+        .login-footer {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 12px;
+            color: #555;
+        }
+
+        .login-footer a {
+            color: var(--black);
+            font-weight: 900;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="top-logo">
+        <i class="fa-solid fa-graduation-cap"></i> EduManager
+    </a>
+
+    <div class="decor dec-tri-1 shape-triangle"></div>
+    <svg class="decor dec-squ-1" width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="#f4cf45" stroke-width="4" stroke-linecap="round"/>
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="black" stroke-width="6" stroke-linecap="round" style="z-index:-1; position:absolute; mix-blend-mode: destination-over;"/>
+    </svg>
+    <div class="decor dec-dot-1 shape-dot"></div>
+    <svg class="decor dec-squ-2" width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="#eb2f64" stroke-width="4" stroke-linecap="round"/>
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="black" stroke-width="6" stroke-linecap="round" style="z-index:-1; position:absolute; mix-blend-mode: destination-over;"/>
+    </svg>
+    <div class="decor dec-tri-2 shape-triangle"></div>
+    <div class="decor dec-tri-3 shape-triangle"></div>
+    <svg class="decor dec-squ-3" width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="#eb2f64" stroke-width="4" stroke-linecap="round"/>
+        <path d="M3 15 C 8 -5, 12 35, 18 15 C 24 -5, 28 35, 33 15" stroke="black" stroke-width="6" stroke-linecap="round" style="z-index:-1; position:absolute; mix-blend-mode: destination-over;"/>
+    </svg>
+    <div class="decor dec-dot-2 shape-dot"></div>
+    <div class="decor dec-tri-4 shape-triangle yellow"></div>
+
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h1><i class="fa-solid fa-lock"></i> TRUY CẬP BỊ TỪ CHỐI</h1>
+            <p class="subtitle">Bạn không có đủ quyền để truy cập trang này.</p>
+
+            <div class="message-card">
+                <p><strong>Mã lỗi:</strong> 403</p>
+                <p>Quyền hiện tại của bạn không cho phép truy cập tài nguyên này.</p>
+            </div>
+
+            <div class="user-status">
+                <p>Đang đăng nhập: <strong>@User.Identity?.Name</strong></p>
+                <p>Quyền: <span>@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "Không xác định"</span></p>
+            </div>
+
+            <a href="/" class="btn-brutal btn-primary">Quay về trang chủ</a>
+            <a asp-controller="Auth" asp-action="Logout" class="btn-brutal btn-secondary">Đăng xuất & Đổi tài khoản</a>
         </div>
 
-        <div class="denied-actions">
-            <a href="/" class="btn-primary">Quay về trang chủ</a>
-            <a asp-controller="Auth" asp-action="Logout" class="btn-secondary">Đăng xuất & Đổi tài khoản</a>
+        <div class="login-footer">
+            Nếu bạn cần truy cập thêm, vui lòng liên hệ quản trị viên để cấp quyền.
         </div>
     </div>
-</div>
-
-<style>
-    .denied-wrapper {
-        max-width: 600px;
-        margin: 4rem auto;
-        width: 100%;
-        text-align: center;
-    }
-
-    .denied-card {
-        padding: 4rem 3rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-    }
-
-    .denied-icon {
-        font-size: 4rem;
-        animation: pulse 2s infinite ease-in-out;
-    }
-
-    @@keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.4)); }
-    }
-
-    .denied-code {
-        font-size: 5rem;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -0.05em;
-        background: linear-gradient(135deg, var(--danger) 0%, var(--accent-orange) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .denied-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    .denied-message {
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-        line-height: 1.6;
-        max-width: 400px;
-    }
-
-    .user-status {
-        background-color: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border-color);
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        width: 100%;
-        max-width: 350px;
-        font-size: 0.9rem;
-        text-align: left;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .user-status p {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: var(--text-secondary);
-    }
-
-    .user-status strong {
-        color: #ffffff;
-    }
-
-    .denied-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-        width: 100%;
-        justify-content: center;
-    }
-
-    @@media (max-width: 480px) {
-        .denied-actions {
-            flex-direction: column;
-        }
-    }
-</style>
+</body>
+</html>

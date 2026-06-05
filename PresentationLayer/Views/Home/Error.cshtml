@@ -1,0 +1,52 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Lỗi hệ thống";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
+        :root {
+            --primary-pink: #eb2f64;
+            --black: #000000;
+            --white: #ffffff;
+            --bg-color: #f8f8f8;
+            --border-width: 3px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+        body { background-color: var(--bg-color); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-wrapper { width: 100%; max-width: 520px; }
+        .login-box { background-color: var(--white); border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0px 0px var(--black); padding: 36px; }
+        .title { color: var(--primary-pink); font-weight: 900; font-size: 28px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .subtitle { font-weight: 800; font-size: 14px; margin-bottom: 24px; color: var(--black); }
+        .message-box { border: var(--border-width) solid var(--black); padding: 20px; background: #fff0f4; color: #000; margin-bottom: 20px; }
+        .message-box strong { color: var(--primary-pink); }
+        .btn-brutal { width: 100%; padding: 14px; font-size: 15px; font-weight: 900; border: var(--border-width) solid var(--black); cursor: pointer; box-shadow: 4px 4px 0px 0px var(--black); text-transform: uppercase; background: var(--primary-pink); color: var(--white); }
+        .btn-brutal:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--black); }
+        .btn-secondary { display: inline-block; width: 100%; text-align: center; margin-top: 12px; padding: 14px; border: var(--border-width) solid var(--black); text-decoration: none; color: var(--black); background: var(--white); font-weight: 900; }
+        .footer-note { margin-top: 22px; font-size: 13px; font-weight: 700; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h1 class="title"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi hệ thống</h1>
+            <p class="subtitle">Trang lỗi đã được đồng bộ về giao diện đăng nhập.</p>
+            <div class="message-box">
+                <p><strong>Thông báo:</strong></p>
+                <p>@ViewBag.ErrorMessage</p>
+                <p style="margin-top:12px;color:#555"><strong>Đường dẫn:</strong> @ViewBag.Path</p>
+            </div>
+            <a asp-controller="Auth" asp-action="Login" class="btn-brutal">Quay lại đăng nhập</a>
+            <a asp-controller="Home" asp-action="Index" class="btn-secondary">Về trang chủ</a>
+            <div class="footer-note">Nếu lỗi vẫn tiếp diễn, hãy thử tải lại trang hoặc liên hệ quản trị viên.</div>
+        </div>
+    </div>
+</body>
+</html>

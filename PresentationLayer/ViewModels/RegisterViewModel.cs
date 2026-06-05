@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PresentationLayer.Models
+namespace PresentationLayer.ViewModels
 {
     // Model nhận dữ liệu đăng ký từ giao diện và thực hiện so khớp mật khẩu
     public class RegisterViewModel
