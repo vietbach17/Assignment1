@@ -210,19 +210,59 @@ namespace BussinessLayer.Services
             }
         }
 
-        public void SaveStudentSubscription(StudentSubscription sub)
+        public void SaveStudentSubscription(StudentSubscriptionDTO subDto)
         {
-            _repository.SaveStudentSubscription(sub);
+            var existing = _repository.GetStudentSubscription(subDto.UserId);
+            if (existing != null)
+            {
+                existing.SubscriptionPlanId = subDto.SubscriptionPlanId;
+                existing.StartDate = subDto.StartDate;
+                existing.EndDate = subDto.EndDate;
+                existing.RemainingQuestions = subDto.RemainingQuestions;
+                existing.DailyResetTime = subDto.DailyResetTime;
+                _repository.SaveStudentSubscription(existing);
+            }
+            else
+            {
+                var sub = new StudentSubscription
+                {
+                    UserId = subDto.UserId,
+                    SubscriptionPlanId = subDto.SubscriptionPlanId,
+                    StartDate = subDto.StartDate,
+                    EndDate = subDto.EndDate,
+                    RemainingQuestions = subDto.RemainingQuestions,
+                    DailyResetTime = subDto.DailyResetTime
+                };
+                _repository.SaveStudentSubscription(sub);
+            }
         }
 
-        public void AddTransaction(PaymentTransaction transaction)
+        public void AddTransaction(PaymentTransactionDTO transactionDto)
         {
+            var transaction = new PaymentTransaction
+            {
+                UserId = transactionDto.UserId,
+                SubscriptionPlanId = transactionDto.SubscriptionPlanId,
+                Amount = transactionDto.Amount,
+                TransactionDate = transactionDto.TransactionDate,
+                Status = transactionDto.Status
+            };
             _repository.AddTransaction(transaction);
         }
 
-        public List<PaymentTransaction> GetAllTransactions()
+        public List<PaymentTransactionDTO> GetAllTransactions()
         {
-            return _repository.GetAllTransactions();
+            var entities = _repository.GetAllTransactions();
+            return entities.Select(t => new PaymentTransactionDTO
+            {
+                Id = t.Id,
+                UserId = t.UserId,
+                Username = t.User?.Username,
+                SubscriptionPlanId = t.SubscriptionPlanId,
+                Amount = t.Amount,
+                TransactionDate = t.TransactionDate,
+                Status = t.Status
+            }).ToList();
         }
     }
 }

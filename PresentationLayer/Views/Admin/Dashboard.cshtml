@@ -340,7 +340,7 @@
                     <span class="text-xs bg-emerald-50 text-emerald-600 font-semibold px-3 py-1 rounded-full">Tổng: @ViewBag.SuccessTransactionCount thành công</span>
                 </div>
 
-                @if (ViewBag.Transactions == null || !((List<DataAccessLayer.Models.PaymentTransaction>)ViewBag.Transactions).Any())
+                @if (ViewBag.Transactions == null || !((List<PaymentTransactionDTO>)ViewBag.Transactions).Any())
                 {
                     <div class="p-12 text-center">
                         <i class="fa-solid fa-receipt text-5xl text-gray-300 mb-4 block"></i>
@@ -361,11 +361,11 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @foreach (var tx in (List<DataAccessLayer.Models.PaymentTransaction>)ViewBag.Transactions)
+                            @foreach (var tx in (List<PaymentTransactionDTO>)ViewBag.Transactions)
                             {
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="px-6 py-4 text-sm font-mono text-gray-600">#TX-@tx.Id</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700 font-medium">@(tx.User?.Username ?? "N/A")</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 font-medium">@(tx.Username ?? "N/A")</td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         @switch(tx.SubscriptionPlanId)
                                         {

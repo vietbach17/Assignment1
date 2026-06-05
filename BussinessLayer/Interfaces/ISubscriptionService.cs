@@ -20,9 +20,9 @@ namespace BussinessLayer.Interfaces
 
         StudentSubscriptionDTO? GetStudentSubscription(int userId);
 
-        void SaveStudentSubscription(StudentSubscription sub);
-        void AddTransaction(PaymentTransaction transaction);
-        List<PaymentTransaction> GetAllTransactions();
+        void SaveStudentSubscription(StudentSubscriptionDTO subDto);
+        void AddTransaction(PaymentTransactionDTO transactionDto);
+        List<PaymentTransactionDTO> GetAllTransactions();
 
         // 2 HÀM MỚI CHO VNPAY:
         string CreateVnPayPaymentUrl(int userId, int planId, HttpContext httpContext, string returnUrl);

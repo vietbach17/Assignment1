@@ -22,4 +22,15 @@ namespace BussinessLayer.DTOs
         // Tổng giới hạn câu hỏi/ngày của gói hiện tại (để view hiển thị)
         public int QuestionLimit { get; set; }
     }
+
+    public class PaymentTransactionDTO
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public string? Username { get; set; } // Để hiển thị tên student
+        public int SubscriptionPlanId { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime TransactionDate { get; set; }
+        public string Status { get; set; } = null!;
+    }
 }
