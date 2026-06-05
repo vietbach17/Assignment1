@@ -159,7 +159,7 @@ namespace PresentationLayer.Controllers
             if (plan != null)
             {
                 // 1. Ghi nhận lịch sử giao dịch thành công
-                var transaction = new DataAccessLayer.Models.PaymentTransaction
+                var transaction = new PaymentTransactionDTO
                 {
                     UserId = userId,
                     SubscriptionPlanId = planId,
@@ -175,23 +175,11 @@ namespace PresentationLayer.Controllers
                 {
                     currentSub.SubscriptionPlanId = plan.Id;
                     currentSub.StartDate = DateTime.UtcNow;
-                    currentSub.EndDate = DateTime.UtcNow.AddMonths(1);
-
+                    currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1); // Gói Free = vĩnh viễn
                     currentSub.RemainingQuestions = plan.QuestionLimit;
+                    currentSub.DailyResetTime = null; // Reset chu kỳ daily khi đổi gói
 
-                    // Gọi hàm lưu đè xuống Postgres
-                    var entity = new DataAccessLayer.Models.StudentSubscription
-                    {
-                        Id = currentSub.Id,
-                        UserId = currentSub.UserId,
-                        SubscriptionPlanId = plan.Id, // Gán ID gói mới mua
-                        StartDate = DateTime.UtcNow,
-                        EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1), // Gói Free = vĩnh viễn
-                        RemainingQuestions = plan.QuestionLimit, // Cập nhật số lượng câu hỏi mới theo gói
-                        DailyResetTime = null // Reset chu kỳ daily khi đổi gói
-                    };
-
-                    _subscriptionService.SaveStudentSubscription(entity); // Lưu thay đổi xuống Database
+                    _subscriptionService.SaveStudentSubscription(currentSub); // Lưu thay đổi xuống Database
 
                     TempData["SuccessMessage"] = $"⚡ Xác nhận thanh toán thành công! Gói {plan.Name} ({plan.QuestionLimit} câu) đã được kích hoạt.";
                     return RedirectToAction(nameof(MySubscription));
