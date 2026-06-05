@@ -16,6 +16,10 @@ namespace BussinessLayer.Services
         /// <summary>Lấy danh sách tài liệu thuộc một Subject</summary>
         Task<IEnumerable<DocumentDto>> GetDocumentsBySubjectAsync(int subjectId);
 
+        Task<IEnumerable<DocumentDto>> GetDocumentsByChapterAsync(int chapterId);
+
+        Task<IEnumerable<DocumentDto>> GetDocumentsByUploadedByUserAsync(int uploadedByUserId);
+
         /// <summary>
         /// Upload tài liệu mới: validate file → lưu lên disk → lưu metadata vào DB
         /// </summary>
@@ -43,6 +47,13 @@ namespace BussinessLayer.Services
 
         /// <summary>Tìm tài liệu theo mã băm SHA-256 nội dung</summary>
         Task<DocumentDto?> GetDocumentByHashAsync(string fileHash);
+
+        /// <summary>
+        /// Cập nhật thông tin tài liệu: tiêu đề, chapter
+        /// </summary>
+        /// <param name="viewModel">Dữ liệu chỉnh sửa từ form</param>
+        /// <returns>(success, message, documentDto)</returns>
+        Task<(bool Success, string Message, DocumentDto? Document)> UpdateDocumentAsync(DocumentEditViewModel viewModel);
 
         /// <summary>Xử lý upload phân đoạn (Chunk Upload)</summary>
         Task<(bool Success, string Message, DocumentDto? Document)> ProcessChunkAsync(

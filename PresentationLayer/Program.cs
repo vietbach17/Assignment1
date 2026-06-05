@@ -1,6 +1,47 @@
 using BussinessLayer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+// --- LOAD ENVIRONMENT VARIABLES FROM .ENV ---
+var currentDir = Directory.GetCurrentDirectory();
+string? envFilePath = null;
+var tempDir = currentDir;
+while (!string.IsNullOrEmpty(tempDir))
+{
+    var path = Path.Combine(tempDir, ".env");
+    if (File.Exists(path))
+    {
+        envFilePath = path;
+        break;
+    }
+    tempDir = Directory.GetParent(tempDir)?.FullName;
+}
+
+if (envFilePath == null)
+{
+    var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env");
+    if (File.Exists(path))
+    {
+        envFilePath = path;
+    }
+}
+
+if (envFilePath != null)
+{
+    foreach (var line in File.ReadAllLines(envFilePath))
+    {
+        var trimmed = line.Trim();
+        if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#")) continue;
+        
+        var parts = trimmed.Split('=', 2);
+        if (parts.Length != 2) continue;
+        
+        var key = parts[0].Trim();
+        var val = parts[1].Trim().Trim('"', '\'');
+        
+        Environment.SetEnvironmentVariable(key, val);
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

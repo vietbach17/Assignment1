@@ -15,6 +15,11 @@ namespace DataAccessLayer.Repositories
         StudentSubscription? GetStudentSubscription(int userId);
         void SaveStudentSubscription(StudentSubscription sub);
 
+        /// <summary>
+        /// Cập nhật RemainingQuestions cho toàn bộ student đang active gói planId theo giới hạn mới.
+        /// </summary>
+        void UpdateStudentQuestionLimitByPlan(int planId, int newLimit);
+
         // Ghi nhận giao dịch
         void AddTransaction(PaymentTransaction transaction);
         List<PaymentTransaction> GetAllTransactions();

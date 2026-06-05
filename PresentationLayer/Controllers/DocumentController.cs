@@ -45,13 +45,19 @@ namespace PresentationLayer.Controllers
         public async Task<IActionResult> Index(int? subjectId, DocumentStatus? status)
         {
             IEnumerable<DocumentDto> documents;
+            var userId = GetCurrentUserId();
 
-            if (subjectId.HasValue)
+            if (User.IsInRole("Lecturer") && userId.HasValue)
+                documents = await _documentService.GetDocumentsByUploadedByUserAsync(userId.Value);
+            else if (subjectId.HasValue)
                 documents = await _documentService.GetDocumentsBySubjectAsync(subjectId.Value);
             else
                 documents = await _documentService.GetAllDocumentsAsync(includeDeleted: false);
 
             // Filter theo trạng thái nếu có
+            if (User.IsInRole("Lecturer") && subjectId.HasValue)
+                documents = documents.Where(d => d.SubjectId == subjectId.Value);
+
             if (status.HasValue)
                 documents = documents.Where(d => d.Status == status.Value);
 
@@ -60,6 +66,20 @@ namespace PresentationLayer.Controllers
             ViewBag.Subjects = new SelectList(subjects, "Id", "SubjectCode", subjectId);
             ViewBag.FilterSubjectId = subjectId;
             ViewBag.FilterStatus = status;
+            ViewBag.CanUploadDocuments = false;
+            ViewBag.ManagedSubjectIds = new List<int>();
+
+            if (User.IsInRole("Lecturer") && userId.HasValue)
+            {
+                var assignedSubjects = await _subjectService.GetSubjectsByLecturerIdAsync(userId.Value, includeDeleted: false);
+                var managedSubjectIds = assignedSubjects.Select(s => s.Id).ToList();
+                ViewBag.ManagedSubjectIds = managedSubjectIds;
+                ViewBag.CanUploadDocuments = managedSubjectIds.Any();
+            }
+            else if (User.IsInRole("Admin"))
+            {
+                ViewBag.ManagedSubjectIds = subjects.Select(s => s.Id).ToList();
+            }
 
             var viewModel = new DocumentListViewModel
             {
@@ -94,17 +114,22 @@ namespace PresentationLayer.Controllers
         [Authorize(Roles = "Lecturer")]
         public async Task<IActionResult> Upload(DocumentUploadViewModel viewModel)
         {
-            if (!ModelState.IsValid)
-            {
-                await PopulateDropdowns(viewModel.SubjectId);
-                return View(viewModel);
-            }
-
             var userId = GetCurrentUserId();
             if (userId == null)
             {
                 TempData["ErrorMessage"] = "Không thể xác định người dùng hiện tại.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (!await CanManageSubjectDocumentsAsync(viewModel.SubjectId, userId.Value))
+            {
+                ModelState.AddModelError(nameof(viewModel.SubjectId), "Bạn chỉ có thể tải tài liệu lên môn học được phân công.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdowns(viewModel.SubjectId);
+                return View(viewModel);
             }
 
             var wwwrootPath = _webHostEnvironment.WebRootPath;
@@ -138,11 +163,94 @@ namespace PresentationLayer.Controllers
                 return Json(new { success = false, message = "Không thể xác định người dùng hiện tại." });
             }
 
+            if (!await CanManageSubjectDocumentsAsync(subjectId, userId.Value))
+            {
+                return Json(new { success = false, message = "Bạn chỉ có thể tải tài liệu lên môn học được phân công." });
+            }
+
             var wwwrootPath = _webHostEnvironment.WebRootPath;
             var (success, message, document) = await _documentService.ProcessChunkAsync(
                 file, chunkIndex, totalChunks, fileName, fileGuid, title, subjectId, chapterId, userId.Value, wwwrootPath);
 
             return Json(new { success, message, document });
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // GET: /Document/Edit/{id}
+        // Form chỉnh sửa tiêu đề và chapter của tài liệu
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet]
+        [Authorize(Roles = "Lecturer,Admin")]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var document = await _documentService.GetDocumentByIdAsync(id);
+            if (document == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy tài liệu.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!await CanManageDocumentAsync(id))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa tài liệu này. Chỉ có thể chỉnh sửa tài liệu thuộc môn học được phân công.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var viewModel = new DocumentEditViewModel
+            {
+                Id = document.Id,
+                Title = document.Title,
+                SubjectId = document.SubjectId,
+                ChapterId = document.ChapterId,
+                FileName = document.FileName,
+                FileType = document.FileType,
+                FileSizeDisplay = document.FileSizeDisplay
+            };
+
+            await PopulateEditDropdowns(document.SubjectId, document.ChapterId);
+            return View(viewModel);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // POST: /Document/Edit/{id}
+        // Lưu thay đổi tiêu đề và chapter
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Lecturer,Admin")]
+        public async Task<IActionResult> Edit(int id, DocumentEditViewModel viewModel)
+        {
+            if (id != viewModel.Id)
+            {
+                TempData["ErrorMessage"] = "Dữ liệu không hợp lệ.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!await CanManageDocumentAsync(id))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa tài liệu này.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateEditDropdowns(viewModel.SubjectId, viewModel.ChapterId);
+                return View(viewModel);
+            }
+
+            var (success, message, document) = await _documentService.UpdateDocumentAsync(viewModel);
+
+            if (!success)
+            {
+                ModelState.AddModelError(string.Empty, message);
+                await PopulateEditDropdowns(viewModel.SubjectId, viewModel.ChapterId);
+                return View(viewModel);
+            }
+
+            TempData["SuccessMessage"] = message;
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -166,6 +274,9 @@ namespace PresentationLayer.Controllers
                 NewStatus = document.Status
             };
 
+            var userId = GetCurrentUserId();
+            ViewBag.CanManageDocument = userId.HasValue && await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value);
+
             return View(viewModel);
         }
 
@@ -178,6 +289,12 @@ namespace PresentationLayer.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, DocumentStatus newStatus)
         {
+            if (!await CanManageDocumentAsync(id))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền cập nhật tài liệu này.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             var (success, message) = await _documentService.UpdateDocumentStatusAsync(id, newStatus);
 
             if (success)
@@ -203,6 +320,12 @@ namespace PresentationLayer.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            if (!await CanManageDocumentAsync(id))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền xóa tài liệu này.";
+                return RedirectToAction(nameof(Index));
+            }
+
             return View(document);
         }
 
@@ -215,6 +338,12 @@ namespace PresentationLayer.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (!await CanManageDocumentAsync(id))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền xóa tài liệu này.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var wwwrootPath = _webHostEnvironment.WebRootPath;
             var (success, message) = await _documentService.DeleteDocumentAsync(id, wwwrootPath);
 
@@ -289,7 +418,18 @@ namespace PresentationLayer.Controllers
 
         private async Task PopulateDropdowns(int? selectedSubjectId = null, int? selectedChapterId = null)
         {
-            var subjects = await _subjectService.GetAllSubjectsAsync(includeDeleted: false);
+            IEnumerable<SubjectDto> subjects;
+            var userId = GetCurrentUserId();
+
+            if (User.IsInRole("Lecturer") && userId.HasValue)
+            {
+                subjects = await _subjectService.GetSubjectsByLecturerIdAsync(userId.Value, includeDeleted: false);
+            }
+            else
+            {
+                subjects = await _subjectService.GetAllSubjectsAsync(includeDeleted: false);
+            }
+
             ViewBag.SubjectList = new SelectList(subjects, "Id", "SubjectCode", selectedSubjectId);
 
             // Load chapters cho subject đã chọn (nếu có)
@@ -308,6 +448,36 @@ namespace PresentationLayer.Controllers
             {
                 ViewBag.ChapterList = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
             }
+        }
+
+        private async Task<bool> CanManageDocumentAsync(int documentId)
+        {
+            var document = await _documentService.GetDocumentByIdAsync(documentId);
+            var userId = GetCurrentUserId();
+            return document != null && userId.HasValue && await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value);
+        }
+
+        private async Task<bool> CanManageSubjectDocumentsAsync(int subjectId, int userId)
+        {
+            if (User.IsInRole("Admin"))
+            {
+                return true;
+            }
+
+            return User.IsInRole("Lecturer")
+                && await _subjectService.IsLecturerAssignedToSubjectAsync(subjectId, userId);
+        }
+
+        private async Task PopulateEditDropdowns(int selectedSubjectId, int? selectedChapterId = null)
+        {
+            var chapters = await _chapterService.GetChaptersBySubjectIdAsync(selectedSubjectId, includeDeleted: false);
+            var chapterItems = chapters.Select(c => new SelectListItem
+            {
+                Value = c.Id.ToString(),
+                Text = $"Chapter {c.ChapterNumber}: {c.ChapterTitle}",
+                Selected = c.Id == selectedChapterId
+            });
+            ViewBag.ChapterList = new SelectList(chapterItems, "Value", "Text", selectedChapterId);
         }
     }
 }

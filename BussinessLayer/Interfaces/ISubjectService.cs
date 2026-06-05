@@ -15,6 +15,14 @@ namespace BussinessLayer.Services
         Task<IEnumerable<SubjectDto>> GetAllSubjectsAsync(bool includeDeleted = false);
 
         /// <summary>
+        /// Lay cac Subject duoc gan cho mot Lecturer cu the
+        /// </summary>
+        /// <param name="lecturerId">ID cua Lecturer</param>
+        /// <param name="includeDeleted">Co bao gom cac Subject da bi xoa mem hay khong</param>
+        /// <returns>Danh sach SubjectDto</returns>
+        Task<IEnumerable<SubjectDto>> GetSubjectsByLecturerIdAsync(int lecturerId, bool includeDeleted = false);
+
+        /// <summary>
         /// Lấy Subject theo ID
         /// </summary>
         /// <param name="id">ID của Subject</param>
