@@ -5,7 +5,6 @@ using System.Security.Claims;
 using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using BussinessLayer.Services;
-using BussinessLayer.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
