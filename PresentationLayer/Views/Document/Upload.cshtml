@@ -559,9 +559,9 @@
                                 logToTerminal(`[SHA-256 Hash] ${result.document.fileHash}`, 'success');
                                 logToTerminal(`[Cơ sở dữ liệu] Ghi nhận metadata thành công. Document ID: ${result.document.id}`, 'success');
                                 progressStatusText.textContent = 'Tải lên hoàn tất!';
-                                logToTerminal('Tải lên thành công! Đang tự động chuyển hướng về trang danh sách...', 'system');
+                                logToTerminal('Tải lên thành công! Đang tự động chuyển hướng về trang chi tiết tài liệu...', 'system');
                                 setTimeout(() => {
-                                    window.location.href = '/Document/Index';
+                                    window.location.href = `/Document/Details/${result.document.id}`;
                                 }, 2000);
                             } else {
                                 logToTerminal(`[Lỗi] Phản hồi thành công nhưng thiếu thông tin chi tiết tài liệu từ máy chủ.`, 'error');

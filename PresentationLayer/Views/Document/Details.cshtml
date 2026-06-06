@@ -401,10 +401,105 @@
                         }
                 }
             </div>
+
+            <!-- AI Chunks / Phân đoạn nội dung -->
+            <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-emerald-700"></i>
+                    <span>Phân đoạn nội dung (AI Indexed Chunks)</span>
+                </h3>
+
+                <div class="flex flex-col lg:flex-row gap-6 border border-gray-200 rounded-xl overflow-hidden min-h-[400px]">
+                    <!-- Left sidebar showing segment index list -->
+                    <div id="segmentsList" class="w-full lg:w-64 border-r border-gray-200 overflow-y-auto bg-gray-50 flex flex-col flex-shrink-0 max-h-[500px]">
+                        <div class="p-4 text-sm text-gray-500 italic text-center font-medium">Đang chuẩn bị các phân đoạn...</div>
+                    </div>
+                    <!-- Right reading panel -->
+                    <div id="segmentContent" class="flex-1 p-6 overflow-y-auto font-serif text-base leading-relaxed text-gray-800 text-justify bg-white max-h-[500px] whitespace-pre-wrap">
+                        Đang tải dữ liệu phân đoạn...
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- Viewing chunks now opens a dedicated page -->
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            loadSegments();
+        });
+
+        let segments = [];
+
+        function loadSegments() {
+            const listEl = document.getElementById('segmentsList');
+            const contentEl = document.getElementById('segmentContent');
+
+            if (!listEl || !contentEl) return;
+
+            listEl.innerHTML = '<div class="p-4 text-sm text-gray-500 italic text-center font-medium">Đang phân đoạn...</div>';
+            contentEl.textContent = 'Đang trích xuất và phân tích văn bản từ máy chủ...';
+
+            fetch(`/Document/GetDocumentSegments?id=@doc.Id`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.segments && data.segments.length > 0) {
+                        segments = data.segments;
+                        listEl.innerHTML = '';
+                        segments.forEach((seg, index) => {
+                            const item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'segment-item w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-100 transition font-medium text-sm text-gray-700 flex items-center justify-between';
+                            
+                            const name = data.fileType.toLowerCase() === 'pptx' ? `Slide ${index + 1}` : 
+                                         (data.fileType.toLowerCase() === 'pdf' ? `Trang ${index + 1}` : `Phân đoạn ${index + 1}`);
+                            
+                            item.innerHTML = `
+                                <span>${name}</span>
+                                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+                            `;
+
+                            item.onclick = () => selectSegment(index, item);
+                            listEl.appendChild(item);
+                        });
+
+                        // Tự động chọn phân đoạn đầu tiên
+                        if (listEl.firstChild) {
+                            listEl.firstChild.click();
+                        }
+                    } else {
+                        listEl.innerHTML = '';
+                        contentEl.innerHTML = `
+                            <div class="flex flex-col items-center justify-center gap-4 py-12 text-center text-gray-500 w-full">
+                                <span class="text-4xl">🚫</span>
+                                <div class="font-bold text-lg font-sans">Không thể tải phân đoạn tài liệu</div>
+                                <p class="text-sm max-w-sm font-sans">${data.message || 'Hệ thống chưa hỗ trợ trích xuất văn bản cho định dạng này.'}</p>
+                            </div>`;
+                    }
+                })
+                .catch(err => {
+                    listEl.innerHTML = '';
+                    contentEl.textContent = `Lỗi kết nối tới máy chủ: ${err.message}`;
+                });
+        }
+
+        function selectSegment(index, element) {
+            // Loại bỏ active khỏi tất cả các phần tử
+            document.querySelectorAll('.segment-item').forEach(el => {
+                el.classList.remove('bg-emerald-50', 'text-emerald-800', 'border-l-4', 'border-l-emerald-600');
+                el.classList.add('text-gray-700');
+            });
+            
+            // Thêm active vào phần tử được chọn
+            element.classList.remove('text-gray-700');
+            element.classList.add('bg-emerald-50', 'text-emerald-800', 'border-l-4', 'border-l-emerald-600');
+
+            // Hiển thị nội dung
+            const contentEl = document.getElementById('segmentContent');
+            contentEl.textContent = segments[index];
+            contentEl.scrollTop = 0;
+        }
+    </script>
 </body>
 </html>

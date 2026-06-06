@@ -5,6 +5,7 @@ using System.Security.Claims;
 using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using BussinessLayer.Services;
+using BussinessLayer.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -87,6 +88,7 @@ namespace PresentationLayer.Controllers
             else if (User.IsInRole("Admin"))
             {
                 ViewBag.ManagedSubjectIds = subjects.Select(s => s.Id).ToList();
+                ViewBag.CanUploadDocuments = false;
             }
 
             var viewModel = new DocumentListViewModel
@@ -160,7 +162,7 @@ namespace PresentationLayer.Controllers
         // Xử lý chunk upload cho Lecturer
         // ─────────────────────────────────────────────────────────────────────
         [HttpPost]
-        [Authorize(Roles = "Lecturer")]
+        [Authorize(Roles = "Lecturer,Admin")]
         public async Task<IActionResult> UploadChunk(
             Microsoft.AspNetCore.Http.IFormFile file, int chunkIndex, int totalChunks, string fileName, string fileGuid,
             string title, int subjectId, int? chapterId)
@@ -686,6 +688,92 @@ namespace PresentationLayer.Controllers
             var chapters = await _chapterService.GetChaptersBySubjectIdAsync(subjectId, includeDeleted: false);
             var result = chapters.Select(c => new { id = c.Id, title = $"Chapter {c.ChapterNumber}: {c.ChapterTitle}" });
             return Json(result);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // AJAX: /Document/GetDocumentSegments?id={id}
+        // Trích xuất nội dung văn bản từ file và phân đoạn thành các slide hoặc mục nhỏ
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpGet]
+        [Authorize(Roles = "Lecturer,Admin")]
+        public async Task<IActionResult> GetDocumentSegments(int id)
+        {
+            var docDto = await _documentService.GetDocumentByIdAsync(id);
+            if (docDto == null || docDto.IsDeleted)
+            {
+                return Json(new { success = false, message = "Không tìm thấy tài liệu này." });
+            }
+
+            var wwwrootPath = _webHostEnvironment.WebRootPath;
+            var fullPath = Path.Combine(wwwrootPath, docDto.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+
+            if (!System.IO.File.Exists(fullPath))
+            {
+                return Json(new { success = false, message = "Tệp tin tài liệu không tồn tại trên hệ thống." });
+            }
+
+            // Gọi GeminiService để trích xuất text
+            var text = await _geminiService.GetDocumentTextAsync(fullPath);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return Json(new { success = false, message = "Không thể trích xuất văn bản từ tài liệu." });
+            }
+
+            // Phân đoạn văn bản
+            var segments = SegmentText(text, docDto.FileType);
+            return Json(new { success = true, title = docDto.Title, fileType = docDto.FileType, segments = segments });
+        }
+
+        private List<string> SegmentText(string text, string fileType)
+        {
+            var segments = new List<string>();
+            if (string.IsNullOrWhiteSpace(text)) return segments;
+
+            var ftype = fileType.ToLower();
+            if (ftype == "pptx")
+            {
+                // Slide show: tách theo marker "--- Slide "
+                var parts = text.Split(new[] { "--- Slide " }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var part in parts)
+                {
+                    segments.Add("Slide " + part.Trim());
+                }
+            }
+            else if (ftype == "pdf")
+            {
+                // PDF: tách theo trang "--- Trang "
+                var parts = text.Split(new[] { "--- Trang " }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var part in parts)
+                {
+                    segments.Add("Trang " + part.Trim());
+                }
+            }
+            else
+            {
+                // Word/TXT: phân đoạn theo đoạn văn (Double newline) gom thành các block ~1200 ký tự
+                var paragraphs = text.Split(new[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var currentChunk = new System.Text.StringBuilder();
+
+                foreach (var p in paragraphs)
+                {
+                    var trimmed = p.Trim();
+                    if (string.IsNullOrEmpty(trimmed)) continue;
+
+                    if (currentChunk.Length + trimmed.Length > 1200)
+                    {
+                        segments.Add(currentChunk.ToString().Trim());
+                        currentChunk.Clear();
+                    }
+                    currentChunk.AppendLine(trimmed).AppendLine();
+                }
+
+                if (currentChunk.Length > 0)
+                {
+                    segments.Add(currentChunk.ToString().Trim());
+                }
+            }
+
+            return segments;
         }
 
         // ─────────────────────────────────────────────────────────────────────
