@@ -19,6 +19,21 @@ namespace BussinessLayer.Interfaces
         Task<string> GenerateContentAsync(string prompt, IEnumerable<BussinessLayer.DTOs.ChatMessageDto> history, IEnumerable<string> documentPaths, bool restrictToDocs);
 
         /// <summary>
+        /// Lấy nội dung tài liệu đã được phân đoạn (chunk) để dễ dàng truyền vào AI hoặc xem trước
+        /// </summary>
+        /// <param name="path">Đường dẫn tuyệt đối đến tệp tài liệu</param>
+        /// <param name="maxChunkSize">Kích thước tối đa mỗi chunk</param>
+        /// <returns>Danh sách các đoạn text của tài liệu</returns>
+        Task<IEnumerable<string>> GetDocumentTextChunksAsync(string path, int maxChunkSize = 1200);
+
+        /// <summary>
+        /// Tạo embedding cho một chuỗi văn bản, để phục vụ truy vấn tìm kiếm/summarization về sau
+        /// </summary>
+        /// <param name="input">Nội dung văn bản cần tạo embedding</param>
+        /// <returns>Vector embedding của Gemini, nếu thất bại trả về null</returns>
+        Task<IEnumerable<float>?> CreateTextEmbeddingAsync(string input);
+
+        /// <summary>
         /// Trích xuất nội dung văn bản thô từ tài liệu nguồn để học sinh xem trước những gì AI sẽ đọc
         /// </summary>
         /// <param name="path">Đường dẫn tuyệt đối đến tệp tài liệu</param>

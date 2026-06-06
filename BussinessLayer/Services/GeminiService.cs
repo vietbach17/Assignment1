@@ -20,13 +20,15 @@ namespace BussinessLayer.Services
         private readonly string _apiKey;
         private readonly string _model;
         private readonly string _apiUrl;
+        private readonly string _embeddingModel;
 
         public GeminiService(IConfiguration configuration)
         {
-            var geminiSection = configuration.GetSection("Gemini");
+           var geminiSection = configuration.GetSection("Gemini");
             _apiKey = geminiSection["ApiKey"] ?? string.Empty;
             _model = geminiSection["Model"] ?? "gemini-3.5-flash";
             _apiUrl = geminiSection["ApiUrl"] ?? "https://generativelanguage.googleapis.com/v1beta/models/";
+            _embeddingModel = geminiSection["EmbeddingModel"] ?? "textembedding-gecko-001";
         }
 
         public async Task<string> GenerateContentAsync(string prompt, IEnumerable<BussinessLayer.DTOs.ChatMessageDto> history, IEnumerable<string> documentPaths, bool restrictToDocs)
@@ -68,8 +70,28 @@ namespace BussinessLayer.Services
 
                         var ext = Path.GetExtension(path).ToLower();
                         var fileName = Path.GetFileName(path);
+                        var chunks = await GetDocumentTextChunksAsync(path, maxChunkSize: 1200);
+                        var chunkList = chunks.ToList();
 
-                        if (ext == ".pdf")
+                        if (chunkList.Any())
+                        {
+                            var usedChunks = chunkList;
+                            const int maxChunks = 8;
+                            if (chunkList.Count > maxChunks)
+                            {
+                                usedChunks = chunkList.Take(maxChunks).ToList();
+                                usedChunks.Add($"[Lưu ý: tài liệu {fileName} có {chunkList.Count} phần. Chỉ sử dụng {maxChunks} phần đầu để tránh payload quá lớn.]");
+                            }
+
+                            for (int i = 0; i < usedChunks.Count; i++)
+                            {
+                                currentParts.Add(new
+                                {
+                                    text = $"[Tài liệu {fileName} - Phần {i + 1}/{usedChunks.Count}]\n{usedChunks[i]}"
+                                });
+                            }
+                        }
+                        else if (ext == ".pdf")
                         {
                             try
                             {
@@ -89,33 +111,9 @@ namespace BussinessLayer.Services
                                 currentParts.Add(new { text = $"[Lỗi đọc file PDF {fileName}: {ex.Message}]" });
                             }
                         }
-                        else if (ext == ".docx")
+                        else
                         {
-                            var text = ExtractTextFromDocx(path);
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                currentParts.Add(new { text = $"[Nội dung tài liệu DOCX: {fileName}]\n{text}" });
-                            }
-                        }
-                        else if (ext == ".pptx")
-                        {
-                            var text = ExtractTextFromPptx(path);
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                currentParts.Add(new { text = $"[Nội dung tài liệu PPTX (Slide): {fileName}]\n{text}" });
-                            }
-                        }
-                        else if (ext == ".txt")
-                        {
-                            try
-                            {
-                                var text = await File.ReadAllTextAsync(path);
-                                currentParts.Add(new { text = $"[Nội dung tài liệu TXT: {fileName}]\n{text}" });
-                            }
-                            catch (Exception ex)
-                            {
-                                currentParts.Add(new { text = $"[Lỗi đọc file TXT {fileName}: {ex.Message}]" });
-                            }
+                            currentParts.Add(new { text = $"[Không thể trích xuất nội dung từ tài liệu {fileName} hoặc định dạng không hỗ trợ chunking.]" });
                         }
                     }
                 }
@@ -192,6 +190,120 @@ namespace BussinessLayer.Services
             {
                 return $"Đã xảy ra lỗi trong quá trình kết nối với Gemini AI: {ex.Message}";
             }
+        }
+
+        public async Task<IEnumerable<string>> GetDocumentTextChunksAsync(string path, int maxChunkSize = 1200)
+        {
+            if (!File.Exists(path)) return Array.Empty<string>();
+
+            var rawText = await GetDocumentTextAsync(path);
+            if (string.IsNullOrWhiteSpace(rawText)) return Array.Empty<string>();
+            if (rawText.StartsWith("[Lỗi") || rawText.Contains("không chứa văn bản dạng ký tự"))
+            {
+                return Array.Empty<string>();
+            }
+
+            return ChunkText(rawText, maxChunkSize);
+        }
+
+        public async Task<IEnumerable<float>?> CreateTextEmbeddingAsync(string input)
+        {
+            if (string.IsNullOrWhiteSpace(_apiKey) || string.IsNullOrWhiteSpace(input)) return null;
+
+            try
+            {
+                var requestBody = new
+                {
+                    input = input
+                };
+
+                var url = $"{_apiUrl.TrimEnd('/')}/{_embeddingModel}:embedText?key={_apiKey}";
+                var jsonPayload = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(url, content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                using var doc = JsonDocument.Parse(responseString);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("embeddings", out var embeddings) && embeddings.GetArrayLength() > 0)
+                {
+                    var embedding = embeddings[0];
+                    return embedding.EnumerateArray().Select(v => (float)v.GetDouble()).ToList();
+                }
+
+                if (root.TryGetProperty("data", out var data) && data.GetArrayLength() > 0 && data[0].TryGetProperty("embedding", out var embedArray))
+                {
+                    return embedArray.EnumerateArray().Select(v => (float)v.GetDouble()).ToList();
+                }
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static List<string> ChunkText(string text, int maxChunkSize)
+        {
+            var normalized = Regex.Replace(text, "\r\n|\r", "\n");
+            var segments = normalized.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList();
+
+            var chunks = new List<string>();
+            var currentChunk = new StringBuilder();
+
+            foreach (var segment in segments)
+            {
+                if (segment.Length > maxChunkSize)
+                {
+                    if (currentChunk.Length > 0)
+                    {
+                        chunks.Add(currentChunk.ToString().Trim());
+                        currentChunk.Clear();
+                    }
+
+                    for (int i = 0; i < segment.Length; i += maxChunkSize)
+                    {
+                        var length = Math.Min(maxChunkSize, segment.Length - i);
+                        chunks.Add(segment.Substring(i, length).Trim());
+                    }
+                    continue;
+                }
+
+                if (currentChunk.Length + segment.Length + 2 > maxChunkSize)
+                {
+                    chunks.Add(currentChunk.ToString().Trim());
+                    currentChunk.Clear();
+                }
+
+                if (currentChunk.Length > 0)
+                {
+                    currentChunk.Append("\n\n");
+                }
+                currentChunk.Append(segment);
+            }
+
+            if (currentChunk.Length > 0)
+            {
+                chunks.Add(currentChunk.ToString().Trim());
+            }
+
+            if (!chunks.Any() && !string.IsNullOrWhiteSpace(text))
+            {
+                chunks.Add(text.Trim());
+            }
+
+            return chunks;
         }
 
         public async Task<string> GetDocumentTextAsync(string path)

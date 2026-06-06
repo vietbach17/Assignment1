@@ -158,4 +158,24 @@ namespace BussinessLayer.DTOs
         /// <summary>Trạng thái mới sẽ được set (dùng trong form UpdateStatus)</summary>
         public DocumentStatus NewStatus { get; set; }
     }
+
+    /// <summary>
+    /// ViewModel cho trang hiển thị chunk và embedding của tài liệu
+    /// </summary>
+    public class DocumentChunksViewModel
+    {
+        public DocumentDto Document { get; set; } = null!;
+        public List<string> Chunks { get; set; } = new List<string>();
+        public string? FirstChunkPreview { get; set; }
+        public List<float>? Embedding { get; set; }
+    }
+
+    /// <summary>
+    /// DTO dùng khi lưu chunks/embedding từ UI
+    /// </summary>
+    public class DocumentChunksSaveDto
+    {
+        public List<string>? Chunks { get; set; }
+        public List<float>? Embedding { get; set; }
+    }
 }

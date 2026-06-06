@@ -1,10 +1,15 @@
+using System;
+using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using BussinessLayer.DTOs;
+using BussinessLayer.Interfaces;
 using BussinessLayer.Services;
 using BussinessLayer.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -178,6 +183,68 @@ namespace PresentationLayer.Controllers
                 file, chunkIndex, totalChunks, fileName, fileGuid, title, subjectId, chapterId, userId.Value, wwwrootPath);
 
             return Json(new { success, message, document });
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // POST: /Document/PreviewDocumentChunks
+        // Xem trước cách Gemini chunk/embed nội dung file trước khi upload hoàn tất
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpPost]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> PreviewDocumentChunks(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "Vui lòng chọn file cần xem trước." });
+            }
+
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            if (ext != ".pdf" && ext != ".docx" && ext != ".pptx" && ext != ".txt")
+            {
+                return Json(new { success = false, message = "Chỉ hỗ trợ xem trước cho các file PDF, DOCX, PPTX và TXT." });
+            }
+
+            var tempFile = Path.Combine(Path.GetTempPath(), $"gemini_preview_{Guid.NewGuid()}{ext}");
+            try
+            {
+                await using (var stream = new FileStream(tempFile, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var chunks = (await _geminiService.GetDocumentTextChunksAsync(tempFile, 1200)).ToList();
+                if (!chunks.Any())
+                {
+                    return Json(new { success = false, message = "Không thể trích xuất hoặc phân đoạn nội dung từ file này." });
+                }
+
+                var firstChunk = chunks.First();
+                var embedding = await _geminiService.CreateTextEmbeddingAsync(firstChunk);
+                return Json(new
+                {
+                    success = true,
+                    chunkCount = chunks.Count,
+                    chunks = chunks.Take(5).Select((text, index) => new { index = index + 1, text }).ToList(),
+                    firstChunkPreview = firstChunk,
+                    embeddingCount = embedding?.Count() ?? 0,
+                    embeddingAvailable = embedding != null
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Lỗi xem trước tài liệu: {ex.Message}" });
+            }
+            finally
+            {
+                try
+                {
+                    if (System.IO.File.Exists(tempFile))
+                        System.IO.File.Delete(tempFile);
+                }
+                catch
+                {
+                }
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -394,6 +461,220 @@ namespace PresentationLayer.Controllers
 
             var fileBytes = await System.IO.File.ReadAllBytesAsync(fullPath);
             return File(fileBytes, contentType, document.FileName);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // GET: /Document/GetDocumentChunks/{id}
+        // Trả về các chunk văn bản và embedding (nếu có) của một tài liệu đã upload
+        // Lecturer/ Admin có thể xem nếu được phân công quản lý môn học tương ứng
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentChunks(int id)
+        {
+            var document = await _documentService.GetDocumentByIdAsync(id);
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy tài liệu." });
+            }
+
+            var userId = GetCurrentUserId();
+            // Admin luôn có quyền
+            if (!User.IsInRole("Admin"))
+            {
+                // Nếu là Lecturer thì phải được phân công cho subject
+                if (User.IsInRole("Lecturer"))
+                {
+                    if (!userId.HasValue || !await _subjectService.IsLecturerAssignedToSubjectAsync(document.SubjectId, userId.Value))
+                    {
+                        return Json(new { success = false, message = "Bạn không có quyền xem nội dung phân đoạn/embedding của tài liệu này." });
+                    }
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Bạn không có quyền xem nội dung phân đoạn/embedding của tài liệu này." });
+                }
+            }
+
+            var wwwrootPath = _webHostEnvironment.WebRootPath;
+            var fullPath = Path.Combine(wwwrootPath, document.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+            if (!System.IO.File.Exists(fullPath))
+            {
+                return Json(new { success = false, message = "File không tồn tại trên hệ thống." });
+            }
+
+            try
+            {
+                var chunks = (await _geminiService.GetDocumentTextChunksAsync(fullPath, 1200)).ToList();
+                if (!chunks.Any())
+                {
+                    return Json(new { success = false, message = "Không thể trích xuất nội dung từ tài liệu này." });
+                }
+
+                var firstChunk = chunks.First();
+                var embedding = await _geminiService.CreateTextEmbeddingAsync(firstChunk);
+
+                return Json(new
+                {
+                    success = true,
+                    chunkCount = chunks.Count,
+                    chunks = chunks.Take(10).Select((text, index) => new { index = index + 1, text }).ToList(),
+                    firstChunkPreview = firstChunk,
+                    embeddingCount = embedding?.Count() ?? 0,
+                    embeddingAvailable = embedding != null
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Lỗi khi trích xuất nội dung: {ex.Message}" });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // GET: /Document/Chunks/{id}
+        // Mở trang mới hiển thị danh sách chunk và embedding của tài liệu
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Chunks(int id)
+        {
+            var document = await _documentService.GetDocumentByIdAsync(id);
+            if (document == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy tài liệu.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var userId = GetCurrentUserId();
+            if (!User.IsInRole("Admin"))
+            {
+                if (User.IsInRole("Lecturer"))
+                {
+                    if (!userId.HasValue || !await _subjectService.IsLecturerAssignedToSubjectAsync(document.SubjectId, userId.Value))
+                    {
+                        TempData["ErrorMessage"] = "Bạn không có quyền xem nội dung phân đoạn/embedding của tài liệu này.";
+                        return RedirectToAction(nameof(Details), new { id });
+                    }
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Bạn không có quyền xem nội dung phân đoạn/embedding của tài liệu này.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+            }
+
+            var wwwrootPath = _webHostEnvironment.WebRootPath;
+            var fullPath = Path.Combine(wwwrootPath, document.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+            if (!System.IO.File.Exists(fullPath))
+            {
+                TempData["ErrorMessage"] = "File không tồn tại trên hệ thống.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            try
+            {
+                var chunks = (await _geminiService.GetDocumentTextChunksAsync(fullPath, 1200)).ToList();
+                var firstChunk = chunks.FirstOrDefault();
+                var embedding = firstChunk != null ? await _geminiService.CreateTextEmbeddingAsync(firstChunk) : null;
+
+                // Nếu đã có file lưu trước đó, load từ file để hiển thị (ưu tiên)
+                var uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+                var savePath = Path.Combine(uploadsDir, $"chunks_{document.StoredFileName}.json");
+
+                List<string> displayChunks = chunks.ToList();
+                List<float>? displayEmbedding = embedding?.ToList();
+
+                if (System.IO.File.Exists(savePath))
+                {
+                    try
+                    {
+                        var savedText = await System.IO.File.ReadAllTextAsync(savePath);
+                        using var doc = System.Text.Json.JsonDocument.Parse(savedText);
+                        if (doc.RootElement.TryGetProperty("chunks", out var chArr) && chArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            var tmp = new List<string>();
+                            foreach (var el in chArr.EnumerateArray()) tmp.Add(el.GetString() ?? string.Empty);
+                            if (tmp.Any()) displayChunks = tmp;
+                        }
+
+                        if (doc.RootElement.TryGetProperty("embedding", out var embArr) && embArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            var tmp2 = new List<float>();
+                            foreach (var el in embArr.EnumerateArray()) if (el.ValueKind == System.Text.Json.JsonValueKind.Number) tmp2.Add((float)el.GetDouble());
+                            if (tmp2.Any()) displayEmbedding = tmp2;
+                        }
+                    }
+                    catch
+                    {
+                        // ignore parsing errors and fallback to freshly generated chunks
+                    }
+                }
+
+                var vm = new DocumentChunksViewModel
+                {
+                    Document = document,
+                    Chunks = displayChunks,
+                    FirstChunkPreview = displayChunks.FirstOrDefault(),
+                    Embedding = displayEmbedding
+                };
+
+                return View(vm);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi khi trích xuất nội dung: " + ex.Message;
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+
+        // POST: /Document/SaveChunks/{id}
+        // Lưu chunks/embedding đã chỉnh sửa vào file JSON kèm thông tin người chỉnh sửa
+        [HttpPost]
+        public async Task<IActionResult> SaveChunks(int id, [FromBody] BussinessLayer.DTOs.DocumentChunksSaveDto model)
+        {
+            var document = await _documentService.GetDocumentByIdAsync(id);
+            if (document == null) return Json(new { success = false, message = "Không tìm thấy tài liệu." });
+
+            var userId = GetCurrentUserId();
+            if (!User.IsInRole("Admin"))
+            {
+                if (User.IsInRole("Lecturer"))
+                {
+                    if (!userId.HasValue || !await _subjectService.IsLecturerAssignedToSubjectAsync(document.SubjectId, userId.Value))
+                    {
+                        return Json(new { success = false, message = "Bạn không có quyền lưu thay đổi cho tài liệu này." });
+                    }
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Bạn không có quyền lưu thay đổi cho tài liệu này." });
+                }
+            }
+
+            try
+            {
+                var wwwrootPath = _webHostEnvironment.WebRootPath;
+                var uploadsDir = Path.Combine(wwwrootPath, "uploads");
+                if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+
+                var savePath = Path.Combine(uploadsDir, $"chunks_{document.StoredFileName}.json");
+                var payload = new
+                {
+                    documentId = document.Id,
+                    savedAt = DateTime.UtcNow,
+                    savedBy = userId,
+                    chunks = model?.Chunks ?? new List<string>(),
+                    embedding = model?.Embedding ?? null
+                };
+
+                var json = System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                await System.IO.File.WriteAllTextAsync(savePath, json);
+
+                return Json(new { success = true, message = "Lưu thành công." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi lưu: " + ex.Message });
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────
