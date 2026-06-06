@@ -176,6 +176,13 @@
                         <i class="fa-solid fa-download"></i>
                         <span>Tải về</span>
                     </a>
+                    @if (User.IsInRole("Lecturer") || User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Chunks" asp-route-id="@doc.Id" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
+                            <i class="fa-solid fa-code"></i>
+                            <span>Xem chunk / embedding</span>
+                        </a>
+                    }
                     @if (canManageDocument)
                     {
                         <a asp-action="Edit" asp-route-id="@doc.Id" class="inline-flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
@@ -396,6 +403,8 @@
             </div>
         </div>
     </main>
+
+    <!-- Viewing chunks now opens a dedicated page -->
 
 </body>
 </html>

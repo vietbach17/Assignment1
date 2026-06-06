@@ -184,6 +184,23 @@
                                 <i class="fa-solid fa-xmark text-xl"></i>
                             </button>
                         </div>
+                        <div id="previewControls" class="hidden mt-4 flex items-center gap-3">
+                            <button id="previewButton" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-xl border border-brand-button bg-white text-brand-button hover:bg-brand-button hover:text-white transition shadow-sm">
+                                <i class="fa-solid fa-magnifying-glass mr-2"></i> Xem trước 
+                            </button>
+                            <span id="previewLoading" class="text-sm text-gray-500 hidden"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tạo preview...</span>
+                        </div>
+                        <div id="previewSection" class="hidden mt-4 p-4 bg-white border border-gray-200 rounded-xl">
+                            <div class="mb-3 flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-800">Preview Gemini Chunk / Embedding</h3>
+                                    <p class="text-xs text-gray-500">Xem trước cách tài liệu sẽ được phân đoạn và embedding.</p>
+                                </div>
+                            </div>
+                            <div id="previewMessage" class="text-sm text-gray-600 mb-3"></div>
+                            <div id="previewInfo" class="grid gap-2 text-sm text-gray-700"></div>
+                            <div id="previewChunks" class="space-y-4 mt-4"></div>
+                        </div>
                         <span asp-validation-for="File" class="text-red-500 text-xs mt-1 block"></span>
                         <div id="fileSizeError" class="text-red-500 text-xs mt-1 hidden">File vượt quá giới hạn 50 MB.</div>
                     </div>
@@ -234,6 +251,13 @@
         const dropZone = document.getElementById('dropZone');
         const filePreview = document.getElementById('filePreview');
         const fileSizeError = document.getElementById('fileSizeError');
+        const previewControls = document.getElementById('previewControls');
+        const previewButton = document.getElementById('previewButton');
+        const previewLoading = document.getElementById('previewLoading');
+        const previewSection = document.getElementById('previewSection');
+        const previewInfo = document.getElementById('previewInfo');
+        const previewChunks = document.getElementById('previewChunks');
+        const previewMessage = document.getElementById('previewMessage');
         const submitBtn = document.getElementById('submitBtn');
 
         fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
@@ -265,6 +289,8 @@
 
             if (file.size > MAX_SIZE_BYTES) {
                 fileSizeError.classList.remove('hidden');
+                previewControls.classList.add('hidden');
+                previewSection.classList.add('hidden');
                 submitBtn.disabled = true;
                 return;
             }
@@ -283,6 +309,83 @@
             
             filePreview.classList.remove('hidden');
             dropZone.classList.add('hidden');
+            previewControls.classList.remove('hidden');
+            previewSection.classList.add('hidden');
+            previewInfo.innerHTML = '';
+            previewChunks.innerHTML = '';
+            previewMessage.textContent = '';
+        }
+
+        previewButton.addEventListener('click', previewFile);
+
+        async function previewFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                previewMessage.textContent = 'Vui lòng chọn file trước khi xem trước.';
+                previewMessage.className = 'text-sm text-red-500';
+                return;
+            }
+
+            previewButton.disabled = true;
+            previewLoading.classList.remove('hidden');
+            previewMessage.textContent = '';
+            previewInfo.innerHTML = '';
+            previewChunks.innerHTML = '';
+            previewSection.classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/Document/PreviewDocumentChunks', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    previewMessage.textContent = result.message || 'Không thể tạo preview cho file.';
+                    previewMessage.className = 'text-sm text-red-500';
+                    return;
+                }
+
+                previewMessage.textContent = '';
+                previewMessage.className = 'text-sm text-gray-600';
+                previewSection.classList.remove('hidden');
+
+                previewInfo.innerHTML = `
+                    <div>Số chunk nhận được: <span class="font-semibold text-gray-800">${result.chunkCount}</span></div>
+                    <div>Embedding khả dụng: <span class="font-semibold text-gray-800">${result.embeddingAvailable ? 'Có' : 'Không'}</span></div>
+                    <div>Kích thước vector embedding: <span class="font-semibold text-gray-800">${result.embeddingCount}</span></div>
+                `;
+
+                const chunks = result.chunks || [];
+                if (chunks.length > 0) {
+                    chunks.forEach(chunk => {
+                        const card = document.createElement('div');
+                        card.className = 'rounded-xl border border-gray-200 bg-gray-50 p-4';
+                        const header = document.createElement('div');
+                        header.className = 'text-xs font-semibold text-gray-500 mb-2';
+                        header.textContent = `Chunk ${chunk.index}`;
+                        const body = document.createElement('pre');
+                        body.className = 'whitespace-pre-wrap text-sm text-gray-700 overflow-x-auto';
+                        body.textContent = chunk.text;
+                        card.appendChild(header);
+                        card.appendChild(body);
+                        previewChunks.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                previewMessage.textContent = `Lỗi khi tạo preview: ${error.message}`;
+                previewMessage.className = 'text-sm text-red-500';
+            } finally {
+                previewLoading.classList.add('hidden');
+                previewButton.disabled = false;
+            }
         }
 
         function clearFile() {
@@ -290,6 +393,11 @@
             filePreview.classList.add('hidden');
             dropZone.classList.remove('hidden');
             fileSizeError.classList.add('hidden');
+            previewControls.classList.add('hidden');
+            previewSection.classList.add('hidden');
+            previewInfo.innerHTML = '';
+            previewChunks.innerHTML = '';
+            previewMessage.textContent = '';
             submitBtn.disabled = false;
         }
 
