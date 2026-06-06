@@ -79,6 +79,7 @@ namespace PresentationLayer.Controllers
             else if (User.IsInRole("Admin"))
             {
                 ViewBag.ManagedSubjectIds = subjects.Select(s => s.Id).ToList();
+                ViewBag.CanUploadDocuments = false;
             }
 
             var viewModel = new DocumentListViewModel
@@ -152,7 +153,7 @@ namespace PresentationLayer.Controllers
         // Xử lý chunk upload cho Lecturer
         // ─────────────────────────────────────────────────────────────────────
         [HttpPost]
-        [Authorize(Roles = "Lecturer")]
+        [Authorize(Roles = "Lecturer,Admin")]
         public async Task<IActionResult> UploadChunk(
             Microsoft.AspNetCore.Http.IFormFile file, int chunkIndex, int totalChunks, string fileName, string fileGuid,
             string title, int subjectId, int? chapterId)
