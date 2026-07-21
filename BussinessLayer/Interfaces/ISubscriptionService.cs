@@ -27,5 +27,7 @@ namespace BussinessLayer.Interfaces
         // 2 HÀM MỚI CHO VNPAY:
         string CreateVnPayPaymentUrl(int userId, int planId, HttpContext httpContext, string returnUrl);
         bool ProcessVnPayReturn(Microsoft.AspNetCore.Http.HttpRequest request);
+        void CheckAndDowngradeExpiredSubscription(int userId);
+        bool ActivateSubscription(int userId, int planId);
     }
 }

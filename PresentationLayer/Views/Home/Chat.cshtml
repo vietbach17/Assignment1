@@ -277,7 +277,6 @@
                                     </span> 
                                     @doc.Title
                                 </label>
-                                <i class="fa-solid fa-eye" style="cursor: pointer; color: #555; transition: 0.1s; font-size: 11px; padding: 2px;" title="Xem nội dung AI đọc" onclick="previewDocumentText(@doc.Id)"></i>
                             </div>
                         }
                     }
@@ -765,50 +764,6 @@
             
             return html;
         }
-
-        function previewDocumentText(docId) {
-            const modal = document.getElementById('previewModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalContent = document.getElementById('modalContent');
-            
-            modalContent.textContent = 'Đang trích xuất nội dung văn bản AI sẽ đọc...';
-            modalTitle.textContent = 'Đang tải...';
-            modal.style.display = 'flex';
-
-            fetch(`/Home/GetDocumentText?docId=${docId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    modalTitle.textContent = `[${data.fileType.toUpperCase()}] ${data.title}`;
-                    modalContent.textContent = data.text || '(Tài liệu rỗng hoặc không trích xuất được ký tự nào)';
-                } else {
-                    modalContent.textContent = `Lỗi: ${data.message}`;
-                }
-            })
-            .catch(err => {
-                modalContent.textContent = `Lỗi kết nối máy chủ: ${err.message}`;
-            });
-        }
-
-        function closePreviewModal() {
-            document.getElementById('previewModal').style.display = 'none';
-        }
     </script>
-
-    <!-- MODAL XEM TRƯỚC VĂN BẢN TRÍCH XUẤT (STYLE BRUTALISM) -->
-    <div id="previewModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
-        <div style="background-color: #fff; border: 3px solid #000; box-shadow: 8px 8px 0px #000; width: 650px; max-width: 90%; padding: 25px; display: flex; flex-direction: column; max-height: 85vh; transform: translate(0, 0);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 12px; margin-bottom: 15px;">
-                <h3 id="modalTitle" style="font-weight: 900; font-size: 18px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%; color: var(--pink);">Xem trước nội dung</h3>
-                <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 24px; font-weight: 900; cursor: pointer; color: #000; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;">&times;</button>
-            </div>
-            <div id="modalContent" style="flex: 1; overflow-y: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; background-color: #f8f9fa; padding: 15px; border: 2px solid #000; line-height: 1.6; max-height: 55vh; color: #000; text-align: left;">
-                Đang tải nội dung...
-            </div>
-            <div style="margin-top: 20px; text-align: right; display: flex; justify-content: flex-end;">
-                <button onclick="closePreviewModal()" style="background-color: #000; color: #fff; border: 2px solid #000; padding: 8px 20px; font-weight: 900; cursor: pointer; box-shadow: 2px 2px 0px #000; font-family: 'Montserrat', sans-serif; transition: 0.1s;" onmousedown="this.style.transform='translate(2px, 2px)'; this.style.boxShadow='0px 0px 0px #000';" onmouseup="this.style.transform='translate(0,0)'; this.style.boxShadow='2px 2px 0px #000';">Đóng</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

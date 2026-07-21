@@ -100,6 +100,9 @@ namespace PresentationLayer.Controllers
         {
             int userId = GetCurrentUserId();
 
+            // 0. Kiểm tra và hạ cấp gói nếu hết hạn
+            _subscriptionService.CheckAndDowngradeExpiredSubscription(userId);
+
             // 1. Lấy thông tin gói hiện tại của học sinh (Dạng DTO)
             var currentSubDto = _subscriptionService.GetStudentSubscription(userId);
 
@@ -116,7 +119,7 @@ namespace PresentationLayer.Controllers
             }
 
             // 3. Kiểm tra & thực hiện Daily Reset nếu đã qua 24h
-            if (planDto.QuestionLimit < 9999
+            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold
                 && currentSubDto.DailyResetTime.HasValue
                 && DateTime.UtcNow >= currentSubDto.DailyResetTime.Value.AddHours(24))
             {
@@ -127,13 +130,13 @@ namespace PresentationLayer.Controllers
             }
 
             // 4. Kiểm tra còn lượt không
-            if (planDto.QuestionLimit < 9999 && currentSubDto.RemainingQuestions <= 0)
+            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold && currentSubDto.RemainingQuestions <= 0)
             {
                 // Tính thời gian còn lại trước khi reset
                 string resetTimeIso = "";
                 if (currentSubDto.DailyResetTime.HasValue)
                 {
-                    resetTimeIso = currentSubDto.DailyResetTime.Value.AddHours(24).ToString("o");
+                    resetTimeIso = DateTime.SpecifyKind(currentSubDto.DailyResetTime.Value.AddHours(24), DateTimeKind.Utc).ToString("o");
                 }
 
                 return Json(new
@@ -146,12 +149,12 @@ namespace PresentationLayer.Controllers
             }
 
             // 5. Nếu gói không phải Vô hạn (Pro), tiến hành trừ 1 lượt hỏi
-            if (planDto.QuestionLimit < 9999)
+            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold)
             {
                 // Nếu chưa có DailyResetTime → đây là câu hỏi đầu tiên trong chu kỳ
                 DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
 
-                currentSubDto.RemainingQuestions -= 1;
+                currentSubDto.RemainingQuestions = Math.Max(0, currentSubDto.RemainingQuestions - 1);
                 currentSubDto.DailyResetTime = newDailyResetTime;
                 _subscriptionService.SaveStudentSubscription(currentSubDto);
             }
@@ -160,7 +163,7 @@ namespace PresentationLayer.Controllers
             string resetTimeResponse = "";
             if (currentSubDto.DailyResetTime.HasValue)
             {
-                resetTimeResponse = currentSubDto.DailyResetTime.Value.AddHours(24).ToString("o");
+                resetTimeResponse = DateTime.SpecifyKind(currentSubDto.DailyResetTime.Value.AddHours(24), DateTimeKind.Utc).ToString("o");
             }
 
             return Json(new
@@ -198,6 +201,9 @@ namespace PresentationLayer.Controllers
 
             int userId = GetCurrentUserId();
 
+            // 0. Kiểm tra và hạ cấp gói nếu hết hạn
+            _subscriptionService.CheckAndDowngradeExpiredSubscription(userId);
+
             // 1. Kiểm tra & thực hiện trừ câu hỏi (Sao chép logic tương tự VerifyAndDeductQuestion)
             var currentSubDto = _subscriptionService.GetStudentSubscription(userId);
             if (currentSubDto == null)
@@ -212,7 +218,7 @@ namespace PresentationLayer.Controllers
             }
 
             // Kiểm tra & thực hiện Daily Reset nếu đã qua 24h
-            if (planDto.QuestionLimit < 9999
+            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold
                 && currentSubDto.DailyResetTime.HasValue
                 && DateTime.UtcNow >= currentSubDto.DailyResetTime.Value.AddHours(24))
             {
@@ -222,12 +228,12 @@ namespace PresentationLayer.Controllers
             }
 
             // Kiểm tra xem học sinh còn lượt đặt câu hỏi không
-            if (planDto.QuestionLimit < 9999 && currentSubDto.RemainingQuestions <= 0)
+            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold && currentSubDto.RemainingQuestions <= 0)
             {
                 string resetTimeIso = "";
                 if (currentSubDto.DailyResetTime.HasValue)
                 {
-                    resetTimeIso = currentSubDto.DailyResetTime.Value.AddHours(24).ToString("o");
+                    resetTimeIso = DateTime.SpecifyKind(currentSubDto.DailyResetTime.Value.AddHours(24), DateTimeKind.Utc).ToString("o");
                 }
 
                 return Json(new
@@ -237,16 +243,6 @@ namespace PresentationLayer.Controllers
                     message = "Bạn đã hết lượt đặt câu hỏi hôm nay. Vui lòng chờ reset hoặc nâng cấp gói!",
                     resetTime = resetTimeIso
                 });
-            }
-
-            // Tiến hành trừ 1 lượt hỏi (nếu không phải gói vô hạn)
-            if (planDto.QuestionLimit < 9999)
-            {
-                DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
-
-                currentSubDto.RemainingQuestions -= 1;
-                currentSubDto.DailyResetTime = newDailyResetTime;
-                _subscriptionService.SaveStudentSubscription(currentSubDto);
             }
 
             // 2. Lấy danh sách đường dẫn tuyệt đối của các tài liệu được tích chọn
@@ -276,13 +272,31 @@ namespace PresentationLayer.Controllers
             }) ?? Enumerable.Empty<ChatMessageDto>();
 
             // 4. Gọi Gemini Service để tạo câu trả lời
-            var reply = await _geminiService.GenerateContentAsync(request.Message, historyBll, docPaths, request.RestrictToDocs);
+            string reply;
+            try
+            {
+                reply = await _geminiService.GenerateContentAsync(request.Message, historyBll, docPaths, request.RestrictToDocs);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Lỗi hệ thống AI: {ex.Message}" });
+            }
 
-            // 4. Trả về kết quả cho client
+            // Tiến hành trừ 1 lượt hỏi (nếu không phải gói vô hạn)
+            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold)
+            {
+                DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
+
+                currentSubDto.RemainingQuestions = Math.Max(0, currentSubDto.RemainingQuestions - 1);
+                currentSubDto.DailyResetTime = newDailyResetTime;
+                _subscriptionService.SaveStudentSubscription(currentSubDto);
+            }
+
+            // 5. Trả về kết quả cho client
             string resetTimeResponse = "";
             if (currentSubDto.DailyResetTime.HasValue)
             {
-                resetTimeResponse = currentSubDto.DailyResetTime.Value.AddHours(24).ToString("o");
+                resetTimeResponse = DateTime.SpecifyKind(currentSubDto.DailyResetTime.Value.AddHours(24), DateTimeKind.Utc).ToString("o");
             }
 
             return Json(new
@@ -294,27 +308,5 @@ namespace PresentationLayer.Controllers
             });
         }
 
-        // --- ENDPOINT XEM TRƯỚC VĂN BẢN TRÍCH XUẤT CỦA TÀI LIỆU ---
-        [Authorize(Roles = "Student")]
-        [HttpGet]
-        public async Task<IActionResult> GetDocumentText(int docId)
-        {
-            var docDto = await _documentService.GetDocumentByIdAsync(docId);
-            if (docDto == null || docDto.IsDeleted)
-            {
-                return Json(new { success = false, message = "Không tìm thấy tài liệu này." });
-            }
-
-            var wwwrootPath = _webHostEnvironment.WebRootPath;
-            var fullPath = Path.Combine(wwwrootPath, docDto.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
-
-            if (!System.IO.File.Exists(fullPath))
-            {
-                return Json(new { success = false, message = "Tệp tin tài liệu không tồn tại trên hệ thống." });
-            }
-
-            var text = await _geminiService.GetDocumentTextAsync(fullPath);
-            return Json(new { success = true, title = docDto.Title, fileType = docDto.FileType, text = text });
-        }
     }
 }

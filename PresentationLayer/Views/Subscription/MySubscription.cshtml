@@ -265,7 +265,16 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Trạng thái</div>
-                    <div class="info-value" style="color:var(--green);">✅ Hoạt động</div>
+                    <div class="info-value">
+                        @if (!isFreePlan && Model.EndDate < DateTime.UtcNow)
+                        {
+                            <span style="color:var(--pink);">❌ Hết hạn</span>
+                        }
+                        else
+                        {
+                            <span style="color:var(--green);">✅ Hoạt động</span>
+                        }
+                    </div>
                 </div>
             </div>
 
@@ -280,7 +289,7 @@
     {
         <script>
             (function () {
-                var resetTimeUtc = new Date("@Model.DailyResetTime.Value.AddHours(24).ToString("o")");
+                var resetTimeUtc = new Date("@DateTime.SpecifyKind(Model.DailyResetTime.Value.AddHours(24), DateTimeKind.Utc).ToString("o")");
                 var timerEl = document.getElementById('countdown-timer');
 
                 function updateCountdown() {

@@ -29,6 +29,10 @@ namespace BussinessLayer.Services
             if (user.IsDeleted)
                 return new UserDto { Id = -1, Username = "__DISABLED__" };
 
+            // Tài khoản bị khóa (banned) — không thể đăng nhập
+            if (user.IsBanned)
+                return new UserDto { Id = -1, Username = "__BANNED__" };
+
             bool isPasswordValid = BCryptNet.Verify(password, user.PasswordHash);
             if (!isPasswordValid)
                 return null;
@@ -47,7 +51,14 @@ namespace BussinessLayer.Services
             var existingUser = await _userRepository.GetByUsernameAsync(username);
             if (existingUser != null)
             {
-                return false; // Tên đăng nhập bị trùng lặp
+                throw new ArgumentException("Username đã tồn tại");
+            }
+
+            // Kiểm tra xem Email đã tồn tại chưa
+            var existingEmail = await _userRepository.GetByEmailAsync(email);
+            if (existingEmail != null)
+            {
+                throw new ArgumentException("Email đã tồn tại");
             }
 
             // Mã hóa mật khẩu bằng BCrypt để lưu trữ an toàn chống tấn công Rainbow Table

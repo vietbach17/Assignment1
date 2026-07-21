@@ -30,6 +30,9 @@ namespace DataAccessLayer.Repositories
         /// <summary>Xoá mềm tài liệu (set IsDeleted = true)</summary>
         Task<bool> SoftDeleteAsync(int id);
 
+        /// <summary>Xoá mềm toàn bộ tài liệu thuộc về một Subject</summary>
+        Task SoftDeleteBySubjectIdAsync(int subjectId);
+
         /// <summary>Cập nhật trạng thái xử lý của tài liệu</summary>
         Task<bool> UpdateStatusAsync(int id, DocumentStatus status);
 

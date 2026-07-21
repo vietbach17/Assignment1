@@ -134,6 +134,12 @@ namespace BussinessLayer.Services
                 return (false, "Chapter is not deleted.");
             }
 
+            // Kiểm tra trùng lặp số chương trong môn học
+            if (await _chapterRepository.ChapterNumberExistsAsync(chapter.SubjectId, chapter.ChapterNumber))
+            {
+                return (false, $"Không thể khôi phục: Chương số {chapter.ChapterNumber} đã tồn tại trong các chương đang hoạt động của môn học này.");
+            }
+
             await _chapterRepository.RestoreAsync(id);
             return (true, "Chapter restored successfully.");
         }

@@ -6,6 +6,7 @@ namespace DataAccessLayer.Repositories
     {
         Task<User?> GetByIdAsync(int id);
         Task<User?> GetByUsernameAsync(string username);
+        Task<User?> GetByEmailAsync(string email);
         Task<IEnumerable<User>> GetUsersByRoleIdAsync(int roleId);
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task AddAsync(User user);

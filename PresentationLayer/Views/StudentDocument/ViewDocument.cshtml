@@ -262,15 +262,7 @@
             </div>
         </div>
 
-        <!-- Tabs Selector in Neo-Brutalism style -->
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <button id="tabOriginalBtn" onclick="switchTab('original')" class="brutal-btn" style="background-color: var(--yellow); font-weight: 900; padding: 10px 20px;">
-                <i class="fa-solid fa-file-pdf"></i> BẢN GỐC TÀI LIỆU
-            </button>
-            <button id="tabSegmentsBtn" onclick="switchTab('segments')" class="brutal-btn" style="background-color: var(--white); font-weight: 900; padding: 10px 20px;">
-                <i class="fa-solid fa-layer-group"></i> PHÂN ĐOẠN NỘI DUNG (AI INDEXED)
-            </button>
-        </div>
+
 
         <!-- Original Document Viewer Container -->
         <div id="originalViewer" class="viewer-box">
@@ -322,17 +314,7 @@
             }
         </div>
 
-        <!-- AI Segmented Text Viewer Container -->
-        <div id="segmentsViewer" class="viewer-box" style="display: none; flex-direction: row; overflow: hidden; background-color: #fff;">
-            <!-- Left sidebar showing segment index list -->
-            <div id="segmentsList" style="width: 240px; border-right: var(--border); overflow-y: auto; background-color: #fcfcfc; display: flex; flex-direction: column; flex-shrink: 0;">
-                <div style="padding: 20px; font-size: 13px; color: #666; font-style: italic; text-align: center; font-weight: 700;">Đang chuẩn bị các phân đoạn...</div>
-            </div>
-            <!-- Right reading panel -->
-            <div id="segmentContent" style="flex: 1; padding: 40px; overflow-y: auto; font-family: 'Times New Roman', Times, serif; font-size: 16px; line-height: 1.8; color: #000; text-align: justify; white-space: pre-wrap; background-color: #fff;">
-                Đang tải dữ liệu phân đoạn...
-            </div>
-        </div>
+
     </div>
 
     @if ((fileType ?? Model.FileType)?.ToLower() == "docx")
@@ -391,102 +373,7 @@
             setTimeout(hideLoading, 15000);
         }
 
-        // --- CÁC HÀM XỬ LÝ CHUYỂN TAB VÀ HIỂN THỊ PHÂN ĐOẠN ---
-        let segments = [];
-        let segmentsLoaded = false;
 
-        function switchTab(tabName) {
-            const tabOriginalBtn = document.getElementById('tabOriginalBtn');
-            const tabSegmentsBtn = document.getElementById('tabSegmentsBtn');
-            const originalViewer = document.getElementById('originalViewer');
-            const segmentsViewer = document.getElementById('segmentsViewer');
-
-            if (tabName === 'original') {
-                tabOriginalBtn.style.backgroundColor = 'var(--yellow)';
-                tabSegmentsBtn.style.backgroundColor = 'var(--white)';
-                originalViewer.style.display = 'flex';
-                segmentsViewer.style.display = 'none';
-            } else if (tabName === 'segments') {
-                tabOriginalBtn.style.backgroundColor = 'var(--white)';
-                tabSegmentsBtn.style.backgroundColor = 'var(--yellow)';
-                originalViewer.style.display = 'none';
-                segmentsViewer.style.display = 'flex';
-                
-                // Tải dữ liệu phân đoạn từ server
-                loadSegments();
-            }
-        }
-
-        function loadSegments() {
-            if (segmentsLoaded) return;
-
-            const listEl = document.getElementById('segmentsList');
-            const contentEl = document.getElementById('segmentContent');
-
-            listEl.innerHTML = '<div style="padding: 20px; font-size: 13px; color: #777; font-style: italic; text-align: center;">Đang phân đoạn...</div>';
-            contentEl.textContent = 'Đang trích xuất và phân tích văn bản từ máy chủ...';
-
-            fetch(`/StudentDocument/GetDocumentSegments?id=@Model.Id`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.segments && data.segments.length > 0) {
-                        segments = data.segments;
-                        segmentsLoaded = true;
-
-                        listEl.innerHTML = '';
-                        segments.forEach((seg, index) => {
-                            const item = document.createElement('div');
-                            item.className = 'segment-list-item';
-                            
-                            // Style cho các phần tử phân đoạn
-                            item.style.padding = '15px 20px';
-                            item.style.borderBottom = '2px solid #000';
-                            item.style.cursor = 'pointer';
-                            item.style.fontWeight = '800';
-                            item.style.fontSize = '12px';
-                            item.style.fontFamily = "'Montserrat', sans-serif";
-                            
-                            const name = data.fileType.toLowerCase() === 'pptx' ? `Slide ${index + 1}` : 
-                                         (data.fileType.toLowerCase() === 'pdf' ? `Trang ${index + 1}` : `Phân đoạn ${index + 1}`);
-                            item.textContent = name;
-
-                            item.onclick = () => selectSegment(index, item);
-                            listEl.appendChild(item);
-                        });
-
-                        // Tự động chọn phân đoạn đầu tiên
-                        if (listEl.firstChild) {
-                            listEl.firstChild.click();
-                        }
-                    } else {
-                        listEl.innerHTML = '';
-                        contentEl.innerHTML = `
-                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; padding:60px 20px; color:#666; width: 100%;">
-                                <div style="font-size:48px;">🚫</div>
-                                <div style="font-weight:800; font-size:16px;">Không thể tải phân đoạn tài liệu</div>
-                                <p style="font-size:13px; text-align:center; max-width: 400px;">${data.message || 'Hệ thống chưa hỗ trợ trích xuất văn bản cho định dạng này.'}</p>
-                            </div>`;
-                    }
-                })
-                .catch(err => {
-                    listEl.innerHTML = '';
-                    contentEl.textContent = `Lỗi kết nối tới máy chủ: ${err.message}`;
-                });
-        }
-
-        function selectSegment(index, element) {
-            // Loại bỏ active khỏi tất cả các phần tử
-            document.querySelectorAll('.segment-list-item').forEach(el => {
-                el.classList.remove('active');
-            });
-            // Thêm active vào phần tử được chọn
-            element.classList.add('active');
-
-            // Hiển thị nội dung
-            const contentEl = document.getElementById('segmentContent');
-            contentEl.textContent = segments[index];
-            contentEl.scrollTop = 0;
-        }
     </script>
 </body>
 </html>

@@ -12,11 +12,19 @@ namespace BussinessLayer.Services
     {
         private readonly ISubjectRepository _subjectRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IChapterRepository _chapterRepository;
+        private readonly IDocumentRepository _documentRepository;
 
-        public SubjectService(ISubjectRepository subjectRepository, IUserRepository userRepository)
+        public SubjectService(
+            ISubjectRepository subjectRepository, 
+            IUserRepository userRepository,
+            IChapterRepository chapterRepository,
+            IDocumentRepository documentRepository)
         {
             _subjectRepository = subjectRepository;
             _userRepository = userRepository;
+            _chapterRepository = chapterRepository;
+            _documentRepository = documentRepository;
         }
 
         public async Task<IEnumerable<SubjectDto>> GetAllSubjectsAsync(bool includeDeleted = false)
@@ -139,7 +147,17 @@ namespace BussinessLayer.Services
                 return (false, "Subject not found.");
             }
 
-            // Không check HasChapters nữa - cho phép xóa Subject có chapters (cascade delete)
+            // 1. Soft-delete all child chapters of this subject
+            var chapters = await _chapterRepository.GetBySubjectIdAsync(id, includeDeleted: false);
+            foreach (var chapter in chapters)
+            {
+                await _chapterRepository.SoftDeleteAsync(chapter.Id);
+            }
+
+            // 2. Soft-delete all child documents of this subject
+            await _documentRepository.SoftDeleteBySubjectIdAsync(id);
+
+            // 3. Soft-delete the subject itself
             var result = await _subjectRepository.SoftDeleteAsync(id);
             return result
                 ? (true, "Subject deleted successfully.")
@@ -189,12 +207,14 @@ namespace BussinessLayer.Services
         {
             // Get all users with RoleId = 2 (Lecturer)
             var lecturers = await _userRepository.GetUsersByRoleIdAsync(2);
-            return lecturers.Select(l => new UserDto
-            {
-                Id = l.Id,
-                Username = l.Username,
-                RoleName = l.Role?.RoleName ?? "Lecturer"
-            });
+            return lecturers
+                .Where(l => !l.IsDeleted)
+                .Select(l => new UserDto
+                {
+                    Id = l.Id,
+                    Username = l.Username,
+                    RoleName = l.Role?.RoleName ?? "Lecturer"
+                });
         }
 
         public async Task<IEnumerable<UserDto>> GetAssignedLecturersAsync(int subjectId)

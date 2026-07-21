@@ -142,6 +142,23 @@ namespace DataAccessLayer.Repositories
         }
 
         /// <summary>
+        /// Xoá mềm toàn bộ tài liệu thuộc về một Subject
+        /// </summary>
+        public async Task SoftDeleteBySubjectIdAsync(int subjectId)
+        {
+            var docs = await _context.Documents
+                .Where(d => d.SubjectId == subjectId && !d.IsDeleted)
+                .ToListAsync();
+
+            foreach (var doc in docs)
+            {
+                doc.IsDeleted = true;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
         /// Cập nhật trạng thái xử lý của tài liệu: Pending / Indexed / Failed
         /// </summary>
         public async Task<bool> UpdateStatusAsync(int id, DocumentStatus status)

@@ -44,6 +44,12 @@ namespace DataAccessLayer.Repositories
             var plan = GetPlanById(id);
             if (plan != null)
             {
+                bool hasSubscribers = _context.StudentSubscriptions.Any(s => s.SubscriptionPlanId == id);
+                if (hasSubscribers)
+                {
+                    throw new InvalidOperationException("Không thể xóa gói dịch vụ này vì đang có người dùng đăng ký.");
+                }
+
                 _context.SubscriptionPlans.Remove(plan);
                 _context.SaveChanges();
             }
@@ -59,11 +65,14 @@ namespace DataAccessLayer.Repositories
             // FIX LỖI 2: Nếu TRONG DB THỰC TẾ CHƯA HỀ CÓ DÒNG NÀO thì mới cấp gói Free
             if (sub == null)
             {
-                var freePlan = _context.SubscriptionPlans.FirstOrDefault(p => p.Id == 1);
+                var freePlan = _context.SubscriptionPlans.FirstOrDefault(p => p.Name == "Free")
+                               ?? _context.SubscriptionPlans.OrderBy(p => p.Price).FirstOrDefault()
+                               ?? _context.SubscriptionPlans.FirstOrDefault(p => p.Id == 1);
+                int freePlanId = freePlan?.Id ?? 1;
                 sub = new StudentSubscription
                 {
                     UserId = userId,
-                    SubscriptionPlanId = 1,
+                    SubscriptionPlanId = freePlanId,
                     StartDate = DateTime.UtcNow,
                     EndDate = DateTime.MaxValue, // Gói Free = vĩnh viễn
                     RemainingQuestions = freePlan?.QuestionLimit ?? 5 // Mặc định gói free là 5 câu/ngày
@@ -122,6 +131,11 @@ namespace DataAccessLayer.Repositories
                 .Include(t => t.User)
                 .OrderByDescending(t => t.TransactionDate)
                 .ToList();
+        }
+
+        public Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction BeginTransaction()
+        {
+            return _context.Database.BeginTransaction();
         }
     }
 }

@@ -64,6 +64,13 @@ namespace PresentationLayer.Controllers
                 return View(model);
             }
 
+            // Tài khoản bị khóa (banned)
+            if (user.Username == "__BANNED__")
+            {
+                ModelState.AddModelError(string.Empty, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.");
+                return View(model);
+            }
+
             // --- CLAIMS & COOKIE AUTHENTICATION SETUP ---
             // Claims là các cặp thuộc tính chứa thông tin về danh tính của người dùng (Ví dụ: Tên, Vai trò, ID)
             var claims = new List<Claim>
@@ -94,46 +101,59 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Register()
+        public IActionResult Register()
         {
-            var roles = await _roleService.GetAllRolesAsync();
-            ViewBag.Roles = roles.Where(r => !string.Equals(r.RoleName, "Admin", StringComparison.OrdinalIgnoreCase)).ToList();
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                var roles = await _roleService.GetAllRolesAsync();
-                ViewBag.Roles = roles.Where(r => !string.Equals(r.RoleName, "Admin", StringComparison.OrdinalIgnoreCase)).ToList();
                 return View(model);
             }
 
-            // Gọi Service để xử lý logic đăng ký và truyền thêm email, roleId
-            bool isRegistered = await _authService.RegisterAsync(model.Username, model.Password, model.Email, model.RoleId);
+            var roles = await _roleService.GetAllRolesAsync();
+            var studentRole = roles.FirstOrDefault(r => string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase));
+            int studentRoleId = studentRole?.Id ?? 3;
 
-            if (!isRegistered)
+            // Gọi Service để xử lý logic đăng ký và truyền thêm email, roleId
+            try
             {
-                ModelState.AddModelError("Username", "Tên đăng nhập này đã tồn tại trên hệ thống.");
-                var roles = await _roleService.GetAllRolesAsync();
-                ViewBag.Roles = roles.Where(r => !string.Equals(r.RoleName, "Admin", StringComparison.OrdinalIgnoreCase)).ToList();
+                bool isRegistered = await _authService.RegisterAsync(model.Username, model.Password, model.Email, studentRoleId);
+                if (!isRegistered)
+                {
+                    ModelState.AddModelError("Username", "Tên đăng nhập này đã tồn tại trên hệ thống.");
+                    return View(model);
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                if (ex.Message.Contains("Username"))
+                {
+                    ModelState.AddModelError("Username", "Tên đăng nhập này đã tồn tại trên hệ thống.");
+                }
+                else if (ex.Message.Contains("Email"))
+                {
+                    ModelState.AddModelError("Email", "Email này đã được sử dụng trên hệ thống.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
                 return View(model);
             }
 
             // Gửi email thông báo cho User mới
-            var targetRole = await _roleService.GetRoleByIdAsync(model.RoleId);
-            var roleName = targetRole?.RoleName ?? "Thành viên";
+            var roleName = studentRole?.RoleName ?? "Học viên";
             var emailSubject = $"Tài khoản {roleName} StudyMind của bạn đã được tạo!";
             var emailBody = $@"
                 <html>
                 <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                     <h2 style='color: #1e3b31;'>Chào mừng bạn đến với StudyMind!</h2>
-                    <p>Tài khoản {roleName} của bạn đã được khởi tạo thành công bởi Quản trị viên.</p>
+                    <p>Tài khoản {roleName} của bạn đã được khởi tạo thành công.</p>
                     <p>Dưới đây là thông tin tài khoản đăng nhập của bạn:</p>
                     <table style='border-collapse: collapse; width: 100%; max-width: 400px;'>
                         <tr style='background-color: #f4f6f8;'>
@@ -157,8 +177,8 @@ namespace PresentationLayer.Controllers
 
             await _emailService.SendEmailAsync(model.Email, emailSubject, emailBody);
 
-            TempData["SuccessMessage"] = $"Đã cấp tài khoản thành công cho {roleName} {model.Username} và gửi email thông báo.";
-            return RedirectToAction("Users", "Admin"); // Chuyển về danh sách User của Admin
+            TempData["SuccessMessage"] = $"Đăng ký tài khoản thành công! Vui lòng đăng nhập.";
+            return RedirectToAction("Login", "Auth");
         }
 
         // Action loại bỏ Cookie và Đăng xuất phiên làm việc của người dùng

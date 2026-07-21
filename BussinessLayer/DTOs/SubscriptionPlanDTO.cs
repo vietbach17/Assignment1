@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace BussinessLayer.DTOs
 {
@@ -25,6 +25,6 @@ namespace BussinessLayer.DTOs
         public int QuestionLimit { get; set; }
 
         /// <summary>Tiện ích hiển thị — không lưu DB</summary>
-        public bool IsUnlimited => QuestionLimit == int.MaxValue;
+        public bool IsUnlimited => QuestionLimit >= Constants.SubscriptionConstants.UnlimitedThreshold;
     }
 }

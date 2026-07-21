@@ -29,6 +29,13 @@ namespace DataAccessLayer.Repositories
                 .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
         }
 
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower().Trim());
+        }
+
         public async Task<IEnumerable<User>> GetUsersByRoleIdAsync(int roleId)
         {
             return await _context.Users

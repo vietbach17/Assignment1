@@ -1,4 +1,4 @@
-@using PresentationLayer.Models
+@using PresentationLayer.ViewModels
 @model RegisterViewModel
 @{
     // Tắt layout mặc định để dùng giao diện full màn hình này
@@ -336,25 +336,6 @@
                         <input asp-for="Email" type="email" placeholder="Nhập email của thành viên" required autocomplete="email">
                     </div>
                     <span asp-validation-for="Email" class="text-danger"></span>
-                </div>
-
-                <div class="input-group">
-                    <label asp-for="RoleId">Vai trò / Quyền hạn</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-user-tag left-icon"></i>
-                        <select asp-for="RoleId" required>
-                            <option value="">-- Chọn vai trò --</option>
-                            @if (ViewBag.Roles != null)
-                            {
-                                foreach (var role in (IEnumerable<DataAccessLayer.Models.Role>)ViewBag.Roles)
-                                {
-                                    <option value="@role.Id">@role.RoleName</option>
-                                }
-                            }
-                        </select>
-                        <i class="fa-solid fa-chevron-down right-icon"></i>
-                    </div>
-                    <span asp-validation-for="RoleId" class="text-danger"></span>
                 </div>
 
                 <div class="input-group">

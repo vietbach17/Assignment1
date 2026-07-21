@@ -167,34 +167,7 @@ namespace BussinessLayer.Services
                     int userId = int.Parse(parts[2]);
                     int planId = int.Parse(parts[4]);
 
-                    var plan = _repository.GetPlanById(planId);
-                    if (plan != null)
-                    {
-                        // 1. Ghi nhận lịch sử giao dịch thành công vào Repo bộ nhớ tạm
-                        var transaction = new PaymentTransaction
-                        {
-                            UserId = userId,
-                            SubscriptionPlanId = planId,
-                            Amount = plan.Price,
-                            TransactionDate = DateTime.UtcNow,
-                            Status = "Success"
-                        };
-                        _repository.AddTransaction(transaction);
-
-                        // 2. Cập nhật gói cho Sinh viên
-                        var currentSub = _repository.GetStudentSubscription(userId);
-                        if (currentSub != null)
-                        {
-                            currentSub.SubscriptionPlanId = plan.Id;
-                            currentSub.StartDate = DateTime.UtcNow;
-                            currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1);
-                            currentSub.RemainingQuestions = plan.QuestionLimit;
-                            currentSub.DailyResetTime = null; // Reset chu kỳ daily khi đổi gói
-
-                            _repository.SaveStudentSubscription(currentSub);
-                        }
-                        return true;
-                    }
+                    return ActivateSubscription(userId, planId);
                 }
                 return false;
             }
@@ -206,6 +179,48 @@ namespace BussinessLayer.Services
                 Console.WriteLine("=================================================");
                 
                 // Rethrow để Controller có thể bắt được và hiện ra giao diện cho dễ debug
+                throw;
+            }
+        }
+
+        public bool ActivateSubscription(int userId, int planId)
+        {
+            var plan = _repository.GetPlanById(planId);
+            if (plan == null) return false;
+
+            using var transaction = _repository.BeginTransaction();
+            try
+            {
+                // 1. Ghi nhận lịch sử giao dịch thành công
+                var paymentTransaction = new PaymentTransaction
+                {
+                    UserId = userId,
+                    SubscriptionPlanId = planId,
+                    Amount = plan.Price,
+                    TransactionDate = DateTime.UtcNow,
+                    Status = "Success"
+                };
+                _repository.AddTransaction(paymentTransaction);
+
+                // 2. Cập nhật gói cho Sinh viên
+                var currentSub = _repository.GetStudentSubscription(userId);
+                if (currentSub != null)
+                {
+                    currentSub.SubscriptionPlanId = plan.Id;
+                    currentSub.StartDate = DateTime.UtcNow;
+                    currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1);
+                    currentSub.RemainingQuestions = plan.QuestionLimit;
+                    currentSub.DailyResetTime = null; // Reset chu kỳ daily khi đổi gói
+
+                    _repository.SaveStudentSubscription(currentSub);
+                }
+
+                transaction.Commit();
+                return true;
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
                 throw;
             }
         }
@@ -263,6 +278,29 @@ namespace BussinessLayer.Services
                 TransactionDate = t.TransactionDate,
                 Status = t.Status
             }).ToList();
+        }
+
+        public void CheckAndDowngradeExpiredSubscription(int userId)
+        {
+            var sub = _repository.GetStudentSubscription(userId);
+            if (sub != null)
+            {
+                var freePlan = _repository.GetAllPlans().FirstOrDefault(p => p.Name == "Free")
+                               ?? _repository.GetAllPlans().OrderBy(p => p.Price).FirstOrDefault()
+                               ?? _repository.GetPlanById(1);
+
+                int freePlanId = freePlan?.Id ?? 1;
+
+                if (sub.SubscriptionPlanId != freePlanId && sub.EndDate < DateTime.UtcNow)
+                {
+                    sub.SubscriptionPlanId = freePlanId;
+                    sub.StartDate = DateTime.UtcNow;
+                    sub.EndDate = DateTime.MaxValue;
+                    sub.RemainingQuestions = freePlan?.QuestionLimit ?? 5;
+                    sub.DailyResetTime = null;
+                    _repository.SaveStudentSubscription(sub);
+                }
+            }
         }
     }
 }

@@ -12,7 +12,7 @@ namespace PresentationLayer.Controllers
     /// Admin và Lecturer có quyền Create/Edit/Delete
     /// Tất cả authenticated users có quyền xem (Index, Details)
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Lecturer,Admin")]
     public class SubjectsController : Controller
     {
         private readonly ISubjectService _subjectService;

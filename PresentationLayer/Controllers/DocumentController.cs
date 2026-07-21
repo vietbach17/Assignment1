@@ -5,7 +5,6 @@ using System.Security.Claims;
 using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using BussinessLayer.Services;
-using BussinessLayer.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -312,6 +311,17 @@ namespace PresentationLayer.Controllers
                 return View(viewModel);
             }
 
+            if (viewModel.ChapterId.HasValue)
+            {
+                var chapter = await _chapterService.GetChapterByIdAsync(viewModel.ChapterId.Value);
+                if (chapter == null || chapter.SubjectId != viewModel.SubjectId)
+                {
+                    ModelState.AddModelError(nameof(viewModel.ChapterId), "Chương học được chọn không thuộc môn học của tài liệu này.");
+                    await PopulateEditDropdowns(viewModel.SubjectId, viewModel.ChapterId);
+                    return View(viewModel);
+                }
+            }
+
             var (success, message, document) = await _documentService.UpdateDocumentAsync(viewModel);
 
             if (!success)
@@ -340,14 +350,20 @@ namespace PresentationLayer.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue || !await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền truy cập tài liệu này.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var viewModel = new DocumentDetailViewModel
             {
                 Document = document,
                 NewStatus = document.Status
             };
 
-            var userId = GetCurrentUserId();
-            ViewBag.CanManageDocument = userId.HasValue && await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value);
+            ViewBag.CanManageDocument = true;
 
             return View(viewModel);
         }
@@ -439,6 +455,13 @@ namespace PresentationLayer.Controllers
             if (document == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy tài liệu.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue || !await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền tải tài liệu này.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -702,6 +725,12 @@ namespace PresentationLayer.Controllers
             if (docDto == null || docDto.IsDeleted)
             {
                 return Json(new { success = false, message = "Không tìm thấy tài liệu này." });
+            }
+
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue || !await CanManageSubjectDocumentsAsync(docDto.SubjectId, userId.Value))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền xem phân đoạn của tài liệu này." });
             }
 
             var wwwrootPath = _webHostEnvironment.WebRootPath;

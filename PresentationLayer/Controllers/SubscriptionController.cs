@@ -40,6 +40,7 @@ namespace PresentationLayer.Controllers
             if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
             {
                 int userId = GetCurrentUserId();
+                _subscriptionService.CheckAndDowngradeExpiredSubscription(userId);
                 var currentSub = _subscriptionService.GetStudentSubscription(userId);
                 ViewBag.CurrentPlanId = currentSub?.SubscriptionPlanId ?? 0;
             }
@@ -53,6 +54,8 @@ namespace PresentationLayer.Controllers
         {
             int userId = GetCurrentUserId();
 
+            _subscriptionService.CheckAndDowngradeExpiredSubscription(userId);
+
             // Nhận về DTO thay vì Entity
             var studentSubDto = _subscriptionService.GetStudentSubscription(userId);
 
@@ -65,6 +68,20 @@ namespace PresentationLayer.Controllers
         public IActionResult BuyPlan(int planId)
         {
             int userId = GetCurrentUserId();
+
+            // Kiểm tra hạ cấp gói dịch vụ
+            var currentSub = _subscriptionService.GetStudentSubscription(userId);
+            var currentPlan = currentSub != null ? _subscriptionService.GetPlanById(currentSub.SubscriptionPlanId) : null;
+            var targetPlan = _subscriptionService.GetPlanById(planId);
+
+            if (currentPlan != null && targetPlan != null)
+            {
+                if (targetPlan.Id != currentPlan.Id && targetPlan.Price <= currentPlan.Price)
+                {
+                    TempData["ErrorMessage"] = "Bạn không thể hạ cấp xuống gói dịch vụ có giá trị thấp hơn hoặc bằng gói hiện tại.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
 
             // Đọc cấu hình xem có bắt buộc dùng VNPay thật hay không
             var useVnPayReal = _configuration.GetValue<bool>("VNPAY:UseSandbox");
@@ -144,6 +161,13 @@ namespace PresentationLayer.Controllers
         [Authorize(Roles = "Student")]
         public IActionResult BuyPlanFakeConfirmation(int userId, int planId)
         {
+            int currentUserId = GetCurrentUserId();
+            if (userId != currentUserId)
+            {
+                TempData["ErrorMessage"] = "Yêu cầu không hợp lệ.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var plan = _subscriptionService.GetPlanById(planId);
             ViewBag.UserId = userId;
             ViewBag.PlanId = planId;
@@ -152,34 +176,34 @@ namespace PresentationLayer.Controllers
 
         [Authorize(Roles = "Student")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult ProcessFakePayment(int userId, int planId)
         {
+            int currentUserId = GetCurrentUserId();
+            if (userId != currentUserId)
+            {
+                TempData["ErrorMessage"] = "Yêu cầu không hợp lệ.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var plan = _subscriptionService.GetPlanById(planId);
+            var currentSub = _subscriptionService.GetStudentSubscription(userId);
+            var currentPlan = currentSub != null ? _subscriptionService.GetPlanById(currentSub.SubscriptionPlanId) : null;
+
+            if (currentPlan != null && plan != null)
+            {
+                if (plan.Id != currentPlan.Id && plan.Price <= currentPlan.Price)
+                {
+                    TempData["ErrorMessage"] = "Bạn không thể hạ cấp xuống gói dịch vụ có giá trị thấp hơn hoặc bằng gói hiện tại.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
             if (plan != null)
             {
-                // 1. Ghi nhận lịch sử giao dịch thành công
-                var transaction = new PaymentTransactionDTO
+                bool activated = _subscriptionService.ActivateSubscription(userId, planId);
+                if (activated)
                 {
-                    UserId = userId,
-                    SubscriptionPlanId = planId,
-                    Amount = plan.Price,
-                    TransactionDate = DateTime.UtcNow,
-                    Status = "Success"
-                };
-                _subscriptionService.AddTransaction(transaction); // Đảm bảo lưu lịch sử transaction
-
-                // 2. Cập nhật hạn mức gói mới cho Sinh viên
-                var currentSub = _subscriptionService.GetStudentSubscription(userId);
-                if (currentSub != null)
-                {
-                    currentSub.SubscriptionPlanId = plan.Id;
-                    currentSub.StartDate = DateTime.UtcNow;
-                    currentSub.EndDate = plan.Id == 1 ? DateTime.MaxValue : DateTime.UtcNow.AddMonths(1); // Gói Free = vĩnh viễn
-                    currentSub.RemainingQuestions = plan.QuestionLimit;
-                    currentSub.DailyResetTime = null; // Reset chu kỳ daily khi đổi gói
-
-                    _subscriptionService.SaveStudentSubscription(currentSub); // Lưu thay đổi xuống Database
-
                     TempData["SuccessMessage"] = $"⚡ Xác nhận thanh toán thành công! Gói {plan.Name} ({plan.QuestionLimit} câu) đã được kích hoạt.";
                     return RedirectToAction(nameof(MySubscription));
                 }
@@ -246,8 +270,19 @@ namespace PresentationLayer.Controllers
         [HttpPost]
         public IActionResult Delete(int id)
         {
-            _subscriptionService.DeletePlan(id);
-            TempData["SuccessMessage"] = "Đã xóa gói dịch vụ thành công!";
+            try
+            {
+                _subscriptionService.DeletePlan(id);
+                TempData["SuccessMessage"] = "Đã xóa gói dịch vụ thành công!";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa gói dịch vụ.";
+            }
             return RedirectToAction(nameof(AdminIndex));
         }
     }

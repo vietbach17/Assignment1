@@ -26,9 +26,5 @@ namespace PresentationLayer.ViewModels
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Vai trò là bắt buộc")]
-        [Display(Name = "Vai trò")]
-        public int RoleId { get; set; }
     }
 }

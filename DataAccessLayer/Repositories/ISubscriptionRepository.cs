@@ -23,5 +23,6 @@ namespace DataAccessLayer.Repositories
         // Ghi nhận giao dịch
         void AddTransaction(PaymentTransaction transaction);
         List<PaymentTransaction> GetAllTransactions();
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction BeginTransaction();
     }
 }
