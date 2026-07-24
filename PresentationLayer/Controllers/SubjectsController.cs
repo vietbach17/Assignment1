@@ -42,6 +42,26 @@ namespace PresentationLayer.Controllers
         }
 
         /// <summary>
+        /// GET: /Subjects/MySubjects
+        /// Hiển thị danh sách các Subject mà Giảng viên hiện tại được phân công
+        /// Chỉ dành cho Lecturer
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> MySubjects()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                TempData["ErrorMessage"] = "Không thể xác định thông tin tài khoản hiện tại.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var subjects = await _subjectService.GetSubjectsByLecturerIdAsync(userId.Value, includeDeleted: false);
+            return View(subjects);
+        }
+
+        /// <summary>
         /// GET: /Subjects/Details/{id}
         /// Hiển thị chi tiết Subject kèm theo danh sách Chapters
         /// Accessible by all authenticated users
@@ -58,6 +78,21 @@ namespace PresentationLayer.Controllers
             }
 
             ViewBag.Documents = await _documentService.GetDocumentsBySubjectAsync(id);
+
+            bool canManage = false;
+            if (User.IsInRole("Admin"))
+            {
+                canManage = true;
+            }
+            else if (User.IsInRole("Lecturer"))
+            {
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    canManage = await _subjectService.IsLecturerAssignedToSubjectAsync(id, userId);
+                }
+            }
+            ViewBag.CanManage = canManage;
 
             return View(subject);
         }

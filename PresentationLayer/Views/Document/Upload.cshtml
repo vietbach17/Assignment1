@@ -1,252 +1,138 @@
 @model BussinessLayer.DTOs.DocumentUploadViewModel
 @{
+    Layout = "_DashboardLayout";
     ViewData["Title"] = "Tải lên tài liệu";
-    Layout = null;
+    ViewBag.ActiveMenu = "Document";
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#1e3b31',
-                            active: '#2c5344',
-                            button: '#376b56',
-                            text: '#222222',
-                            gray: '#f4f6f8'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
 
-    <aside class="w-64 bg-brand-dark text-white flex flex-col">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-                <i class="fa-solid fa-book-open text-white"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
-                <p class="text-xs text-gray-300">Tải tài liệu</p>
-            </div>
+@section Styles {
+    <style>
+        .hidden { display: none !important; }
+        .drop-zone { border: 3px dashed var(--black); padding: 32px; text-align: center; cursor: pointer; transition: 0.1s; background: #faf9f7; }
+        .drop-zone.dz-active, .drop-zone:hover { background: #fff0f4; box-shadow: var(--shadow); }
+        #terminalLog { background: #0d1117; color: #4ade80; font-family: monospace; font-size: 12px; padding: 14px; height: 200px; overflow-y: auto; border: 3px solid var(--black); }
+        #terminalLog .t-green { color: #4ade80; }
+        #terminalLog .t-red { color: #f87171; }
+        #terminalLog .t-teal { color: #5eead4; font-weight: 700; }
+        #terminalLog .t-gray { color: #8b949e; }
+        #terminalLog .t-time { color: #6b7280; }
+        .progress-track { width: 100%; background: #e5e5e5; border: 2px solid var(--black); height: 18px; overflow: hidden; }
+        .progress-fill { background: var(--pink); height: 100%; width: 0%; transition: width 0.3s; }
+        .chunk-card { border: 2px solid var(--black); background: #faf9f7; padding: 14px; }
+    </style>
+}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle"><a asp-action="Index" class="text-pink">Tài liệu</a> › Tải lên</div>
+            <h1 class="page-title">Tải lên tài liệu mới</h1>
+            <p class="page-subtitle">Hỗ trợ PDF, DOCX, PPTX — tối đa 50 MB.</p>
         </div>
+        <a asp-action="Index" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+    </div>
 
-        <div class="px-4 py-2">
-            <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-            <ul class="space-y-1">
-                <li>
-                    <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-solid fa-border-all w-5"></i>
-                        <span>Tổng quan</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-solid fa-book w-5"></i>
-                        <span>Môn Học</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
-                        <i class="fa-regular fa-file-lines w-5"></i>
-                        <span>Tài liệu</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-error"><i class="fa-solid fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
+    }
 
-        <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i>
-                <span>Đăng xuất</span>
-            </a>
-        </div>
-    </aside>
+    <div class="brutal-card" style="max-width:720px;">
+        <form asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm" novalidate>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-error" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div class="relative w-96">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" placeholder="Tìm kiếm..." class="w-full bg-gray-50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-button">
-            </div>
-            
-            <div class="flex items-center space-x-5">
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <button class="text-gray-400 hover:text-gray-600 relative">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-                    <div class="flex items-center space-x-3 cursor-pointer">
-                        <div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
-                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
-                        </div>
+            <!-- Modal Popup for Upload Errors (like duplicate file) -->
+            <div class="modal @(ViewBag.UploadError != null ? "open" : "")" id="duplicateErrorModal">
+                <div class="modal-content">
+                    <button type="button" class="modal-close" onclick="document.getElementById('duplicateErrorModal').classList.remove('open')">&times;</button>
+                    <h2 class="card-title text-pink mb-3" style="margin-bottom: 15px;"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo Tải lên</h2>
+                    <p id="modalErrorMessage" style="font-weight: 700; line-height: 1.5;">@(ViewBag.UploadError ?? "")</p>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 25px;">
+                        <button type="button" class="brutal-btn btn-dark" onclick="document.getElementById('duplicateErrorModal').classList.remove('open')">Đã hiểu</button>
                     </div>
-                }
+                </div>
             </div>
-        </header>
 
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="mb-8 flex justify-between items-start">
+            <div class="form-group">
+                <label asp-for="Title">Tiêu đề tài liệu *</label>
+                <input asp-for="Title" placeholder="Ví dụ: Slide Chapter 1 - Introduction" autocomplete="off" />
+                <span asp-validation-for="Title" class="text-pink" style="font-size:12px;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SubjectId">Môn học *</label>
+                <select asp-for="SubjectId" id="subjectSelect" asp-items="ViewBag.SubjectList">
+                    <option value="">— Chọn môn học —</option>
+                </select>
+                <span asp-validation-for="SubjectId" class="text-pink" style="font-size:12px;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ChapterId">Chương <span class="text-muted" style="font-weight:600;">(tuỳ chọn)</span></label>
+                <select asp-for="ChapterId" id="chapterSelect">
+                    <option value="">— Chọn chương (tuỳ chọn) —</option>
+                </select>
+                <span class="text-muted" style="font-size:11px;">Chọn môn học trước để load danh sách chương.</span>
+            </div>
+
+            <div class="form-group">
+                <label>📎 File tài liệu *</label>
+                <div class="drop-zone" id="dropZone">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:36px; color:#999;"></i>
+                    <p style="font-weight:800; margin-top:10px;">Kéo thả file vào đây hoặc <span class="text-pink" style="text-decoration:underline; cursor:pointer;" onclick="document.getElementById('fileInput').click()">chọn file</span></p>
+                    <p class="text-muted" style="font-weight:700; font-size:13px;">PDF, DOCX, PPTX — tối đa 50 MB</p>
+                    <input asp-for="File" type="file" id="fileInput" accept=".pdf,.docx,.pptx" style="display:none" />
+                </div>
+
+                <div id="filePreview" class="hidden" style="margin-top:14px; padding:14px; border:2px solid var(--black); display:flex; align-items:center; gap:14px;">
+                    <span class="badge badge-gray" style="font-size:18px; padding:10px 12px;"><i id="fileIcon" class="fa-solid fa-file"></i></span>
+                    <div style="flex:1;">
+                        <div id="fileName" style="font-weight:900;"></div>
+                        <div id="fileSize" class="page-subtitle"></div>
+                    </div>
+                    <button type="button" style="background:none; border:none; cursor:pointer; font-size:20px;" onclick="clearFile()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div id="previewControls" class="hidden" style="margin-top:14px; display:flex; align-items:center; gap:12px;">
+                    <button id="previewButton" type="button" class="brutal-btn btn-blue"><i class="fa-solid fa-magnifying-glass"></i> Xem trước</button>
+                    <span id="previewLoading" class="hidden text-muted" style="font-weight:800; font-size:13px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tạo preview...</span>
+                </div>
+
+                <div id="previewSection" class="hidden" style="margin-top:14px; padding:14px; border:2px solid var(--black);">
+                    <h3 class="card-title" style="font-size:15px;">Preview Gemini Chunk / Embedding</h3>
+                    <p class="page-subtitle">Xem trước cách tài liệu sẽ được phân đoạn và embedding.</p>
+                    <div id="previewMessage" style="font-weight:700; margin:8px 0;"></div>
+                    <div id="previewInfo" style="display:grid; gap:6px; font-weight:700; font-size:13px;"></div>
+                    <div id="previewChunks" style="display:flex; flex-direction:column; gap:12px; margin-top:12px;"></div>
+                </div>
+
+                <span asp-validation-for="File" class="text-pink" style="font-size:12px;"></span>
+                <div id="fileSizeError" class="hidden text-pink" style="font-size:12px; font-weight:800;">File vượt quá giới hạn 50 MB.</div>
+            </div>
+
+            <div id="uploadProgressSection" class="hidden" style="margin-bottom:18px; display:flex; flex-direction:column; gap:14px;">
                 <div>
-                    <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">Không gian giảng viên</p>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Tải lên Tài liệu</h2>
-                    <p class="text-gray-500 text-sm">Hỗ trợ PDF, DOCX, PPTX — Tối đa 50 MB</p>
+                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:13px; margin-bottom:6px;">
+                        <span id="progressStatusText">Đang chuẩn bị tải lên...</span>
+                        <span id="progressPercentText">0%</span>
+                    </div>
+                    <div class="progress-track"><div id="progressBarFill" class="progress-fill"></div></div>
                 </div>
-                <a asp-action="Index" class="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 font-medium py-2.5 px-6 rounded-xl transition">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Quay lại</span>
-                </a>
             </div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                    <i class="fa-solid fa-exclamation-circle mr-2"></i>@TempData["ErrorMessage"]
-                </div>
-            }
-
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl">
-                <form asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm" novalidate>
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
-
-                    <!-- Title -->
-                    <div class="mb-6">
-                        <label asp-for="Title" class="block text-sm font-medium text-gray-700 mb-2">
-                            Tiêu đề tài liệu <span class="text-red-500">*</span>
-                        </label>
-                        <input asp-for="Title" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-button focus:border-transparent" placeholder="Ví dụ: Slide Chapter 1 - Introduction" autocomplete="off" />
-                        <span asp-validation-for="Title" class="text-red-500 text-xs mt-1 block"></span>
-                    </div>
-
-                    <!-- Subject -->
-                    <div class="mb-6">
-                        <label asp-for="SubjectId" class="block text-sm font-medium text-gray-700 mb-2">
-                            Môn học <span class="text-red-500">*</span>
-                        </label>
-                        <select asp-for="SubjectId" id="subjectSelect" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-button focus:border-transparent" asp-items="ViewBag.SubjectList">
-                            <option value="">— Chọn môn học —</option>
-                        </select>
-                        <span asp-validation-for="SubjectId" class="text-red-500 text-xs mt-1 block"></span>
-                    </div>
-
-                    <!-- Chapter -->
-                    <div class="mb-6">
-                        <label asp-for="ChapterId" class="block text-sm font-medium text-gray-700 mb-2">
-                            Chương <span class="text-gray-500 text-xs font-normal">(tuỳ chọn)</span>
-                        </label>
-                        <select asp-for="ChapterId" id="chapterSelect" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-button focus:border-transparent">
-                            <option value="">— Chọn chương (tuỳ chọn) —</option>
-                        </select>
-                        <p class="text-gray-500 text-xs mt-1">Chọn môn học trước để load danh sách chương.</p>
-                    </div>
-
-                    <!-- File Upload Drop Zone -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            📎 File tài liệu <span class="text-red-500">*</span>
-                        </label>
-                        <div class="drop-zone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-brand-button hover:bg-brand-gray transition" id="dropZone">
-                            <div class="mb-3">
-                                <i class="fa-solid fa-cloud-arrow-up text-gray-400 text-4xl"></i>
-                            </div>
-                            <p class="text-gray-700 font-medium">Kéo thả file vào đây hoặc <span class="text-brand-button hover:underline cursor-pointer" onclick="document.getElementById('fileInput').click()">chọn file</span></p>
-                            <p class="text-gray-500 text-sm mt-1">PDF, DOCX, PPTX — tối đa 50 MB</p>
-                            <input asp-for="File" type="file" id="fileInput" accept=".pdf,.docx,.pptx" style="display:none" />
-                        </div>
-                        <div id="filePreview" class="file-preview hidden mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center space-x-4">
-                            <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-brand-button/10 rounded-lg flex items-center justify-center">
-                                    <i id="fileIcon" class="fa-solid fa-file text-brand-button text-xl"></i>
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <div id="fileName" class="font-medium text-gray-800"></div>
-                                <div id="fileSize" class="text-sm text-gray-500"></div>
-                            </div>
-                            <button type="button" class="text-gray-400 hover:text-red-500" onclick="clearFile()">
-                                <i class="fa-solid fa-xmark text-xl"></i>
-                            </button>
-                        </div>
-                        <div id="previewControls" class="hidden mt-4 flex items-center gap-3">
-                            <button id="previewButton" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-xl border border-brand-button bg-white text-brand-button hover:bg-brand-button hover:text-white transition shadow-sm">
-                                <i class="fa-solid fa-magnifying-glass mr-2"></i> Xem trước 
-                            </button>
-                            <span id="previewLoading" class="text-sm text-gray-500 hidden"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tạo preview...</span>
-                        </div>
-                        <div id="previewSection" class="hidden mt-4 p-4 bg-white border border-gray-200 rounded-xl">
-                            <div class="mb-3 flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-sm font-semibold text-gray-800">Preview Gemini Chunk / Embedding</h3>
-                                    <p class="text-xs text-gray-500">Xem trước cách tài liệu sẽ được phân đoạn và embedding.</p>
-                                </div>
-                            </div>
-                            <div id="previewMessage" class="text-sm text-gray-600 mb-3"></div>
-                            <div id="previewInfo" class="grid gap-2 text-sm text-gray-700"></div>
-                            <div id="previewChunks" class="space-y-4 mt-4"></div>
-                        </div>
-                        <span asp-validation-for="File" class="text-red-500 text-xs mt-1 block"></span>
-                        <div id="fileSizeError" class="text-red-500 text-xs mt-1 hidden">File vượt quá giới hạn 50 MB.</div>
-                    </div>
-
-                    <!-- Progress & Console Logs (Hidden by default) -->
-                    <div id="uploadProgressSection" class="hidden mb-6 space-y-4">
-                        <!-- Progress Bar -->
-                        <div>
-                            <div class="flex justify-between text-sm font-semibold text-gray-700 mb-1">
-                                <span id="progressStatusText">Đang chuẩn bị tải lên...</span>
-                                <span id="progressPercentText">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                <div id="progressBarFill" class="bg-brand-button h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <!-- Terminal-like Console Log Panel -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                💻 Tiến trình xử lý hệ thống (Real-time Logs)
-                            </label>
-                            <div id="terminalLog" class="w-full bg-gray-900 text-green-400 font-mono text-[11px] p-4 rounded-xl h-48 overflow-y-auto border border-gray-800 shadow-inner space-y-1 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-gray-900">
-                                <div class="text-gray-500">[System] Sẵn sàng tải lên tài liệu...</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex gap-3">
-                        <button type="submit" class="flex-1 bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm" id="submitBtn">
-                            <i class="fa-solid fa-upload mr-2"></i>Tải lên tài liệu
-                        </button>
-                        <a asp-action="Index" class="px-6 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-medium rounded-xl transition">
-                            Huỷ
-                        </a>
-                    </div>
-                </form>
+            <div style="display:flex; gap:12px;">
+                <button type="submit" class="brutal-btn btn-pink" style="flex:1;" id="submitBtn"><i class="fa-solid fa-upload"></i> Tải lên tài liệu</button>
+                <a asp-action="Index" class="brutal-btn">Huỷ</a>
             </div>
-        </div>
-    </main>
+        </form>
+    </div>
+</div>
 
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        const MAX_SIZE_MB = 50;
-        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
-
+        const MAX_SIZE_BYTES = 50 * 1024 * 1024;
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
         const filePreview = document.getElementById('filePreview');
@@ -261,24 +147,13 @@
         const submitBtn = document.getElementById('submitBtn');
 
         fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
-
-        dropZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            dropZone.classList.add('border-brand-button', 'bg-brand-gray');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-brand-button', 'bg-brand-gray');
-        });
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dz-active'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dz-active'));
         dropZone.addEventListener('drop', e => {
             e.preventDefault();
-            dropZone.classList.remove('border-brand-button', 'bg-brand-gray');
+            dropZone.classList.remove('dz-active');
             const file = e.dataTransfer.files[0];
-            if (file) {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                fileInput.files = dt.files;
-                handleFile(file);
-            }
+            if (file) { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; handleFile(file); }
         });
         dropZone.addEventListener('click', () => fileInput.click());
 
@@ -286,7 +161,6 @@
             if (!file) return;
             const ext = file.name.split('.').pop().toLowerCase();
             fileSizeError.classList.add('hidden');
-
             if (file.size > MAX_SIZE_BYTES) {
                 fileSizeError.classList.remove('hidden');
                 previewControls.classList.add('hidden');
@@ -295,18 +169,15 @@
                 return;
             }
             submitBtn.disabled = false;
-
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('fileSize').textContent = formatSize(file.size);
-            
             const badge = document.getElementById('fileIcon');
-            switch(ext) {
-                case 'pdf': badge.className = 'fa-solid fa-file-pdf text-red-500'; break;
-                case 'docx': badge.className = 'fa-solid fa-file-word text-blue-500'; break;
-                case 'pptx': badge.className = 'fa-solid fa-file-powerpoint text-orange-500'; break;
-                default: badge.className = 'fa-solid fa-file text-gray-500';
+            switch (ext) {
+                case 'pdf': badge.className = 'fa-solid fa-file-pdf'; break;
+                case 'docx': badge.className = 'fa-solid fa-file-word'; break;
+                case 'pptx': badge.className = 'fa-solid fa-file-powerpoint'; break;
+                default: badge.className = 'fa-solid fa-file';
             }
-            
             filePreview.classList.remove('hidden');
             dropZone.classList.add('hidden');
             previewControls.classList.remove('hidden');
@@ -317,71 +188,41 @@
         }
 
         previewButton.addEventListener('click', previewFile);
-
         async function previewFile() {
             const file = fileInput.files[0];
-            if (!file) {
-                previewMessage.textContent = 'Vui lòng chọn file trước khi xem trước.';
-                previewMessage.className = 'text-sm text-red-500';
-                return;
-            }
-
+            if (!file) { previewMessage.textContent = 'Vui lòng chọn file trước khi xem trước.'; return; }
             previewButton.disabled = true;
             previewLoading.classList.remove('hidden');
             previewMessage.textContent = '';
             previewInfo.innerHTML = '';
             previewChunks.innerHTML = '';
             previewSection.classList.add('hidden');
-
             const formData = new FormData();
             formData.append('file', file);
-
             try {
-                const response = await fetch('/Document/PreviewDocumentChunks', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
+                const response = await fetch('/Document/PreviewDocumentChunks', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
-                if (!result.success) {
-                    previewMessage.textContent = result.message || 'Không thể tạo preview cho file.';
-                    previewMessage.className = 'text-sm text-red-500';
-                    return;
-                }
-
-                previewMessage.textContent = '';
-                previewMessage.className = 'text-sm text-gray-600';
+                if (!result.success) { previewMessage.textContent = result.message || 'Không thể tạo preview cho file.'; return; }
                 previewSection.classList.remove('hidden');
-
                 previewInfo.innerHTML = `
-                    <div>Số chunk nhận được: <span class="font-semibold text-gray-800">${result.chunkCount}</span></div>
-                    <div>Embedding khả dụng: <span class="font-semibold text-gray-800">${result.embeddingAvailable ? 'Có' : 'Không'}</span></div>
-                    <div>Kích thước vector embedding: <span class="font-semibold text-gray-800">${result.embeddingCount}</span></div>
-                `;
-
-                const chunks = result.chunks || [];
-                if (chunks.length > 0) {
-                    chunks.forEach(chunk => {
-                        const card = document.createElement('div');
-                        card.className = 'rounded-xl border border-gray-200 bg-gray-50 p-4';
-                        const header = document.createElement('div');
-                        header.className = 'text-xs font-semibold text-gray-500 mb-2';
-                        header.textContent = `Chunk ${chunk.index}`;
-                        const body = document.createElement('pre');
-                        body.className = 'whitespace-pre-wrap text-sm text-gray-700 overflow-x-auto';
-                        body.textContent = chunk.text;
-                        card.appendChild(header);
-                        card.appendChild(body);
-                        previewChunks.appendChild(card);
-                    });
-                }
+                    <div>Số chunk nhận được: <b>${result.chunkCount}</b></div>
+                    <div>Embedding khả dụng: <b>${result.embeddingAvailable ? 'Có' : 'Không'}</b></div>
+                    <div>Kích thước vector embedding: <b>${result.embeddingCount}</b></div>`;
+                (result.chunks || []).forEach(chunk => {
+                    const card = document.createElement('div');
+                    card.className = 'chunk-card';
+                    const header = document.createElement('div');
+                    header.style.cssText = 'font-weight:900; font-size:12px; margin-bottom:6px;';
+                    header.textContent = `Chunk ${chunk.index}`;
+                    const body = document.createElement('pre');
+                    body.style.cssText = 'white-space:pre-wrap; font-size:13px; overflow-x:auto; margin:0;';
+                    body.textContent = chunk.text;
+                    card.appendChild(header); card.appendChild(body);
+                    previewChunks.appendChild(card);
+                });
             } catch (error) {
                 previewMessage.textContent = `Lỗi khi tạo preview: ${error.message}`;
-                previewMessage.className = 'text-sm text-red-500';
             } finally {
                 previewLoading.classList.add('hidden');
                 previewButton.disabled = false;
@@ -409,113 +250,71 @@
 
         const subjectSelect = document.getElementById('subjectSelect');
         const chapterSelect = document.getElementById('chapterSelect');
-
         subjectSelect.addEventListener('change', async function () {
             const subjectId = this.value;
             chapterSelect.innerHTML = '<option value="">— Chọn chương (tuỳ chọn) —</option>';
             if (!subjectId) return;
-
             try {
                 const res = await fetch(`/Document/GetChaptersBySubject?subjectId=${subjectId}`);
                 const data = await res.json();
-                data.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = c.title;
-                    chapterSelect.appendChild(opt);
-                });
-            } catch (e) {
-                console.warn('Không thể load chapters:', e);
-            }
+                data.forEach(c => { const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.title; chapterSelect.appendChild(opt); });
+            } catch (e) { console.warn('Không thể load chapters:', e); }
         });
 
         function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
         }
 
+        function showErrorModal(message) {
+            document.getElementById('modalErrorMessage').textContent = message;
+            document.getElementById('duplicateErrorModal').classList.add('open');
+        }
+
+        function logToTerminal(message, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
         const uploadForm = document.getElementById('uploadForm');
         uploadForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-
             const titleInput = document.getElementById('Title');
             const subjectInput = document.getElementById('subjectSelect');
             const chapterInput = document.getElementById('chapterSelect');
-            
-            // Clear validation messages
             document.querySelectorAll('[data-valmsg-for]').forEach(span => span.textContent = '');
 
             let hasError = false;
-            if (!titleInput.value.trim()) {
-                const titleErrorSpan = document.querySelector('[data-valmsg-for="Title"]');
-                if (titleErrorSpan) titleErrorSpan.textContent = 'Vui lòng nhập tiêu đề tài liệu';
-                hasError = true;
-            }
-            if (!subjectInput.value) {
-                const subjectErrorSpan = document.querySelector('[data-valmsg-for="SubjectId"]');
-                if (subjectErrorSpan) subjectErrorSpan.textContent = 'Vui lòng chọn môn học';
-                hasError = true;
-            }
-            if (!fileInput.files || fileInput.files.length === 0) {
-                const fileErrorSpan = document.querySelector('[data-valmsg-for="File"]');
-                if (fileErrorSpan) fileErrorSpan.textContent = 'Vui lòng chọn file để tải lên';
-                hasError = true;
-            }
-
+            if (!titleInput.value.trim()) { const s = document.querySelector('[data-valmsg-for="Title"]'); if (s) s.textContent = 'Vui lòng nhập tiêu đề tài liệu'; hasError = true; }
+            if (!subjectInput.value) { const s = document.querySelector('[data-valmsg-for="SubjectId"]'); if (s) s.textContent = 'Vui lòng chọn môn học'; hasError = true; }
+            if (!fileInput.files || fileInput.files.length === 0) { const s = document.querySelector('[data-valmsg-for="File"]'); if (s) s.textContent = 'Vui lòng chọn file để tải lên'; hasError = true; }
             if (hasError) return;
 
             const file = fileInput.files[0];
-            
-            // Show progress and console section
             const progressSection = document.getElementById('uploadProgressSection');
             const progressStatusText = document.getElementById('progressStatusText');
             const progressPercentText = document.getElementById('progressPercentText');
             const progressBarFill = document.getElementById('progressBarFill');
-            const terminalLog = document.getElementById('terminalLog');
-            
             progressSection.classList.remove('hidden');
-            terminalLog.innerHTML = '';
-            
-            function logToTerminal(message, type = 'info') {
-                const div = document.createElement('div');
-                const timestamp = new Date().toLocaleTimeString();
-                let colorClass = 'text-green-400';
-                if (type === 'error') colorClass = 'text-red-400';
-                if (type === 'success') colorClass = 'text-teal-300 font-semibold';
-                if (type === 'system') colorClass = 'text-gray-500';
-                
-                div.className = `${colorClass} leading-relaxed`;
-                div.innerHTML = `<span class="text-gray-600">[${timestamp}]</span> ${message}`;
-                terminalLog.appendChild(div);
-                terminalLog.scrollTop = terminalLog.scrollHeight;
-            }
 
             logToTerminal('Khởi tạo kết nối upload phân đoạn...', 'system');
             logToTerminal(`Thông tin file: ${file.name} (${formatSize(file.size)})`, 'info');
 
-            // Slicing parameters: 2MB per chunk
             const CHUNK_SIZE = 2 * 1024 * 1024;
             const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
             const fileGuid = generateUUID();
-            
             logToTerminal(`Cấu hình Chunk Size: 2MB. Tổng số mảnh sẽ cắt: ${totalChunks}`, 'info');
 
-            // Disable buttons
             submitBtn.disabled = true;
             const cancelBtn = submitBtn.nextElementSibling;
-            if (cancelBtn) {
-                cancelBtn.classList.add('pointer-events-none', 'opacity-50');
-            }
+            if (cancelBtn) { cancelBtn.style.pointerEvents = 'none'; cancelBtn.style.opacity = '0.5'; }
 
-            // Sequential upload
             for (let i = 0; i < totalChunks; i++) {
                 const start = i * CHUNK_SIZE;
                 const end = Math.min(start + CHUNK_SIZE, file.size);
                 const chunk = file.slice(start, end);
-
-                logToTerminal(`[Cắt file] Tiến hành cắt phân đoạn ${i+1}/${totalChunks} (Bytes: ${start} - ${end})...`, 'info');
+                logToTerminal(`[Cắt file] Tiến hành cắt phân đoạn ${i + 1}/${totalChunks} (Bytes: ${start} - ${end})...`, 'info');
 
                 const formData = new FormData();
                 formData.append('file', chunk);
@@ -525,66 +324,51 @@
                 formData.append('fileGuid', fileGuid);
                 formData.append('title', titleInput.value.trim());
                 formData.append('subjectId', subjectInput.value);
-                if (chapterInput.value) {
-                    formData.append('chapterId', chapterInput.value);
-                }
+                if (chapterInput.value) formData.append('chapterId', chapterInput.value);
 
-                progressStatusText.textContent = `Đang tải lên phân đoạn ${i+1}/${totalChunks}...`;
-                
+                progressStatusText.textContent = `Đang tải lên phân đoạn ${i + 1}/${totalChunks}...`;
                 try {
-                    const response = await fetch('/Document/UploadChunk', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
+                    const response = await fetch('/Document/UploadChunk', { method: 'POST', body: formData });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const result = await response.json();
-                    
                     if (result.success) {
                         const percent = Math.round(((i + 1) / totalChunks) * 100);
                         progressBarFill.style.width = `${percent}%`;
                         progressPercentText.textContent = `${percent}%`;
-                        
-                        logToTerminal(`[Tải lên] Truyền tải thành công mảnh ${i+1}/${totalChunks}.`, 'success');
-                        
+                        logToTerminal(`[Tải lên] Truyền tải thành công mảnh ${i + 1}/${totalChunks}.`, 'success');
                         if (i === totalChunks - 1) {
-                            logToTerminal('[Máy chủ] Đang tiến hành ghép các phân đoạn tệp tin thành file hoàn chỉnh...', 'system');
-                            logToTerminal('[Máy chủ] Đang tạo mã SHA-256 và kiểm tra trùng lặp trên CSDL...', 'system');
-                            
+                            logToTerminal('[Máy chủ] Đang ghép các phân đoạn thành file hoàn chỉnh...', 'system');
+                            logToTerminal('[Máy chủ] Đang tạo mã SHA-256 và kiểm tra trùng lặp...', 'system');
                             if (result.document) {
                                 logToTerminal(`[Kiểm tra] Thành công! Không trùng lặp tài liệu nào khác.`, 'success');
                                 logToTerminal(`[SHA-256 Hash] ${result.document.fileHash}`, 'success');
                                 logToTerminal(`[Cơ sở dữ liệu] Ghi nhận metadata thành công. Document ID: ${result.document.id}`, 'success');
-                                progressStatusText.textContent = 'Tải lên hoàn tất!';
-                                logToTerminal('Tải lên thành công! Đang tự động chuyển hướng về trang chi tiết tài liệu...', 'system');
-                                setTimeout(() => {
-                                    window.location.href = `/Document/Details/${result.document.id}`;
-                                }, 2000);
+                                progressStatusText.textContent = 'Đang xử lý AI ngầm...';
+                                logToTerminal('Tải lên thành công! Hệ thống đang xử lý phân đoạn ngữ cảnh AI ngầm. Bạn có thể chuyển hướng...', 'system');
+                                setTimeout(() => { window.location.href = `/Document/Details/${result.document.id}`; }, 2500);
                             } else {
-                                logToTerminal(`[Lỗi] Phản hồi thành công nhưng thiếu thông tin chi tiết tài liệu từ máy chủ.`, 'error');
+                                logToTerminal(`[Lỗi] Phản hồi thành công nhưng thiếu thông tin tài liệu.`, 'error');
                                 submitBtn.disabled = false;
-                                if (cancelBtn) cancelBtn.classList.remove('pointer-events-none', 'opacity-50');
+                                if (cancelBtn) { cancelBtn.style.pointerEvents = ''; cancelBtn.style.opacity = ''; }
                             }
                         }
                     } else {
-                        logToTerminal(`[Thất bại] Lỗi từ máy chủ: ${result.message}`, 'error');
+                        console.error(`[Thất bại] Lỗi từ máy chủ: ${result.message}`);
+                        showErrorModal(result.message);
                         progressStatusText.textContent = 'Tải lên thất bại.';
                         submitBtn.disabled = false;
-                        if (cancelBtn) cancelBtn.classList.remove('pointer-events-none', 'opacity-50');
-                        return; // Stop the loop
+                        if (cancelBtn) { cancelBtn.style.pointerEvents = ''; cancelBtn.style.opacity = ''; }
+                        return;
                     }
                 } catch (error) {
-                    logToTerminal(`[Lỗi mạng] Không thể kết nối hoặc lỗi truyền tải phân đoạn ${i+1}. Lỗi: ${error.message}`, 'error');
+                    console.error(`[Lỗi mạng] Lỗi truyền tải phân đoạn ${i + 1}. Lỗi: ${error.message}`);
+                    showErrorModal(`Lỗi truyền tải phân đoạn. Chi tiết: ${error.message}`);
                     progressStatusText.textContent = 'Lỗi kết nối mạng.';
                     submitBtn.disabled = false;
-                    if (cancelBtn) cancelBtn.classList.remove('pointer-events-none', 'opacity-50');
-                    return; // Stop the loop
+                    if (cancelBtn) { cancelBtn.style.pointerEvents = ''; cancelBtn.style.opacity = ''; }
+                    return;
                 }
             }
         });
     </script>
-</body>
-</html>
+}

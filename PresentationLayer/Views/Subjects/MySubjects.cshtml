@@ -1,16 +1,16 @@
 @model IEnumerable<BussinessLayer.DTOs.SubjectDto>
 @{
     Layout = "_DashboardLayout";
-    ViewData["Title"] = "Môn học";
-    ViewBag.ActiveMenu = "Subjects";
+    ViewData["Title"] = "Môn phụ trách";
+    ViewBag.ActiveMenu = "MySubjects";
 }
 
 <div class="page-content">
     <div class="page-header">
         <div>
-            <div class="page-subtitle">QUẢN LÝ ĐÀO TẠO</div>
-            <h1 class="page-title">Danh sách môn học</h1>
-            <p class="page-subtitle">Xem và quản lý tất cả các môn học trong hệ thống.</p>
+            <div class="page-subtitle">GIẢNG VIÊN</div>
+            <h1 class="page-title">Môn phụ trách</h1>
+            <p class="page-subtitle">Danh sách các môn học mà bạn được phân công quản lý và upload tài liệu.</p>
         </div>
         @if (User.IsInRole("Admin"))
         {
@@ -30,13 +30,9 @@
     @if (!Model.Any())
     {
         <div class="brutal-card" style="text-align:center; padding:48px;">
-            <i class="fa-solid fa-book" style="font-size:40px; color:#ccc;"></i>
-            <h3 class="card-title" style="margin:12px 0 6px;">Chưa có môn học nào</h3>
-            <p class="text-muted" style="font-weight:700; margin-bottom:16px;">Hiện tại hệ thống chưa có môn học nào được tạo.</p>
-            @if (User.IsInRole("Admin"))
-            {
-                <a asp-action="Create" class="brutal-btn btn-pink"><i class="fa-solid fa-plus"></i> Tạo môn học đầu tiên</a>
-            }
+            <i class="fa-solid fa-user-xmark" style="font-size:40px; color:#ccc;"></i>
+            <h3 class="card-title" style="margin:12px 0 6px;">Chưa được phân công môn nào</h3>
+            <p class="text-muted" style="font-weight:700; margin-bottom:16px;">Hiện tại bạn chưa được phân công quản lý môn học nào. Vui lòng liên hệ Admin.</p>
         </div>
     }
     else
@@ -45,7 +41,7 @@
             <div style="padding:15px 20px; overflow-x:auto;">
                 <table class="brutal-table">
                     <thead>
-                        <tr><th>Mã môn</th><th>Tên môn</th><th>Giảng viên</th><th>Mô tả</th><th style="text-align:right;">Thao tác</th></tr>
+                        <tr><th>Mã môn</th><th>Tên môn</th><th>Mô tả</th><th style="text-align:right;">Thao tác</th></tr>
                     </thead>
                     <tbody>
                         @foreach (var subject in Model)
@@ -53,19 +49,6 @@
                             <tr>
                                 <td><span class="badge badge-green">@subject.SubjectCode</span></td>
                                 <td style="font-weight:900;">@subject.SubjectName</td>
-                                <td>
-                                    @if (subject.AssignedLecturerNames != null && subject.AssignedLecturerNames.Any())
-                                    {
-                                        foreach (var name in subject.AssignedLecturerNames)
-                                        {
-                                            <span class="badge badge-gray" style="margin-right: 4px; font-size: 10px;">@name</span>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted" style="font-style:italic; font-size: 11px;">Chưa phân công</span>
-                                    }
-                                </td>
                                 <td class="text-muted" style="max-width:320px;">
                                     @if (!string.IsNullOrEmpty(subject.Description))
                                     {
@@ -81,6 +64,7 @@
                                         <a asp-action="Details" asp-route-id="@subject.Id" class="brutal-btn btn-blue sm" title="Chi tiết"><i class="fa-solid fa-eye"></i></a>
                                         @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
                                         {
+                                            <a asp-controller="Document" asp-action="Upload" asp-route-subjectId="@subject.Id" class="brutal-btn btn-pink sm" title="Tải tài liệu"><i class="fa-solid fa-cloud-arrow-up"></i></a>
                                             <a asp-controller="Chapters" asp-action="Index" asp-route-subjectId="@subject.Id" class="brutal-btn btn-green sm" title="Quản lý chương"><i class="fa-solid fa-list"></i></a>
                                         }
                                         @if (User.IsInRole("Admin"))

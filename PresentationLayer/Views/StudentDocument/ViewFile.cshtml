@@ -1,307 +1,203 @@
 @model BussinessLayer.DTOs.DocumentDto
-
 @{
-    ViewData["Title"] = $"Xem tài liệu - {Model.Title}";
-    var fileUrl = ViewBag.FileUrl as string;
-    var fileType = ViewBag.FileType as string;
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Chi tiết tài liệu - " + Model.Title;
+    ViewBag.ActiveMenu = "SubjectDocuments";
+    var doc = Model;
+    var textContent = ViewBag.TextContent as string ?? "";
+    var isPdfView = ViewBag.IsPdfView as bool? ?? false;
+    var pdfUrl = ViewBag.FileUrl as string ?? "";
+    var hasContent = !string.IsNullOrWhiteSpace(textContent) && textContent != "Không có nội dung dạng text cho file này.";
+    var fileType = doc.FileType?.ToLower() ?? "";
+    var isViewable = new[] { "txt", "md", "csv", "pdf", "docx", "doc", "pptx", "log" }.Contains(fileType);
+    var isOfficeType = new[] { "docx", "doc", "pptx", "ppt" }.Contains(fileType);
 }
 
-<style>
-    .viewer-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 200px);
-        min-height: 600px;
-    }
-
-    .viewer-header {
-        background: var(--bg-card);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--border-color);
-        border-radius: 12px 12px 0 0;
-        padding: 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .viewer-title-section {
-        flex: 1;
-        min-width: 250px;
-    }
-
-    .viewer-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #ffffff;
-        margin-bottom: 0.5rem;
-    }
-
-    .viewer-meta {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        flex-wrap: wrap;
-    }
-
-    .viewer-actions {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .btn-viewer-action {
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        text-decoration: none;
-        transition: var(--transition-smooth);
-        white-space: nowrap;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-download-viewer {
-        background: linear-gradient(135deg, var(--accent-emerald) 0%, var(--accent-blue) 100%);
-        color: #ffffff;
-        border: none;
-    }
-
-    .btn-download-viewer:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-    }
-
-    .btn-back-viewer {
-        background-color: rgba(255, 255, 255, 0.05);
-        color: #ffffff;
-        border: 1px solid var(--border-color);
-    }
-
-    .btn-back-viewer:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .viewer-frame-container {
-        flex: 1;
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-top: none;
-        border-radius: 0 0 12px 12px;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .viewer-frame {
-        width: 100%;
-        height: 100%;
-        border: none;
-        background: #ffffff;
-    }
-
-    .viewer-loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        color: var(--text-secondary);
-    }
-
-    .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(255, 255, 255, 0.1);
-        border-top-color: var(--accent-blue);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1rem;
-    }
-
-    @@keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    .viewer-notice {
-        background: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        color: #93c5fd;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .viewer-notice-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .file-type-badge {
-        display: inline-block;
-        padding: 0.25rem 0.6rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .file-type-pdf {
-        background-color: rgba(239, 68, 68, 0.15);
-        color: #fca5a5;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .file-type-docx {
-        background-color: rgba(59, 130, 246, 0.15);
-        color: #93c5fd;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-
-    .file-type-pptx {
-        background-color: rgba(249, 115, 22, 0.15);
-        color: #fdba74;
-        border: 1px solid rgba(249, 115, 22, 0.3);
-    }
-
-    .breadcrumb {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        flex-wrap: wrap;
-    }
-
-    .breadcrumb a {
-        color: var(--accent-blue);
-        text-decoration: none;
-        transition: var(--transition-smooth);
-    }
-
-    .breadcrumb a:hover {
-        color: #ffffff;
-    }
-
-    .breadcrumb-separator {
-        color: var(--text-secondary);
-    }
-</style>
-
-<div class="breadcrumb">
-    <a asp-action="Subjects">Môn học</a>
-    <span class="breadcrumb-separator">›</span>
-    <a asp-action="Chapters" asp-route-subjectId="@Model.SubjectId">@Model.SubjectName</a>
-    @if (Model.ChapterId.HasValue)
-    {
-        <span class="breadcrumb-separator">›</span>
-        <a asp-action="Documents" asp-route-chapterId="@Model.ChapterId">@Model.ChapterTitle</a>
-    }
-    <span class="breadcrumb-separator">›</span>
-    <span>Xem tài liệu</span>
-</div>
-
-@if (fileType == "docx" || fileType == "pptx")
-{
-    <div class="viewer-notice">
-        <span class="viewer-notice-icon">ℹ️</span>
-        <div>
-            <strong>Lưu ý:</strong> File @fileType.ToUpper() được xem qua Office Online Viewer. 
-            Nếu không hiển thị, vui lòng tải về để xem trên máy tính.
-        </div>
-    </div>
-}
-
-<div class="viewer-container">
-    <div class="viewer-header">
-        <div class="viewer-title-section">
-            <h1 class="viewer-title">@Model.Title</h1>
-            <div class="viewer-meta">
-                <span class="file-type-badge file-type-@fileType">@fileType.ToUpper()</span>
-                <span>@((Model.FileSize / 1024.0 / 1024.0).ToString("F2")) MB</span>
-                <span>📅 @Model.UploadedDate.ToString("dd/MM/yyyy")</span>
-            </div>
-        </div>
-        <div class="viewer-actions">
-            <a asp-action="Download" asp-route-id="@Model.Id" class="btn-viewer-action btn-download-viewer">
-                ⬇ Tải xuống
+<div class="page-content">
+    <div style="margin-bottom: 20px;">
+        @if (Model.ChapterId.HasValue)
+        {
+            <a asp-action="DocumentInChapter" asp-route-chapterId="@Model.ChapterId" style="color: var(--black); text-decoration: none; font-weight: 800; font-size: 14px;">
+                <i class="fa-solid fa-arrow-left"></i> QUAY LẠI
             </a>
-            @if (Model.ChapterId.HasValue)
-            {
-                <a asp-action="Documents" asp-route-chapterId="@Model.ChapterId" class="btn-viewer-action btn-back-viewer">
-                    ← Quay lại
-                </a>
-            }
-            else
-            {
-                <a asp-action="SubjectDocuments" asp-route-subjectId="@Model.SubjectId" class="btn-viewer-action btn-back-viewer">
-                    ← Quay lại
-                </a>
-            }
-        </div>
-    </div>
-
-    <div class="viewer-frame-container">
-        <div class="viewer-loading" id="loadingIndicator">
-            <div class="loading-spinner"></div>
-            <p>Đang tải tài liệu...</p>
-        </div>
-
-        @if (fileType == "pdf")
-        {
-            <!-- PDF Viewer - Hiển thị trực tiếp -->
-            <iframe 
-                id="documentFrame"
-                class="viewer-frame" 
-                src="@Url.Action("PreviewFile", new { id = Model.Id })"
-                onload="hideLoading()">
-            </iframe>
-        }
-        else if (fileType == "docx" || fileType == "pptx")
-        {
-            var fullUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{fileUrl}";
-            var viewerUrl = $"https://view.officeapps.live.com/op/embed.aspx?src={Uri.EscapeDataString(fullUrl)}";
-            
-            <!-- Office Viewer - Sử dụng Office Online Viewer -->
-            <iframe 
-                id="documentFrame"
-                class="viewer-frame" 
-                src="@viewerUrl"
-                onload="hideLoading()">
-            </iframe>
         }
         else
         {
-            <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-                <p>Không thể xem trước loại file này. Vui lòng tải về để xem.</p>
-                <a asp-action="Download" asp-route-id="@Model.Id" class="btn-viewer-action btn-download-viewer" style="margin-top: 1rem;">
-                    ⬇ Tải xuống
-                </a>
-            </div>
+            <a asp-action="SubjectDocuments" asp-route-subjectId="@Model.SubjectId" style="color: var(--black); text-decoration: none; font-weight: 800; font-size: 14px;">
+                <i class="fa-solid fa-arrow-left"></i> QUAY LẠI
+            </a>
         }
+    </div>
+
+    <div style="background: var(--white); border: 4px solid var(--black); box-shadow: 8px 8px 0px var(--black); padding: 30px; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+                <h1 style="color: var(--pink); font-weight: 900; margin-bottom: 10px; font-size: 24px; text-transform: uppercase;">
+                    @doc.Title
+                    @if (doc.IsDeleted)
+                    {
+                        <span style="background: #dc2626; color: white; padding: 4px 8px; font-size: 14px; vertical-align: middle; margin-left: 10px; border: 2px solid var(--black); box-shadow: 2px 2px 0px var(--black);">
+                            <i class="fa-solid fa-trash"></i> ĐÃ XÓA TẠM
+                        </span>
+                    }
+                </h1>
+                <div style="font-weight: 700; font-size: 14px; color: #555; display: flex; gap: 20px; flex-wrap: wrap;">
+                    <span>
+                        @{
+                            var iconClass = fileType switch {
+                                "pdf"           => "fa-file-pdf",
+                                "docx" or "doc" => "fa-file-word",
+                                "pptx" or "ppt" => "fa-file-powerpoint",
+                                "txt" or "md"   => "fa-file-lines",
+                                "csv"           => "fa-file-csv",
+                                _               => "fa-file"
+                            };
+                        }
+                        <i class="fa-solid @iconClass"></i> Loại file: @fileType.ToUpper()
+                    </span>
+                    <span><i class="fa-solid fa-clock"></i> Cập nhật: @doc.UploadedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span><i class="fa-solid fa-user"></i> Người tải: @(doc.UploadedByUsername ?? "Hệ thống")</span>
+                </div>
+            </div>
+            <a href="@pdfUrl" download target="_blank" class="brutal-btn" style="background-color: var(--yellow); color: var(--black); border: 3px solid var(--black); padding: 10px 20px; font-weight: 900; text-decoration: none; box-shadow: 4px 4px 0px var(--black);">
+                <i class="fa-solid fa-download"></i> TẢI XUỐNG
+            </a>
+        </div>
+
+        <!-- TAB HEADERS -->
+        <div style="display: flex; border-bottom: 3px solid var(--black); margin-bottom: 20px;">
+            <div id="tab-content" onclick="switchTab('content')" style="padding: 10px 20px; font-weight: 900; cursor: pointer; background: var(--black); color: var(--white); border: 3px solid var(--black); border-bottom: none; margin-right: 10px;">
+                <i class="fa-solid fa-file-lines"></i> NỘI DUNG
+            </div>
+        </div>
+
+        <!-- TAB: NỘI DUNG FILE -->
+        <div id="panel-content" style="display: block;">
+            @if (isPdfView)
+            {
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <p style="font-style: italic; color: #555; font-weight: 600; margin: 0;">
+                        Bản tài liệu gốc <strong>@fileType.ToUpper()</strong> hiển thị đúng định dạng như lúc tải lên.
+                    </p>
+                </div>
+                <div id="pdfViewer" data-pdf-url="@pdfUrl"
+                     style="background: #525659; border: 2px solid var(--black); padding: 16px; max-height: 760px; overflow-y: auto;">
+                    <div id="pdfStatus" style="text-align:center; color:#eee; font-weight:800; padding:40px 10px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Đang tải bản xem tài liệu…
+                    </div>
+                    <div id="pdfPages"></div>
+                </div>
+            }
+            else
+            {
+                @if (isOfficeType)
+                {
+                    <div style="background:#e8f4fd; border:2px solid var(--blue); padding:10px 16px; font-weight:700; font-size:12.5px; margin-bottom:14px; color:#0b4f77;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        File @fileType.ToUpper() đang hiển thị nội dung dạng text được trích xuất (có thể không giữ nguyên định dạng gốc).
+                    </div>
+                }
+                @if (hasContent)
+                {
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <p style="font-style: italic; color: #555; font-weight: 600; margin: 0;">
+                            Nội dung văn bản trích xuất từ file <strong>@fileType.ToUpper()</strong>.
+                        </p>
+                        <span style="font-size: 12px; color: #888; font-weight: 700;">
+                            @textContent.Length.ToString("N0") ký tự
+                        </span>
+                    </div>
+                    <div id="docContentBox" style="background: #1e1e1e; border: 2px solid var(--black); padding: 20px; max-height: 600px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; color: #d4d4d4; white-space: pre-wrap; word-wrap: break-word;">@textContent</div>
+                }
+                else
+                {
+                    <div style="padding: 40px; text-align: center; border: 2px dashed #000; background: var(--bg);">
+                        <i class="fa-solid fa-file-circle-question" style="font-size: 48px; color: #ccc; margin-bottom: 15px; display: block;"></i>
+                        <p style="font-weight: 800; font-size: 16px; margin-bottom: 10px;">Không thể hiển thị nội dung</p>
+                        <p style="color: #777; font-size: 14px;">
+                            @if (!isViewable)
+                            {
+                                <text>File <strong>@fileType.ToUpper()</strong> chưa được hỗ trợ trích xuất text.</text>
+                            }
+                            else
+                            {
+                                <text>File chưa có nội dung hoặc không thể đọc.</text>
+                            }
+                        </p>
+                        <a href="@pdfUrl" download target="_blank" style="color: var(--blue); font-weight: 800;">
+                            <i class="fa-solid fa-external-link-alt"></i> Tải file gốc
+                        </a>
+                    </div>
+                }
+            }
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function hideLoading() {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
+        function switchTab(tab) {
+            // Student only has 'content' tab, so we don't need logic, but keeping function to avoid errors if clicked
         }
-
-        // Ẩn loading sau 10 giây nếu iframe không load được
-        setTimeout(hideLoading, 10000);
     </script>
+
+    @if (isPdfView)
+    {
+        <style>
+            #pdfPages .pdf-page { position: relative; margin: 0 auto 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); background: #fff; }
+            #pdfPages .pdf-page:last-child { margin-bottom: 0; }
+            #pdfPages canvas { display: block; }
+        </style>
+        <script src="/lib/pdfjs/pdf.min.js"></script>
+        <script>
+            (function () {
+                var viewerEl = document.getElementById('pdfViewer');
+                if (!viewerEl) return;
+                var url = viewerEl.getAttribute('data-pdf-url');
+                var pagesEl = document.getElementById('pdfPages');
+                var statusEl = document.getElementById('pdfStatus');
+
+                if (typeof pdfjsLib === 'undefined') {
+                    if (statusEl) statusEl.innerHTML = 'Không tải được thư viện xem PDF.';
+                    return;
+                }
+                pdfjsLib.GlobalWorkerOptions.workerSrc = '/lib/pdfjs/pdf.worker.min.js';
+
+                pdfjsLib.getDocument(url).promise.then(function (pdf) {
+                    if (statusEl) statusEl.style.display = 'none';
+                    var chain = Promise.resolve();
+                    for (var p = 1; p <= pdf.numPages; p++) {
+                        (function (pageNum) {
+                            chain = chain.then(function () { return renderPage(pdf, pageNum); });
+                        })(p);
+                    }
+                    return chain;
+                }).catch(function (err) {
+                    if (statusEl) { statusEl.style.display = 'block'; statusEl.innerHTML = 'Không tải được bản xem PDF: ' + (err && err.message ? err.message : err); }
+                });
+
+                function renderPage(pdf, pageNum) {
+                    return pdf.getPage(pageNum).then(function (page) {
+                        var scale = 1.5;
+                        var viewport = page.getViewport({ scale: scale });
+
+                        var pageContainer = document.createElement('div');
+                        pageContainer.className = 'pdf-page';
+                        pageContainer.style.width = viewport.width + 'px';
+                        pageContainer.style.height = viewport.height + 'px';
+
+                        var canvas = document.createElement('canvas');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        pageContainer.appendChild(canvas);
+
+                        pagesEl.appendChild(pageContainer);
+
+                        var renderTask = page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport });
+                        return renderTask.promise;
+                    });
+                }
+            })();
+        </script>
+    }
 }

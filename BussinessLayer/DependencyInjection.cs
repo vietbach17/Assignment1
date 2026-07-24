@@ -26,6 +26,7 @@ namespace BussinessLayer
             services.AddScoped<ISubjectRepository, SubjectRepository>();
             services.AddScoped<IChapterRepository, ChapterRepository>();
             services.AddScoped<IDocumentRepository, DocumentRepository>();
+            services.AddScoped<IDocumentActivityLogRepository, DocumentActivityLogRepository>();
 
             // 1. Đăng ký Client VNPay
             var vnpayConfig = configuration.GetSection("VNPAY");
@@ -53,6 +54,8 @@ namespace BussinessLayer
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailService, EmailService>();
 
+            services.AddScoped<IChunkSettingsService, ChunkSettingsService>();
+            services.AddScoped<IDocumentActivityLogService, DocumentActivityLogService>();
             services.AddScoped<IGeminiService, GeminiService>();
 
             return services;

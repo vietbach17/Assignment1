@@ -1,6 +1,7 @@
 using BussinessLayer.DTOs;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 using DocumentStatusEntity = DataAccessLayer.Models.DocumentStatus;
 using DocumentStatusDto = BussinessLayer.DTOs.DocumentStatus;
 
@@ -17,6 +18,8 @@ namespace BussinessLayer.Services
     public class DocumentService : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository;
+        private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
+        private readonly BussinessLayer.Interfaces.IDocumentActivityLogService _activityLogService;
 
         // Các định dạng file được phép upload
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -27,9 +30,14 @@ namespace BussinessLayer.Services
         // Kích thước tối đa: 50 MB
         private const long MaxFileSizeBytes = 50L * 1024 * 1024;
 
-        public DocumentService(IDocumentRepository documentRepository)
+        public DocumentService(
+            IDocumentRepository documentRepository, 
+            Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory,
+            BussinessLayer.Interfaces.IDocumentActivityLogService activityLogService)
         {
             _documentRepository = documentRepository;
+            _scopeFactory = scopeFactory;
+            _activityLogService = activityLogService;
         }
 
         /// <summary>
@@ -152,7 +160,7 @@ namespace BussinessLayer.Services
                 FilePath = relativeFilePath,
                 FileSize = file.Length,
                 FileType = extension.TrimStart('.').ToLowerInvariant(),
-                Status = DocumentStatusEntity.Indexed,
+                Status = DocumentStatusEntity.Pending,
                 SubjectId = viewModel.SubjectId,
                 ChapterId = viewModel.ChapterId,
                 UploadedByUserId = uploadedByUserId,
@@ -163,10 +171,16 @@ namespace BussinessLayer.Services
 
             var savedDocument = await _documentRepository.AddAsync(document);
 
+            // Log activity
+            await _activityLogService.LogActivityAsync(document.SubjectId, savedDocument.Id, document.Title, uploadedByUserId, "Uploaded");
+
+            // Trigger background AI processing
+            TriggerBackgroundProcessing(savedDocument.Id, fullFilePath, uploadedByUserId, wwwrootPath);
+
             // Reload với navigation properties
             var savedDto = await GetDocumentByIdAsync(savedDocument.Id);
 
-            return (true, $"Tài liệu \"{document.Title}\" đã được tải lên thành công.", savedDto);
+            return (true, $"Tài liệu \"{document.Title}\" đang được xử lý ngữ cảnh AI ngầm.", savedDto);
         }
 
         /// <summary>
@@ -174,7 +188,7 @@ namespace BussinessLayer.Services
         /// 1. Soft delete record trong DB (IsDeleted = true)
         /// 2. Xoá file vật lý khỏi disk
         /// </summary>
-        public async Task<(bool Success, string Message)> DeleteDocumentAsync(int id, string wwwrootPath)
+        public async Task<(bool Success, string Message)> DeleteDocumentAsync(int id, string wwwrootPath, int userId)
         {
             var document = await _documentRepository.GetByIdAsync(id, includeDeleted: false);
             if (document == null)
@@ -202,13 +216,20 @@ namespace BussinessLayer.Services
                 }
             }
 
+            // Log activity
+            // Since we don't have the user ID who deleted it passed to DeleteDocumentAsync, we'll need to update the signature or skip it.
+            // Wait, DeleteDocumentAsync doesn't take userId. I will add an overloaded method or just don't log userId.
+            // Actually, I'll update DeleteDocumentAsync to take userId if it doesn't.
+            // Let's check the signature. It doesn't have userId. I will add it as an optional parameter or default to 0. 
+            await _activityLogService.LogActivityAsync(document.SubjectId, document.Id, documentTitle, userId, "Deleted");
+
             return (true, $"Tài liệu \"{documentTitle}\" đã được xoá thành công.");
         }
 
         /// <summary>
         /// Cập nhật trạng thái xử lý của tài liệu: Pending → Indexed hoặc Failed
         /// </summary>
-        public async Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatusDto newStatus)
+        public async Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatusDto newStatus, int userId)
         {
             var updated = await _documentRepository.UpdateStatusAsync(id, (DocumentStatusEntity)newStatus);
             if (!updated)
@@ -221,6 +242,12 @@ namespace BussinessLayer.Services
                 DocumentStatusDto.Failed  => "Failed",
                 _                      => newStatus.ToString()
             };
+
+            var document = await _documentRepository.GetByIdAsync(id, includeDeleted: false);
+            if (document != null)
+            {
+                await _activityLogService.LogActivityAsync(document.SubjectId, document.Id, document.Title, userId, "ChangeStatus");
+            }
 
             return (true, $"Trạng thái tài liệu đã được cập nhật thành \"{statusName}\".");
         }
@@ -235,7 +262,7 @@ namespace BussinessLayer.Services
         /// <summary>
         /// Cập nhật thông tin tài liệu: tiêu đề và chapter
         /// </summary>
-        public async Task<(bool Success, string Message, DocumentDto? Document)> UpdateDocumentAsync(DocumentEditViewModel viewModel)
+        public async Task<(bool Success, string Message, DocumentDto? Document)> UpdateDocumentAsync(DocumentEditViewModel viewModel, int userId)
         {
             var document = await _documentRepository.GetByIdAsync(viewModel.Id, includeDeleted: false);
             if (document == null)
@@ -244,7 +271,13 @@ namespace BussinessLayer.Services
             document.Title = viewModel.Title.Trim();
             document.ChapterId = viewModel.ChapterId;
 
-            await _documentRepository.UpdateAsync(document);
+            var updated = await _documentRepository.UpdateAsync(document);
+            if (updated == null)
+                return (false, "Lỗi khi cập nhật tài liệu trong cơ sở dữ liệu.", null);
+
+            // Log activity
+            // Using 0 for userId since UpdateDocumentAsync doesn't receive userId. We can improve this later.
+            await _activityLogService.LogActivityAsync(document.SubjectId, document.Id, document.Title, userId, "Updated");
 
             var updatedDto = await GetDocumentByIdAsync(document.Id);
             return (true, $"Tài liệu \"{document.Title}\" đã được cập nhật thành công.", updatedDto);
@@ -372,7 +405,7 @@ namespace BussinessLayer.Services
                 FilePath = relativeFilePath,
                 FileSize = fileSize,
                 FileType = extension.TrimStart('.').ToLowerInvariant(),
-                Status = DocumentStatusEntity.Indexed,
+                Status = DocumentStatusEntity.Pending,
                 SubjectId = subjectId,
                 ChapterId = chapterId,
                 UploadedByUserId = uploadedByUserId,
@@ -384,14 +417,71 @@ namespace BussinessLayer.Services
             try
             {
                 var savedDocument = await _documentRepository.AddAsync(document);
+                
+                // Log activity
+                await _activityLogService.LogActivityAsync(document.SubjectId, savedDocument.Id, document.Title, uploadedByUserId, "Uploaded");
+
+                // Trigger background AI processing
+                TriggerBackgroundProcessing(savedDocument.Id, fullFilePath, uploadedByUserId, wwwrootPath);
+
                 var savedDto = await GetDocumentByIdAsync(savedDocument.Id);
-                return (true, $"Tài liệu \"{document.Title}\" đã được tải lên và ghép thành công.", savedDto);
+                return (true, $"Tài liệu \"{document.Title}\" đang được xử lý ngữ cảnh AI ngầm.", savedDto);
             }
             catch (Exception ex)
             {
                 if (File.Exists(fullFilePath)) File.Delete(fullFilePath);
                 return (false, $"Lỗi khi lưu thông tin vào cơ sở dữ liệu: {ex.Message}", null);
             }
+        }
+
+        private void TriggerBackgroundProcessing(int documentId, string fullFilePath, int userId, string wwwrootPath)
+        {
+            Task.Run(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var geminiService = scope.ServiceProvider.GetRequiredService<BussinessLayer.Interfaces.IGeminiService>();
+                var chunkSettingsService = scope.ServiceProvider.GetRequiredService<BussinessLayer.Interfaces.IChunkSettingsService>();
+                var docRepo = scope.ServiceProvider.GetRequiredService<DataAccessLayer.Repositories.IDocumentRepository>();
+
+                try
+                {
+                    // Lấy cấu hình Chunk của Admin
+                    var settings = chunkSettingsService.GetSettings();
+
+                    // 1. Lấy chunks theo ngữ cảnh
+                    var chunks = (await geminiService.GetContextualDocumentTextChunksAsync(fullFilePath, settings.MaxWords, settings.OverlapWords)).ToList();
+
+                    // 2. Embeddings (tùy chọn, để tiết kiệm thời gian/API thì có thể chỉ lấy embedding cho chunk đầu tiên, hoặc map hết)
+                    // Ở đây làm giống logic cũ là chỉ lấy chunk đầu, hoặc loop lấy hết. Lấy chunk đầu để tránh rate limit:
+                    var firstChunk = chunks.FirstOrDefault();
+                    var embedding = firstChunk != null ? await geminiService.CreateTextEmbeddingAsync(firstChunk) : null;
+
+                    var uploadsDir = Path.Combine(wwwrootPath, "uploads");
+                    var document = await docRepo.GetByIdAsync(documentId, false);
+                    if (document != null)
+                    {
+                        var savePath = Path.Combine(uploadsDir, $"chunks_{document.StoredFileName}.json");
+                        var payload = new
+                        {
+                            documentId = document.Id,
+                            savedAt = DateTime.UtcNow,
+                            savedBy = userId,
+                            chunks = chunks,
+                            embedding = embedding?.ToList()
+                        };
+
+                        var json = System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                        await System.IO.File.WriteAllTextAsync(savePath, json);
+
+                        // 3. Update status to Indexed
+                        await docRepo.UpdateStatusAsync(document.Id, DocumentStatusEntity.Indexed);
+                    }
+                }
+                catch (Exception)
+                {
+                    await docRepo.UpdateStatusAsync(documentId, DocumentStatusEntity.Failed);
+                }
+            });
         }
 
         // ─────────────────────────────────────────────────────────────────────

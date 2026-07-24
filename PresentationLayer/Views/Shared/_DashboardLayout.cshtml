@@ -1,0 +1,308 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var userRole = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+    // Xác định mục menu đang active. View có thể override bằng ViewBag.ActiveMenu.
+    string active = ViewBag.ActiveMenu as string ?? "";
+    if (string.IsNullOrEmpty(active))
+    {
+        if (controller == "Admin" && action == "Dashboard") active = "AdminDashboard";
+        else if (controller == "Admin" && (action == "Users" || action == "UserDetails")) active = "AdminUsers";
+        else if (controller == "Admin" && action == "SubscriptionPlans") active = "AdminPlans";
+        else if (controller == "Admin" && action == "Notify") active = "AdminNotify";
+        else if (controller == "Admin" && action == "ChunkSettings") active = "AdminChunkSettings";
+        else if (controller == "Home") active = "LecturerHome";
+        else if (controller == "Subjects" && action == "MySubjects") active = "MySubjects";
+        else if (controller == "Subjects") active = "Subjects";
+        else if (controller == "Document") active = "Document";
+        else if (controller == "Chapters") active = "Chapters";
+    }
+    string IsActive(string key) => active == key ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EduQuest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800;900&display=swap');
+
+        :root {
+            --pink: #eb2f64; --yellow: #f4cf45; --green: #5cb85c;
+            --blue: #4fa8db; --purple: #8b5cf6; --black: #000; --white: #fff; --bg: #f4f4f6;
+            --border: 3px solid var(--black);
+            --shadow: 4px 4px 0px 0px var(--black);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Be Vietnam Pro', sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            display: flex; height: 100vh; color: var(--black);
+            background-image: radial-gradient(#d1d1d1 2px, transparent 2px);
+            background-size: 32px 32px;
+            overflow: hidden;
+        }
+
+        /* ---------- SIDEBAR ---------- */
+        .sidebar {
+            width: 280px; background: var(--white); border-right: var(--border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px;
+            height: 100vh; flex-shrink: 0; overflow-y: auto;
+        }
+        .sidebar > * { flex-shrink: 0; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--black); }
+        .logo { color: var(--pink); font-size: 22px; font-weight: 900; margin-bottom: 15px; }
+        .menu-label { margin: 5px 0; font-size: 11px; font-weight: 900; color: #999; letter-spacing: 1px; }
+        .nav-item {
+            padding: 12px 15px; font-weight: 800; color: var(--black); font-size: 14px;
+            text-decoration: none; display: flex; align-items: center; gap: 12px;
+            border: 3px solid transparent; transition: 0.1s;
+        }
+        .nav-item.active {
+            background: var(--pink); color: var(--white);
+            border-color: var(--black); box-shadow: var(--shadow);
+        }
+        .nav-item:not(.active):hover { border-color: var(--black); transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+
+        .user-profile {
+            margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 10px;
+            background-color: var(--white); border: var(--border); box-shadow: var(--shadow);
+            text-decoration: none;
+        }
+        .avatar-box {
+            width: 36px; height: 36px; background-color: var(--pink); border: 2px solid var(--black);
+            display: flex; align-items: center; justify-content: center; color: var(--white); font-size: 14px; flex-shrink: 0;
+        }
+        .user-info { display: flex; flex-direction: column; overflow: hidden; }
+        .user-info .username { font-weight: 800; font-size: 12px; color: var(--black); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .user-info .role { font-weight: 700; font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+        /* ---------- MAIN ---------- */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        .page-content { padding: 30px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px; flex-wrap: wrap; }
+        .page-title { color: var(--pink); font-weight: 900; font-size: 28px; text-transform: uppercase; line-height: 1.2; }
+        .page-subtitle { font-weight: 700; font-size: 13px; color: #666; margin-top: 4px; }
+
+        /* ---------- REUSABLE COMPONENTS ---------- */
+        .brutal-card { background: var(--white); border: var(--border); box-shadow: var(--shadow); padding: 20px; }
+        .brutal-card.pad0 { padding: 0; }
+        .card-title { font-weight: 900; font-size: 18px; text-transform: uppercase; }
+
+        .brutal-btn { transition: 0.1s; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            border: 2px solid var(--black); padding: 10px 18px; font-weight: 900; font-size: 13px; text-decoration: none;
+            box-shadow: 2px 2px 0px var(--black); background: var(--white); color: var(--black); text-transform: uppercase; }
+        .brutal-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0px var(--black); }
+        .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--black) !important; }
+        .brutal-btn.sm { padding: 5px 10px; font-size: 12px; }
+        .btn-pink { background: var(--pink); color: var(--white); }
+        .btn-blue { background: var(--blue); color: var(--white); }
+        .btn-green { background: var(--green); color: var(--white); }
+        .btn-yellow { background: var(--yellow); color: var(--black); }
+        .btn-red { background: #ff4d4f; color: var(--white); }
+        .btn-dark { background: var(--black); color: var(--white); }
+
+        .brutal-table { width: 100%; border-collapse: collapse; }
+        .brutal-table thead tr { border-bottom: 3px solid var(--black); }
+        .brutal-table th { padding: 12px 10px; text-align: left; font-weight: 900; font-size: 12px; text-transform: uppercase; }
+        .brutal-table td { padding: 12px 10px; font-weight: 700; font-size: 14px; }
+        .brutal-table tbody tr { border-bottom: 1px dashed #ccc; }
+        .brutal-table tbody tr:hover { background: #faf7f2; }
+
+        .badge { display: inline-block; padding: 3px 10px; font-weight: 800; font-size: 11px; border: 2px solid var(--black); text-transform: uppercase; }
+        .badge-pink { background: var(--pink); color: var(--white); }
+        .badge-blue { background: var(--blue); color: var(--white); }
+        .badge-green { background: var(--green); color: var(--white); }
+        .badge-yellow { background: var(--yellow); color: var(--black); }
+        .badge-gray { background: #e5e5e5; color: var(--black); }
+        .badge-red { background: #ff4d4f; color: var(--white); }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 25px; }
+        .stat-card { background: var(--white); border: var(--border); box-shadow: var(--shadow); padding: 18px; display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: var(--black); }
+        .stat-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--black); }
+        .stat-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #666; letter-spacing: 0.5px; }
+        .stat-value { font-size: 30px; font-weight: 900; }
+        .stat-icon { width: 40px; height: 40px; border: 2px solid var(--black); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-weight: 800; font-size: 12px; text-transform: uppercase; }
+        .brutal-input, .form-group input, .form-group select, .form-group textarea {
+            border: 2px solid var(--black); padding: 10px; font-weight: 700; outline: none; background: var(--white); width: 100%;
+        }
+        .brutal-input:focus, .form-group input:focus, .form-group select:focus, .form-group textarea:focus { box-shadow: 2px 2px 0 var(--pink); }
+
+        .alert { padding: 12px 16px; font-weight: 800; margin-bottom: 16px; font-size: 13px; border: 2px solid var(--black); display: flex; align-items: center; gap: 8px; }
+        .alert-success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .alert-warning { background: #fff3cd; border-color: var(--yellow); color: #856404; }
+        .alert-error { background: #f8d7da; border-color: var(--pink); color: #721c24; }
+
+        .text-pink { color: var(--pink); } .text-blue { color: var(--blue); } .text-green { color: var(--green); }
+        .text-muted { color: #666; }
+
+        /* ---------- MODAL ---------- */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal.open { display: flex; }
+        .modal-content { background: var(--white); border: var(--border); box-shadow: 8px 8px 0px var(--black);
+            padding: 30px; width: 440px; max-width: 92%; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 10px; right: 15px; font-size: 26px; font-weight: 900; cursor: pointer; color: var(--black); background: none; border: none; }
+
+        /* ---------- MOBILE ---------- */
+        .mobile-topbar { display: none; }
+        .sidebar-header-mobile { display: none; }
+        #sidebarOverlay { display: none; }
+        @@media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 280px; z-index: 9999;
+                transform: translateX(-100%); transition: transform 0.2s ease-in-out; box-shadow: 5px 0px 0px var(--black); }
+            .sidebar.active { transform: translateX(0); }
+            .mobile-topbar { display: flex; justify-content: space-between; align-items: center; background: var(--white);
+                border-bottom: var(--border); padding: 15px 20px; height: 60px; width: 100%; z-index: 9990; flex-shrink: 0; }
+            .sidebar-header-mobile { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+                border-bottom: 2px dashed #ccc; padding-bottom: 15px; }
+            .sidebar > .logo { display: none; }
+            .page-content { padding: 20px 15px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- MOBILE TOPBAR -->
+    <div class="mobile-topbar">
+        <div class="logo" style="margin:0; font-size:18px;"><i class="fa-solid fa-graduation-cap"></i> EduQuest</div>
+        <button id="menuToggleButton" onclick="toggleSidebarMenu()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--black);"><i class="fa-solid fa-bars"></i></button>
+    </div>
+    <div id="sidebarOverlay" onclick="toggleSidebarMenu()" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9998;"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header-mobile">
+            <div class="logo" style="margin:0; font-size:18px;"><i class="fa-solid fa-graduation-cap"></i> EduQuest</div>
+            <button onclick="toggleSidebarMenu()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--black);"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i> EduQuest</div>
+
+        @if (userRole == "Admin")
+        {
+            <div class="menu-label">QUẢN TRỊ VIÊN</div>
+            <a asp-controller="Admin" asp-action="Dashboard" class="nav-item @IsActive("AdminDashboard")"><i class="fa-solid fa-chart-pie"></i> DASHBOARD</a>
+            <a asp-controller="Admin" asp-action="Users" class="nav-item @IsActive("AdminUsers")"><i class="fa-solid fa-users-gear"></i> QL NGƯỜI DÙNG</a>
+            <a asp-controller="Subjects" asp-action="Index" class="nav-item @IsActive("Subjects")"><i class="fa-solid fa-book-open-reader"></i> QL MÔN HỌC</a>
+            <a asp-controller="Document" asp-action="Index" class="nav-item @IsActive("Document")"><i class="fa-regular fa-file-lines"></i> QL TÀI LIỆU</a>
+            <a asp-controller="Admin" asp-action="SubscriptionPlans" class="nav-item @IsActive("AdminPlans")"><i class="fa-solid fa-tags"></i> GÓI SUBSCRIPTION</a>
+            <a asp-controller="Admin" asp-action="Notify" class="nav-item @IsActive("AdminNotify")"><i class="fa-solid fa-bell"></i> GỬI THÔNG BÁO</a>
+            <a asp-controller="Admin" asp-action="ChunkSettings" class="nav-item @IsActive("AdminChunkSettings")"><i class="fa-solid fa-cogs"></i> AI CHUNKING</a>
+        }
+        else if (userRole == "Lecturer")
+        {
+            <div class="menu-label">GIẢNG VIÊN</div>
+            <a asp-controller="Home" asp-action="Index" class="nav-item @IsActive("LecturerHome")"><i class="fa-solid fa-border-all"></i> TỔNG QUAN</a>
+            <a asp-controller="Subjects" asp-action="MySubjects" class="nav-item @IsActive("MySubjects")"><i class="fa-solid fa-book-bookmark"></i> MÔN PHỤ TRÁCH</a>
+            <a asp-controller="Subjects" asp-action="Index" class="nav-item @IsActive("Subjects")"><i class="fa-solid fa-book-open"></i> TẤT CẢ MÔN HỌC</a>
+            <a asp-controller="Document" asp-action="Index" class="nav-item @IsActive("Document")"><i class="fa-regular fa-file-lines"></i> TÀI LIỆU</a>
+        }
+
+        <a asp-controller="Auth" asp-action="Profile" class="user-profile">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="avatar-box"><i class="fa-solid fa-user"></i></div>
+                <div class="user-info">
+                    <div class="username">@User.Identity.Name</div>
+                    <div class="role">@userRole</div>
+                </div>
+            }
+        </a>
+        <a asp-controller="Auth" asp-action="Logout" class="nav-item" style="border:dashed 2px var(--black); justify-content:center;">
+            <i class="fa-solid fa-right-from-bracket"></i> ĐĂNG XUẤT
+        </a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-wrapper">
+        @RenderBody()
+    </div>
+
+    <!-- GLOBAL CONFIRM MODAL -->
+    <div id="brutalConfirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(2px);">
+        <div style="background:var(--white); border:4px solid var(--black); box-shadow:8px 8px 0px var(--black); width:400px; max-width:90%; text-align:center; display:flex; flex-direction:column;">
+            <div style="background:var(--yellow); padding:15px; border-bottom:4px solid var(--black);">
+                <h3 style="margin:0; font-weight:900; font-size:20px; text-transform:uppercase; color:var(--black);"><i class="fa-solid fa-triangle-exclamation"></i> XÁC NHẬN</h3>
+            </div>
+            <div style="padding:30px 20px;"><p id="brutalConfirmMessage" style="font-weight:800; font-size:16px; margin:0; line-height:1.5;"></p></div>
+            <div style="padding:20px; border-top:4px solid var(--black); background:var(--bg); display:flex; justify-content:center; gap:15px;">
+                <button type="button" onclick="__brutalConfirmNo()" class="brutal-btn" style="background:#ccc;">HỦY BỎ</button>
+                <button type="button" onclick="__brutalConfirmYes()" class="brutal-btn btn-pink">XÁC NHẬN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOBAL ALERT MODAL -->
+    <div id="brutalAlertModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(2px);">
+        <div style="background:var(--white); border:4px solid var(--black); box-shadow:8px 8px 0px var(--black); width:400px; max-width:90%; text-align:center; display:flex; flex-direction:column;">
+            <div style="background:var(--pink); padding:15px; border-bottom:4px solid var(--black);">
+                <h3 style="margin:0; font-weight:900; font-size:20px; text-transform:uppercase; color:var(--white);"><i class="fa-solid fa-circle-info"></i> THÔNG BÁO</h3>
+            </div>
+            <div style="padding:30px 20px;"><p id="brutalAlertMessage" style="font-weight:800; font-size:16px; margin:0; line-height:1.5;"></p></div>
+            <div style="padding:20px; border-top:4px solid var(--black); background:var(--bg); display:flex; justify-content:center;">
+                <button type="button" onclick="document.getElementById('brutalAlertModal').style.display='none'" class="brutal-btn btn-dark">ĐÓNG</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.__brutalConfirmCallback = null;
+        function brutalConfirm(message, callback) {
+            document.getElementById('brutalConfirmMessage').innerText = message;
+            document.getElementById('brutalConfirmModal').style.display = 'flex';
+            window.__brutalConfirmCallback = callback;
+        }
+        function __brutalConfirmYes() {
+            document.getElementById('brutalConfirmModal').style.display = 'none';
+            if (window.__brutalConfirmCallback) { window.__brutalConfirmCallback(); window.__brutalConfirmCallback = null; }
+        }
+        function __brutalConfirmNo() {
+            document.getElementById('brutalConfirmModal').style.display = 'none';
+            window.__brutalConfirmCallback = null;
+        }
+        function brutalAlert(message) {
+            document.getElementById('brutalAlertMessage').innerText = message;
+            document.getElementById('brutalAlertModal').style.display = 'flex';
+        }
+        function toggleSidebarMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const icon = document.querySelector('#menuToggleButton i');
+            sidebar.classList.toggle('active');
+            if (sidebar.classList.contains('active')) { overlay.style.display = 'block'; if (icon) icon.className = 'fa-solid fa-xmark'; }
+            else { overlay.style.display = 'none'; if (icon) icon.className = 'fa-solid fa-bars'; }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.sidebar .nav-item').forEach(link => {
+                link.addEventListener('click', () => {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('active')) toggleSidebarMenu();
+                });
+            });
+        });
+        // Chặn các form có data-confirm để hiển thị modal xác nhận
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            const msg = form.getAttribute('data-confirm');
+            if (msg) {
+                e.preventDefault();
+                brutalConfirm(msg, function () { form.removeAttribute('data-confirm'); form.submit(); });
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

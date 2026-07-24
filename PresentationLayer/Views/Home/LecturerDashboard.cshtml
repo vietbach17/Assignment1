@@ -1,349 +1,181 @@
 @using BussinessLayer.DTOs
 @{
-    Layout = null;
+    Layout = "_DashboardLayout";
     ViewData["Title"] = "Tổng quan Giảng viên";
+    ViewBag.ActiveMenu = "LecturerHome";
 
-    var lecturerDocs     = ViewBag.LecturerDocuments    as List<DocumentDto>                      ?? new List<DocumentDto>();
-    var recentDocs       = ViewBag.LecturerRecentDocs   as List<DocumentDto>                      ?? new List<DocumentDto>();
-    var lecturerSubjects = ViewBag.LecturerSubjects     as List<BussinessLayer.DTOs.SubjectDto>   ?? new List<BussinessLayer.DTOs.SubjectDto>();
-    int totalDocs        = ViewBag.LecturerTotalDocs    ?? 0;
-    int indexedDocs      = ViewBag.LecturerIndexedDocs  ?? 0;
-    int subjectCount     = ViewBag.LecturerSubjectCount ?? 0;
+    var lecturerDocs = ViewBag.LecturerDocuments as List<DocumentDto> ?? new List<DocumentDto>();
+    var recentDocs = ViewBag.LecturerRecentDocs as List<DocumentDto> ?? new List<DocumentDto>();
+    var lecturerSubjects = ViewBag.LecturerSubjects as List<SubjectDto> ?? new List<SubjectDto>();
+    int totalDocs = ViewBag.LecturerTotalDocs ?? 0;
+    int indexedDocs = ViewBag.LecturerIndexedDocs ?? 0;
+    int subjectCount = ViewBag.LecturerSubjectCount ?? 0;
+
+    string StatusBadge(DocumentStatus s) => s switch
+    {
+        DocumentStatus.Indexed => "badge-green",
+        DocumentStatus.Pending => "badge-yellow",
+        _ => "badge-red"
+    };
+    string FileBadge(string ft) => ft switch
+    {
+        "pdf" => "badge-red",
+        "docx" => "badge-blue",
+        "pptx" => "badge-yellow",
+        _ => "badge-gray"
+    };
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { dark:'#1e3b31', active:'#2c5344', button:'#376b56', gray:'#f4f6f8' }
-                    }
-                }
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle">KHÔNG GIAN GIẢNG VIÊN</div>
+            <h1 class="page-title">Tổng quan</h1>
+            <p class="page-subtitle">Theo dõi tài liệu và môn học bạn phụ trách.</p>
+        </div>
+        <a asp-action="Upload" asp-controller="Document" class="brutal-btn btn-pink"><i class="fa-solid fa-upload"></i> Tải tài liệu mới</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid">
+        <a asp-action="Index" asp-controller="Subjects" class="stat-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="stat-label">Môn phụ trách</span>
+                <div class="stat-icon" style="background:var(--green); color:var(--white);"><i class="fa-solid fa-book"></i></div>
+            </div>
+            <div class="stat-value">@subjectCount</div>
+            <div class="page-subtitle">môn học được giao</div>
+        </a>
+        <a asp-action="Index" asp-controller="Document" class="stat-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="stat-label">Tổng tài liệu</span>
+                <div class="stat-icon" style="background:var(--yellow);"><i class="fa-solid fa-file-lines"></i></div>
+            </div>
+            <div class="stat-value">@totalDocs</div>
+            <div class="page-subtitle">file đã upload</div>
+        </a>
+        <div class="stat-card" style="cursor:default;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="stat-label">Đã Indexed</span>
+                <div class="stat-icon" style="background:var(--blue); color:var(--white);"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+            <div class="stat-value text-green">@indexedDocs</div>
+            <div class="page-subtitle">@(totalDocs > 0 ? $"{(int)Math.Round(indexedDocs * 100.0 / totalDocs)}% tổng số" : "chưa có tài liệu")</div>
+        </div>
+    </div>
+
+    <!-- Recent docs -->
+    <div class="brutal-card pad0" style="margin-bottom:25px;">
+        <div style="padding:18px 20px; border-bottom:3px solid var(--black); display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="card-title">Tài liệu gần đây</h3>
+            <a asp-action="Index" asp-controller="Document" class="brutal-btn sm">Xem tất cả</a>
+        </div>
+        <div style="padding:15px 20px;">
+            @if (!recentDocs.Any())
+            {
+                <div style="padding:32px; text-align:center;">
+                    <i class="fa-regular fa-folder-open" style="font-size:34px; color:#ccc;"></i>
+                    <p class="text-muted" style="margin-top:10px; font-weight:800;">Bạn chưa upload tài liệu nào.</p>
+                    <a asp-action="Upload" asp-controller="Document" class="brutal-btn btn-pink sm" style="margin-top:10px;"><i class="fa-solid fa-upload"></i> Tải lên ngay</a>
+                </div>
             }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
-
-    <!-- Sidebar -->
-    <aside class="w-64 bg-brand-dark text-white flex flex-col">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg"><i class="fa-solid fa-book-open text-white"></i></div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
-                <p class="text-xs text-gray-300">Không gian giảng viên</p>
-            </div>
-        </div>
-        <div class="px-4 py-2">
-            <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-            <ul class="space-y-1">
-                <li>
-                    <a asp-action="Index" asp-controller="Home"
-                       class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
-                        <i class="fa-solid fa-border-all w-5"></i><span>Tổng quan</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-action="Index" asp-controller="Subjects"
-                       class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-solid fa-book w-5"></i><span>Môn Học</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-action="Index" asp-controller="Document"
-                       class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                        <i class="fa-regular fa-file-lines w-5"></i><span>Tài liệu</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth"
-               class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i><span>Đăng xuất</span>
-            </a>
-        </div>
-    </aside>
-
-    <!-- Main -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div></div>
-            <div class="flex items-center space-x-5">
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
-                            <p class="text-xs text-gray-500">Lecturer</p>
-                        </div>
-                    </div>
-                }
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-8">
-
-            <!-- Page header -->
-            <div class="mb-8 flex justify-between items-start">
-                <div>
-                    <p class="text-sm text-gray-500 font-semibold tracking-wide uppercase mb-1">Không gian giảng viên</p>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-1">Tổng quan</h2>
-                    <p class="text-gray-500 text-sm">Theo dõi tài liệu và môn học bạn phụ trách.</p>
-                </div>
-                <a asp-action="Upload" asp-controller="Document"
-                   class="inline-flex items-center gap-2 bg-brand-button hover:bg-brand-active text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-sm">
-                    <i class="fa-solid fa-upload"></i> Tải tài liệu mới
-                </a>
-            </div>
-
-            <!-- Stat cards -->
-            <div class="grid grid-cols-3 gap-5 mb-8">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Môn phụ trách</span>
-                        <div class="w-9 h-9 bg-brand-button/10 rounded-lg flex items-center justify-center">
-                            <i class="fa-solid fa-book text-brand-button text-sm"></i>
-                        </div>
-                    </div>
-                    <p class="text-3xl font-bold text-gray-800">@subjectCount</p>
-                    <p class="text-xs text-gray-500 mt-1">môn học được giao</p>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tổng tài liệu</span>
-                        <div class="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center">
-                            <i class="fa-solid fa-file-lines text-orange-500 text-sm"></i>
-                        </div>
-                    </div>
-                    <p class="text-3xl font-bold text-gray-800">@totalDocs</p>
-                    <p class="text-xs text-gray-500 mt-1">file đã upload</p>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Đã Indexed</span>
-                        <div class="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
-                            <i class="fa-solid fa-circle-check text-green-600 text-sm"></i>
-                        </div>
-                    </div>
-                    <p class="text-3xl font-bold text-green-600">@indexedDocs</p>
-                    <p class="text-xs text-gray-500 mt-1">
-                        @(totalDocs > 0 ? $"{(int)Math.Round(indexedDocs * 100.0 / totalDocs)}% tổng số" : "chưa có tài liệu")
-                    </p>
-                </div>
-            </div>
-
-            <!-- Row 2: Upload card + Tài liệu gần đây -->
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-
-                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-800 mb-1">Tải tài liệu mới</h3>
-                        <p class="text-sm text-gray-500 mb-4">Hỗ trợ PDF, DOCX, PPTX — tối đa 50 MB</p>
-                        <div class="flex gap-2 text-xs">
-                            <span class="bg-red-50 text-red-500 px-2 py-1 rounded font-semibold">PDF</span>
-                            <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded font-semibold">DOCX</span>
-                            <span class="bg-orange-50 text-orange-500 px-2 py-1 rounded font-semibold">PPTX</span>
-                        </div>
-                    </div>
-                    <a asp-action="Upload" asp-controller="Document"
-                       class="mt-5 w-full bg-brand-button hover:bg-brand-active text-white font-medium py-3 rounded-xl transition shadow-sm text-center text-sm block">
-                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Tiến hành tải tài liệu
-                    </a>
-                </div>
-
-                <!-- Tài liệu gần đây — dữ liệu thực -->
-                <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base font-bold text-gray-800">Tài liệu gần đây</h3>
-                        <a asp-action="Index" asp-controller="Document"
-                           class="text-xs text-brand-button hover:underline font-medium">Xem tất cả →</a>
-                    </div>
-
-                    @if (!recentDocs.Any())
+            else
+            {
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    @foreach (var doc in recentDocs)
                     {
-                        <div class="text-center py-8">
-                            <i class="fa-regular fa-folder-open text-3xl text-gray-300 mb-2 block"></i>
-                            <p class="text-sm text-gray-500">Bạn chưa upload tài liệu nào.</p>
-                            <a asp-action="Upload" asp-controller="Document"
-                               class="mt-3 inline-flex items-center gap-1.5 text-xs text-brand-button hover:underline font-medium">
-                                <i class="fa-solid fa-upload"></i> Tải lên ngay
-                            </a>
-                        </div>
+                        <a asp-action="Details" asp-controller="Document" asp-route-id="@doc.Id"
+                           style="display:flex; align-items:center; justify-content:space-between; padding:12px; border:2px solid var(--black); text-decoration:none; color:var(--black); background:var(--white);">
+                            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                                <span class="badge @FileBadge(doc.FileType)">@doc.FileType.ToUpper()</span>
+                                <div style="min-width:0;">
+                                    <div style="font-weight:900;">@doc.Title</div>
+                                    <div class="page-subtitle">@doc.FileSizeDisplay · @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                </div>
+                            </div>
+                            <span class="badge @StatusBadge(doc.Status)">@doc.Status</span>
+                        </a>
                     }
-                    else
+                </div>
+            }
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px;">
+        <!-- Subjects -->
+        <div class="brutal-card pad0">
+            <div style="padding:18px 20px; border-bottom:3px solid var(--black); display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="card-title"><i class="fa-solid fa-book text-green"></i> Môn học phụ trách</h3>
+                <span class="badge badge-green">@subjectCount môn</span>
+            </div>
+            @if (!lecturerSubjects.Any())
+            {
+                <div style="padding:32px; text-align:center;">
+                    <i class="fa-solid fa-book-open" style="font-size:34px; color:#ccc;"></i>
+                    <p class="text-muted" style="margin-top:10px; font-weight:800;">Chưa được phân công môn học nào.</p>
+                </div>
+            }
+            else
+            {
+                <div style="padding:12px 20px;">
+                    @foreach (var subject in lecturerSubjects)
                     {
-                        <div class="space-y-2">
-                            @foreach (var doc in recentDocs)
+                        int docCount = lecturerDocs.Count(d => d.SubjectId == subject.Id);
+                        <a asp-action="Details" asp-controller="Subjects" asp-route-id="@subject.Id"
+                           style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #ccc; text-decoration:none; color:var(--black);">
+                            <div>
+                                <div style="font-weight:900;">@subject.SubjectCode</div>
+                                <div class="page-subtitle">@subject.SubjectName</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:900;">@docCount</div>
+                                <div class="page-subtitle">tài liệu</div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- All docs -->
+        <div class="brutal-card pad0">
+            <div style="padding:18px 20px; border-bottom:3px solid var(--black); display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="card-title"><i class="fa-solid fa-file-lines text-pink"></i> Tất cả tài liệu</h3>
+                <a asp-action="Index" asp-controller="Document" class="brutal-btn sm">Quản lý</a>
+            </div>
+            @if (!lecturerDocs.Any())
+            {
+                <div style="padding:32px; text-align:center;">
+                    <i class="fa-regular fa-folder-open" style="font-size:34px; color:#ccc;"></i>
+                    <p class="text-muted" style="margin-top:10px; font-weight:800;">Chưa có tài liệu nào.</p>
+                </div>
+            }
+            else
+            {
+                <div style="max-height:340px; overflow-y:auto; padding:15px 20px;">
+                    <table class="brutal-table">
+                        <thead>
+                            <tr><th>Tiêu đề</th><th>Môn</th><th>Trạng thái</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in lecturerDocs.OrderByDescending(d => d.UploadedDate))
                             {
-                                string iconClass = doc.FileType switch {
-                                    "pdf"  => "fa-file-pdf text-red-500",
-                                    "docx" => "fa-file-word text-blue-500",
-                                    "pptx" => "fa-file-powerpoint text-orange-500",
-                                    _      => "fa-file text-gray-400"
-                                };
-                                string bgClass = doc.FileType switch {
-                                    "pdf"  => "bg-red-50",
-                                    "docx" => "bg-blue-50",
-                                    "pptx" => "bg-orange-50",
-                                    _      => "bg-gray-100"
-                                };
-                                string stClass = doc.Status switch {
-                                    DocumentStatus.Indexed => "bg-green-100 text-green-700",
-                                    DocumentStatus.Pending => "bg-yellow-100 text-yellow-700",
-                                    _                      => "bg-red-100 text-red-700"
-                                };
-
-                                <a asp-action="Details" asp-controller="Document" asp-route-id="@doc.Id"
-                                   class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-100 transition group">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="w-9 h-9 @bgClass rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <i class="fa-solid @iconClass text-sm"></i>
+                                <tr>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span class="badge @FileBadge(doc.FileType)">@doc.FileType.ToUpper()</span>
+                                            <span style="font-weight:900;">@doc.Title</span>
                                         </div>
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-700 leading-tight group-hover:text-brand-button transition truncate">@doc.Title</p>
-                                            <p class="text-xs text-gray-400 mt-0.5">
-                                                @doc.FileSizeDisplay · @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ml-3 @stClass">
-                                        @doc.Status
-                                    </span>
-                                </a>
+                                        <div class="page-subtitle" style="margin-top:2px;">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                                    </td>
+                                    <td>@doc.SubjectCode</td>
+                                    <td><span class="badge @StatusBadge(doc.Status)">@doc.Status</span></td>
+                                </tr>
                             }
-                        </div>
-                    }
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-
-            <!-- Row 3: Môn phụ trách + Tổng tài liệu -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                <!-- Môn phụ trách -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                        <h3 class="text-base font-bold text-gray-800">
-                            <i class="fa-solid fa-book text-brand-button mr-2"></i>Môn học phụ trách
-                        </h3>
-                        <span class="text-xs bg-brand-button/10 text-brand-button font-semibold px-2.5 py-1 rounded-full">
-                            @subjectCount môn
-                        </span>
-                    </div>
-                    @if (!lecturerSubjects.Any())
-                    {
-                        <div class="p-8 text-center">
-                            <i class="fa-solid fa-book-open text-3xl text-gray-300 mb-2 block"></i>
-                            <p class="text-sm text-gray-500">Chưa được phân công môn học nào.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="divide-y divide-gray-100">
-                            @foreach (var subject in lecturerSubjects)
-                            {
-                                int docCount = lecturerDocs.Count(d => d.SubjectId == subject.Id);
-                                <a asp-action="Details" asp-controller="Subjects" asp-route-id="@subject.Id"
-                                   class="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition group">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="w-9 h-9 bg-brand-button/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <i class="fa-solid fa-book text-brand-button text-sm"></i>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-800 group-hover:text-brand-button transition">
-                                                @subject.SubjectCode
-                                            </p>
-                                            <p class="text-xs text-gray-500 mt-0.5 truncate">@subject.SubjectName</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right flex-shrink-0 ml-3">
-                                        <p class="text-sm font-bold text-gray-700">@docCount</p>
-                                        <p class="text-xs text-gray-400">tài liệu</p>
-                                    </div>
-                                </a>
-                            }
-                        </div>
-                    }
-                </div>
-
-                <!-- Tất cả tài liệu -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                        <h3 class="text-base font-bold text-gray-800">
-                            <i class="fa-solid fa-file-lines text-orange-500 mr-2"></i>Tất cả tài liệu đã upload
-                        </h3>
-                        <a asp-action="Index" asp-controller="Document"
-                           class="text-xs text-brand-button hover:underline font-medium">Quản lý →</a>
-                    </div>
-                    @if (!lecturerDocs.Any())
-                    {
-                        <div class="p-8 text-center">
-                            <i class="fa-regular fa-folder-open text-3xl text-gray-300 mb-2 block"></i>
-                            <p class="text-sm text-gray-500">Chưa có tài liệu nào.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="overflow-y-auto" style="max-height: 320px;">
-                            <table class="w-full">
-                                <thead class="sticky top-0 bg-white border-b border-gray-100">
-                                    <tr>
-                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tiêu đề</th>
-                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">Môn</th>
-                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-24">Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @foreach (var doc in lecturerDocs.OrderByDescending(d => d.UploadedDate))
-                                    {
-                                        string ftBg = doc.FileType switch {
-                                            "pdf"  => "bg-red-100 text-red-600",
-                                            "docx" => "bg-blue-100 text-blue-600",
-                                            "pptx" => "bg-orange-100 text-orange-600",
-                                            _      => "bg-gray-100 text-gray-600"
-                                        };
-                                        string stBg = doc.Status switch {
-                                            DocumentStatus.Indexed => "bg-green-100 text-green-700",
-                                            DocumentStatus.Pending => "bg-yellow-100 text-yellow-700",
-                                            _                      => "bg-red-100 text-red-700"
-                                        };
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="px-5 py-3">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="inline-block px-1.5 py-0.5 rounded text-xs font-bold uppercase @ftBg flex-shrink-0">@doc.FileType</span>
-                                                    <span class="text-sm text-gray-700 font-medium truncate max-w-xs">@doc.Title</span>
-                                                </div>
-                                                <p class="text-xs text-gray-400 mt-0.5 ml-10">
-                                                    @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy")
-                                                </p>
-                                            </td>
-                                            <td class="px-5 py-3 text-xs font-semibold text-gray-600">@doc.SubjectCode</td>
-                                            <td class="px-5 py-3">
-                                                <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full @stBg">
-                                                    @doc.Status
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </div>
-            </div>
-
+            }
         </div>
-    </main>
-
-</body>
-</html>
+    </div>
+</div>

@@ -19,7 +19,10 @@ namespace DataAccessLayer.Repositories
 
         public async Task<IEnumerable<Subject>> GetAllAsync(bool includeDeleted = false)
         {
-            var query = _context.Subjects.AsQueryable();
+            var query = _context.Subjects
+                .Include(s => s.SubjectLecturers)
+                .ThenInclude(sl => sl.Lecturer)
+                .AsQueryable();
 
             if (!includeDeleted)
             {
@@ -34,6 +37,8 @@ namespace DataAccessLayer.Repositories
         public async Task<IEnumerable<Subject>> GetByLecturerIdAsync(int lecturerId, bool includeDeleted = false)
         {
             var query = _context.Subjects
+                .Include(s => s.SubjectLecturers)
+                .ThenInclude(sl => sl.Lecturer)
                 .Where(s => s.SubjectLecturers.Any(sl => sl.LecturerId == lecturerId));
 
             if (!includeDeleted)
@@ -48,7 +53,9 @@ namespace DataAccessLayer.Repositories
 
         public async Task<Subject?> GetByIdAsync(int id, bool includeDeleted = false)
         {
-            var query = _context.Subjects.AsQueryable();
+            var query = _context.Subjects
+                .Include(s => s.SubjectLecturers).ThenInclude(sl => sl.Lecturer)
+                .AsQueryable();
 
             if (!includeDeleted)
             {
@@ -61,6 +68,7 @@ namespace DataAccessLayer.Repositories
         public async Task<Subject?> GetByIdWithChaptersAsync(int id, bool includeDeleted = false)
         {
             IQueryable<Subject> query = _context.Subjects
+                .Include(s => s.SubjectLecturers).ThenInclude(sl => sl.Lecturer)
                 .Include(s => s.Chapters.Where(c => !c.IsDeleted).OrderBy(c => c.ChapterNumber));
 
             if (!includeDeleted)

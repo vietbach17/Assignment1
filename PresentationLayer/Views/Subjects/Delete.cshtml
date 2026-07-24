@@ -1,184 +1,55 @@
 @model BussinessLayer.DTOs.SubjectDto
 @{
-    ViewData["Title"] = "Xoá Môn Học";
-    Layout = null;
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Xoá môn học";
+    ViewBag.ActiveMenu = "Subjects";
     var hasChapters = Model.Chapters != null && Model.Chapters.Any();
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#1e3b31',
-                            active: '#2c5344',
-                            button: '#376b56',
-                            text: '#222222',
-                            gray: '#f4f6f8'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
 
-    <aside class="w-64 bg-brand-dark text-white flex flex-col">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-                <i class="fa-solid fa-book-open text-white"></i>
-            </div>
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle"><a asp-action="Index" class="text-pink">Môn học</a> › Xóa</div>
+            <h1 class="page-title" style="color:#d11;">Xóa môn học</h1>
+        </div>
+        <a asp-action="Index" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+    </div>
+
+    <div class="brutal-card" style="max-width:640px; border-color:#d11;">
+        <div class="alert alert-error" style="align-items:flex-start;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;"></i>
             <div>
-                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
-                <p class="text-xs text-gray-300">Quản lý nội dung</p>
+                <div style="font-weight:900;">Cảnh báo: Bạn đang chuẩn bị xóa môn học!</div>
+                <div style="font-weight:600;">Hành động này không thể hoàn tác.</div>
             </div>
         </div>
 
-        @if (User.IsInRole("Admin"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-chart-line w-5"></i>
-                            <span>Bảng điều khiển</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-users w-5"></i>
-                            <span>Người Dùng</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Admin" asp-controller="Subscription" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-box-open w-5"></i>
-                            <span>Gói Subscription</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Về trang chủ</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-        else if (User.IsInRole("Lecturer"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-border-all w-5"></i>
-                            <span>Tổng quan</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 bg-brand-active text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                            <i class="fa-solid fa-book w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-regular fa-file-lines w-5"></i>
-                            <span>Tài liệu</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-
-        <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i>
-                <span>Đăng xuất</span>
-            </a>
+        <div style="border:2px solid var(--black); padding:16px; margin-bottom:16px;">
+            <h3 class="card-title">@Model.SubjectName</h3>
+            <p class="text-muted" style="font-weight:700; margin-top:4px;">Mã môn: <span style="font-family:monospace;">@Model.SubjectCode</span></p>
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div style="margin-top:10px; font-weight:600;">@(Model.Description.Length > 150 ? Model.Description.Substring(0, 150) + "..." : Model.Description)</div>
+            }
         </div>
-    </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div class="flex items-center gap-4 text-sm text-gray-500">
-                <a asp-action="Index" class="hover:text-brand-active transition">Môn học</a>
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-                <span class="font-semibold text-gray-800">Xóa môn học</span>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-2xl mx-auto">
-                <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
-                    <div class="bg-red-50 p-6 flex items-start gap-4 border-b border-red-100">
-                        <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center flex-shrink-0 text-xl">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold text-red-700">Cảnh báo: Bạn đang chuẩn bị xóa môn học!</h2>
-                            <p class="text-sm text-red-600 mt-1">Hành động này không thể hoàn tác.</p>
-                        </div>
-                    </div>
-
-                    <div class="p-8">
-                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-5 mb-6">
-                            <h3 class="font-bold text-gray-800 text-lg mb-1">@Model.SubjectName</h3>
-                            <p class="text-gray-500 text-sm mb-4">Mã môn: <span class="font-mono bg-white px-2 py-0.5 rounded border border-gray-200">@Model.SubjectCode</span></p>
-                            
-                            @if (!string.IsNullOrEmpty(Model.Description))
-                            {
-                                <div class="text-sm text-gray-600 mt-2 p-3 bg-white rounded border border-gray-100">
-                                    @(Model.Description.Length > 150 ? Model.Description.Substring(0, 150) + "..." : Model.Description)
-                                </div>
-                            }
-                        </div>
-
-                        @if (hasChapters)
-                        {
-                            <div class="bg-orange-50 border border-orange-200 p-4 rounded-xl flex items-start gap-3 mb-6">
-                                <i class="fa-solid fa-circle-exclamation text-orange-500 mt-0.5"></i>
-                                <div>
-                                    <h4 class="text-orange-800 font-semibold text-sm">Môn học này có chứa các chương</h4>
-                                    <p class="text-orange-700 text-xs mt-1">Việc xóa môn học sẽ xóa toàn bộ nội dung và tài liệu liên quan bên trong.</p>
-                                </div>
-                            </div>
-                        }
-
-                        <form asp-action="Delete" method="post">
-                            <input type="hidden" asp-for="Id" />
-                            <div class="flex gap-4">
-                                <a asp-action="Index" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition text-center">
-                                    Hủy bỏ, quay lại
-                                </a>
-                                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition shadow-sm flex justify-center items-center gap-2">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                    Xác nhận xóa
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+        @if (hasChapters)
+        {
+            <div class="alert alert-warning" style="align-items:flex-start;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <div>
+                    <div style="font-weight:900;">Môn học này có chứa các chương</div>
+                    <div style="font-weight:600;">Việc xóa môn học sẽ xóa toàn bộ nội dung và tài liệu liên quan bên trong.</div>
                 </div>
             </div>
-        </div>
-    </main>
+        }
 
-</body>
-</html>
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div style="display:flex; gap:12px; margin-top:8px;">
+                <a asp-action="Index" class="brutal-btn" style="flex:1;">Hủy bỏ, quay lại</a>
+                <button type="submit" class="brutal-btn btn-red" style="flex:1;"><i class="fa-solid fa-trash-can"></i> Xác nhận xóa</button>
+            </div>
+        </form>
+    </div>
+</div>

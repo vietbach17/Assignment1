@@ -17,6 +17,7 @@ namespace DataAccessLayer.DbContexts
         public DbSet<Chapter> Chapters { get; set; } = null!;
         public DbSet<SubjectLecturer> SubjectLecturers { get; set; } = null!;
         public DbSet<Document> Documents { get; set; } = null!;
+        public DbSet<DocumentActivityLog> DocumentActivityLogs { get; set; } = null!;
 
         // ============ SUBCRIPTIONS (GÓI HỘI VIÊN) ============
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; } = null!;

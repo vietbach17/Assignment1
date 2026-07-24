@@ -1,258 +1,116 @@
 @model BussinessLayer.DTOs.SubjectDto
 @using BussinessLayer.DTOs
 @{
-    ViewData["Title"] = "Chi tiết Môn Học";
-    Layout = null;
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Chi tiết môn học";
+    ViewBag.ActiveMenu = "Subjects";
     var documents = ViewBag.Documents as IEnumerable<DocumentDto> ?? Enumerable.Empty<DocumentDto>();
+    string FileBadge(string ft) => ft switch { "pdf" => "badge-red", "docx" => "badge-blue", "pptx" => "badge-yellow", _ => "badge-gray" };
+    string FileIcon(string ft) => ft switch { "pdf" => "fa-file-pdf", "docx" => "fa-file-word", "pptx" => "fa-file-powerpoint", _ => "fa-file" };
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#1e3b31',
-                            active: '#2c5344',
-                            button: '#376b56',
-                            text: '#222222',
-                            gray: '#f4f6f8'
-                        }
-                    }
-                }
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle"><a asp-action="Index" class="text-pink">Môn học</a> › Chi tiết</div>
+            <h1 class="page-title">@Model.SubjectName</h1>
+            <p class="page-subtitle">Mã môn: <span style="font-family:monospace; font-weight:900;">@Model.SubjectCode</span></p>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <a asp-action="Index" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="brutal-btn btn-yellow"><i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa</a>
             }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
-
-    <aside class="w-64 bg-brand-dark text-white flex flex-col">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-                <i class="fa-solid fa-book-open text-white"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
-                <p class="text-xs text-gray-300">Quản lý nội dung</p>
-            </div>
         </div>
+    </div>
 
-        @if (User.IsInRole("Admin"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-chart-line w-5"></i>
-                            <span>Bảng điều khiển</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-users w-5"></i>
-                            <span>Người Dùng</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Admin" asp-controller="Subscription" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-box-open w-5"></i>
-                            <span>Gói Subscription</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Về trang chủ</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-        else if (User.IsInRole("Lecturer"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-border-all w-5"></i>
-                            <span>Tổng quan</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 bg-brand-active text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                            <i class="fa-solid fa-book w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-regular fa-file-lines w-5"></i>
-                            <span>Tài liệu</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-
-        <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i>
-                <span>Đăng xuất</span>
-            </a>
+    <!-- Mô tả -->
+    <div class="brutal-card" style="margin-bottom:22px;">
+        <h3 class="card-title" style="margin-bottom:12px;">Mô tả</h3>
+        <div style="white-space:pre-wrap; font-weight:600; line-height:1.6;">
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                @Model.Description
+            }
+            else
+            {
+                <span class="text-muted" style="font-style:italic;">Không có mô tả cho môn học này.</span>
+            }
         </div>
-    </aside>
+    </div>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div class="flex items-center gap-4 text-sm text-gray-500">
-                <a asp-action="Index" class="hover:text-brand-active transition">Môn học</a>
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-                <span class="font-semibold text-gray-800">Chi tiết môn học</span>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-3xl mx-auto">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-brand-active to-brand-button p-8 text-white flex justify-between items-end">
+    <!-- Chương -->
+    <div class="brutal-card" style="margin-bottom:22px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3 class="card-title">Danh sách chương</h3>
+            <span class="badge badge-green">@((Model.Chapters?.Count() ?? 0)) chương</span>
+        </div>
+        @if (Model.Chapters == null || !Model.Chapters.Any())
+        {
+            <p class="text-muted" style="font-weight:700;">Môn học này chưa có chương nào.</p>
+        }
+        else
+        {
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                @foreach (var chapter in Model.Chapters.OrderBy(c => c.ChapterNumber))
+                {
+                    <a asp-controller="Chapters" asp-action="Details" asp-route-id="@chapter.Id"
+                       style="display:flex; align-items:center; justify-content:space-between; padding:14px; border:2px solid var(--black); text-decoration:none; color:var(--black); background:var(--white);">
                         <div>
-                            <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-3">Thông tin chi tiết</span>
-                            <h2 class="text-3xl font-bold mb-1">@Model.SubjectName</h2>
-                            <p class="text-brand-gray/80 text-lg">Mã môn: <span class="font-mono font-bold">@Model.SubjectCode</span></p>
-                        </div>
-                        <div class="text-right">
-                            <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl">
-                                📚
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="p-8">
-                        <div class="mb-8">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-100 pb-2">Mô tả</h3>
-                            <div class="text-gray-600 bg-gray-50 p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap">
-                                @if (!string.IsNullOrEmpty(Model.Description))
-                                {
-                                    @Model.Description
-                                }
-                                else
-                                {
-                                    <span class="italic text-gray-400">Không có mô tả cho môn học này.</span>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="mb-8">
-                            <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
-                                <h3 class="text-lg font-semibold text-gray-800">Danh sách chương</h3>
-                                <span class="text-xs font-semibold text-gray-500">@((Model.Chapters?.Count() ?? 0)) chương</span>
-                            </div>
-
-                            @if (Model.Chapters == null || !Model.Chapters.Any())
+                            <div class="text-green" style="font-size:11px; font-weight:900; text-transform:uppercase;">Chương @chapter.ChapterNumber</div>
+                            <div style="font-weight:900; margin-top:2px;">@chapter.ChapterTitle</div>
+                            @if (!string.IsNullOrEmpty(chapter.Description))
                             {
-                                <div class="text-gray-500 bg-gray-50 p-4 rounded-xl text-sm">
-                                    Môn học này chưa có chương nào.
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="space-y-3">
-                                    @foreach (var chapter in Model.Chapters.OrderBy(c => c.ChapterNumber))
-                                    {
-                                        <a asp-controller="Chapters" asp-action="Details" asp-route-id="@chapter.Id" class="block bg-gray-50 hover:bg-teal-50 border border-gray-100 hover:border-brand-button rounded-xl p-4 transition">
-                                            <div class="flex items-center justify-between gap-4">
-                                                <div>
-                                                    <p class="text-xs font-semibold text-brand-active uppercase">Chương @chapter.ChapterNumber</p>
-                                                    <h4 class="text-sm font-bold text-gray-800 mt-1">@chapter.ChapterTitle</h4>
-                                                    @if (!string.IsNullOrEmpty(chapter.Description))
-                                                    {
-                                                        <p class="text-xs text-gray-500 mt-2">@(chapter.Description.Length > 120 ? chapter.Description.Substring(0, 120) + "..." : chapter.Description)</p>
-                                                    }
-                                                </div>
-                                                <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                                            </div>
-                                        </a>
-                                    }
-                                </div>
+                                <div class="page-subtitle" style="margin-top:4px;">@(chapter.Description.Length > 120 ? chapter.Description.Substring(0, 120) + "..." : chapter.Description)</div>
                             }
                         </div>
-
-                        <div class="mb-8">
-                            <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
-                                <h3 class="text-lg font-semibold text-gray-800">Tài liệu của môn</h3>
-                                <span class="text-xs font-semibold text-gray-500">@documents.Count() tài liệu</span>
-                            </div>
-
-                            @if (!documents.Any())
-                            {
-                                <div class="text-gray-500 bg-gray-50 p-4 rounded-xl text-sm">
-                                    Môn học này chưa có tài liệu nào.
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="space-y-3">
-                                    @foreach (var doc in documents)
-                                    {
-                                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-4">
-                                            <div class="flex items-center gap-3 min-w-0">
-                                                <div class="w-10 h-10 rounded-lg flex items-center justify-center @(doc.FileType == "pdf" ? "bg-red-100 text-red-600" : doc.FileType == "docx" ? "bg-blue-100 text-blue-600" : "bg-orange-100 text-orange-600")">
-                                                    <i class="fa-solid @(doc.FileType == "pdf" ? "fa-file-pdf" : doc.FileType == "docx" ? "fa-file-word" : "fa-file-powerpoint")"></i>
-                                                </div>
-                                                <div class="min-w-0">
-                                                    <h4 class="text-sm font-bold text-gray-800 truncate">@doc.Title</h4>
-                                                    <p class="text-xs text-gray-500 mt-1">
-                                                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "Chưa gắn chương" : doc.ChapterTitle) • @doc.FileSizeDisplay • @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-2 shrink-0">
-                                                <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                                                    <i class="fa-solid fa-eye mr-1"></i>Xem
-                                                </a>
-                                                <a asp-controller="Document" asp-action="Download" asp-route-id="@doc.Id" class="px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 rounded-lg transition">
-                                                    <i class="fa-solid fa-download mr-1"></i>Tải về
-                                                </a>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </div>
-
-                        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                            <a asp-action="Index" class="text-gray-500 hover:text-gray-800 font-medium py-2 px-4 transition flex items-center gap-2">
-                                <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
-                            </a>
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <div class="flex gap-3">
-                                    <a asp-action="Edit" asp-route-id="@Model.Id" class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-6 rounded-xl transition shadow-sm">
-                                        <i class="fa-solid fa-pen-to-square mr-2"></i> Chỉnh sửa
-                                    </a>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                }
             </div>
-        </div>
-    </main>
+        }
+    </div>
 
-</body>
-</html>
+    <!-- Tài liệu -->
+    <div class="brutal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+                <h3 class="card-title">Tài liệu của môn</h3>
+                <span class="badge badge-blue">@documents.Count() tài liệu</span>
+            </div>
+            @if (ViewBag.CanManage == true)
+            {
+                <div style="display:flex; gap:8px;">
+                    <a asp-controller="Document" asp-action="ActivityLog" asp-route-subjectId="@Model.Id" class="brutal-btn btn-yellow sm" title="Xem hoạt động thao tác tài liệu"><i class="fa-solid fa-clock-rotate-left"></i> Hoạt động</a>
+                    <a asp-controller="Document" asp-action="Upload" asp-route-subjectId="@Model.Id" class="brutal-btn btn-pink sm"><i class="fa-solid fa-cloud-arrow-up"></i> Tải tài liệu</a>
+                </div>
+            }
+        </div>
+        @if (!documents.Any())
+        {
+            <p class="text-muted" style="font-weight:700;">Môn học này chưa có tài liệu nào.</p>
+        }
+        else
+        {
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                @foreach (var doc in documents)
+                {
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; border:2px solid var(--black); background:var(--white);">
+                        <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                            <span class="badge @FileBadge(doc.FileType)"><i class="fa-solid @FileIcon(doc.FileType)"></i></span>
+                            <div style="min-width:0;">
+                                <div style="font-weight:900;">@doc.Title</div>
+                                <div class="page-subtitle">@(string.IsNullOrEmpty(doc.ChapterTitle) ? "Chưa gắn chương" : doc.ChapterTitle) • @doc.FileSizeDisplay • @doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-shrink:0;">
+                            <a asp-controller="Document" asp-action="Details" asp-route-id="@doc.Id" class="brutal-btn btn-blue sm"><i class="fa-solid fa-eye"></i> Xem</a>
+                            <a asp-controller="Document" asp-action="Download" asp-route-id="@doc.Id" class="brutal-btn btn-green sm"><i class="fa-solid fa-download"></i> Tải</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

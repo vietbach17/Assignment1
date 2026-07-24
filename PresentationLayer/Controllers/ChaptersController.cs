@@ -367,74 +367,37 @@ namespace PresentationLayer.Controllers
             ViewBag.Subjects = subjects;
         }
 
-        /// <summary>
-        /// Helper method để kiểm tra authorization cho Chapter
-        /// Admin có full access
-        /// Lecturer chỉ có access nếu được assign vào Subject của Chapter
-        /// </summary>
-        /// <param name="chapterId">ID của Chapter cần kiểm tra</param>
-        /// <returns>True nếu user có quyền, False nếu không</returns>
         private async Task<bool> IsAuthorizedForChapter(int chapterId)
         {
-            // Admin có full access
-            if (User.IsInRole("Admin"))
-            {
-                return true;
-            }
-
-            // Nếu không phải Admin hoặc Lecturer, deny access
-            if (!User.IsInRole("Lecturer"))
-            {
-                return false;
-            }
-
-            // Lecturer: cần check xem có được assign vào Subject của Chapter không
             var userId = GetCurrentUserId();
             if (userId == null)
             {
                 return false;
             }
 
-            // Lấy Chapter để biết SubjectId
             var chapter = await _chapterService.GetChapterByIdAsync(chapterId, includeDeleted: false);
             if (chapter == null)
             {
                 return false;
             }
 
-            // Check xem Lecturer có được assign vào Subject này không
             return await _subjectService.IsLecturerAssignedToSubjectAsync(chapter.SubjectId, userId.Value);
         }
 
         /// <summary>
         /// Helper method để kiểm tra authorization cho Subject (khi tạo Chapter mới)
-        /// Admin có full access
-        /// Lecturer chỉ có access nếu được assign vào Subject
+        /// Chỉ cho phép Lecturer được assign vào Subject
         /// </summary>
         /// <param name="subjectId">ID của Subject cần kiểm tra</param>
         /// <returns>True nếu user có quyền, False nếu không</returns>
         private async Task<bool> IsAuthorizedForSubject(int subjectId)
         {
-            // Admin có full access
-            if (User.IsInRole("Admin"))
-            {
-                return true;
-            }
-
-            // Nếu không phải Admin hoặc Lecturer, deny access
-            if (!User.IsInRole("Lecturer"))
-            {
-                return false;
-            }
-
-            // Lecturer: cần check xem có được assign vào Subject không
             var userId = GetCurrentUserId();
             if (userId == null)
             {
                 return false;
             }
 
-            // Check xem Lecturer có được assign vào Subject này không
             return await _subjectService.IsLecturerAssignedToSubjectAsync(subjectId, userId.Value);
         }
     }

@@ -1,186 +1,57 @@
 @model BussinessLayer.DTOs.CreateSubjectDto
 @{
-    ViewData["Title"] = "Tạo Môn Học Mới";
-    Layout = null;
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Tạo môn học mới";
+    ViewBag.ActiveMenu = "Subjects";
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#1e3b31',
-                            active: '#2c5344',
-                            button: '#376b56',
-                            text: '#222222',
-                            gray: '#f4f6f8'
-                        }
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle"><a asp-action="Index" class="text-pink">Môn học</a> › Tạo mới</div>
+            <h1 class="page-title">Thêm môn học mới</h1>
+            <p class="page-subtitle">Nhập thông tin chi tiết để tạo môn học mới trong hệ thống.</p>
+        </div>
+        <a asp-action="Index" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+    </div>
+
+    <div class="brutal-card" style="max-width:640px;">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-error" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
+            <div class="form-group">
+                <label asp-for="SubjectCode">Mã môn học *</label>
+                <input asp-for="SubjectCode" placeholder="Ví dụ: PRN222" />
+                <span asp-validation-for="SubjectCode" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubjectName">Tên môn học *</label>
+                <input asp-for="SubjectName" placeholder="Nhập tên môn học..." />
+                <span asp-validation-for="SubjectName" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Description">Mô tả chi tiết</label>
+                <textarea asp-for="Description" rows="4" placeholder="Nhập mô tả về môn học này..."></textarea>
+                <span asp-validation-for="Description" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label for="assignedLecturerId">Giảng viên phụ trách upload tài liệu *</label>
+                <select id="assignedLecturerId" name="assignedLecturerId">
+                    <option value="">-- Chọn giảng viên --</option>
+                    @foreach (var lecturer in ViewBag.Lecturers)
+                    {
+                        <option value="@lecturer.Id">@lecturer.Username</option>
                     }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
-
-    <aside class="w-64 bg-brand-dark text-white flex flex-col">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-                <i class="fa-solid fa-book-open text-white"></i>
+                </select>
+                @Html.ValidationMessage("assignedLecturerId", "", new { @class = "text-pink", style = "font-size:12px;" })
             </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
-                <p class="text-xs text-gray-300">Quản lý nội dung</p>
+            <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+                <a asp-action="Index" class="brutal-btn">Hủy bỏ</a>
+                <button type="submit" class="brutal-btn btn-pink"><i class="fa-solid fa-plus"></i> Tạo môn học</button>
             </div>
-        </div>
+        </form>
+    </div>
+</div>
 
-        @if (User.IsInRole("Admin"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-chart-line w-5"></i>
-                            <span>Bảng điều khiển</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-users w-5"></i>
-                            <span>Người Dùng</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Admin" asp-controller="Subscription" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-box-open w-5"></i>
-                            <span>Gói Subscription</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Về trang chủ</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-        else if (User.IsInRole("Lecturer"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-border-all w-5"></i>
-                            <span>Tổng quan</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 bg-brand-active text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                            <i class="fa-solid fa-book w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-regular fa-file-lines w-5"></i>
-                            <span>Tài liệu</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-
-        <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i>
-                <span>Đăng xuất</span>
-            </a>
-        </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div class="flex items-center gap-4 text-sm text-gray-500">
-                <a asp-action="Index" class="hover:text-brand-active transition">Môn học</a>
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-                <span class="font-semibold text-gray-800">Tạo mới</span>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-2xl mx-auto">
-                <div class="mb-8 text-center">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Thêm Môn học Mới</h2>
-                    <p class="text-gray-500">Nhập thông tin chi tiết để tạo môn học mới trong hệ thống.</p>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                    <form asp-action="Create" method="post" class="space-y-6">
-                        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
-                        
-                        <div>
-                            <label asp-for="SubjectCode" class="block text-sm font-medium text-gray-700 mb-2">Mã môn học <span class="text-red-500">*</span></label>
-                            <input asp-for="SubjectCode" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-active focus:bg-white transition" placeholder="Ví dụ: PRN222" />
-                            <span asp-validation-for="SubjectCode" class="text-red-500 text-xs mt-1 block"></span>
-                        </div>
-
-                        <div>
-                            <label asp-for="SubjectName" class="block text-sm font-medium text-gray-700 mb-2">Tên môn học <span class="text-red-500">*</span></label>
-                            <input asp-for="SubjectName" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-active focus:bg-white transition" placeholder="Nhập tên môn học..." />
-                            <span asp-validation-for="SubjectName" class="text-red-500 text-xs mt-1 block"></span>
-                        </div>
-
-                        <div>
-                            <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-2">Mô tả chi tiết</label>
-                            <textarea asp-for="Description" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-active focus:bg-white transition resize-none" placeholder="Nhập mô tả về môn học này..."></textarea>
-                            <span asp-validation-for="Description" class="text-red-500 text-xs mt-1 block"></span>
-                        </div>
-
-                        <div>
-                            <label for="assignedLecturerId" class="block text-sm font-medium text-gray-700 mb-2">Giảng viên phụ trách upload tài liệu <span class="text-red-500">*</span></label>
-                            <select id="assignedLecturerId" name="assignedLecturerId" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-active focus:bg-white transition">
-                                <option value="">-- Chọn giảng viên --</option>
-                                @foreach (var lecturer in ViewBag.Lecturers)
-                                {
-                                    <option value="@lecturer.Id">@lecturer.Username</option>
-                                }
-                            </select>
-                            @Html.ValidationMessage("assignedLecturerId", "", new { @class = "text-red-500 text-xs mt-1 block" })
-                        </div>
-
-                        <div class="pt-4 flex gap-4">
-                            <a asp-action="Index" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition text-center">
-                                Hủy bỏ
-                            </a>
-                            <button type="submit" class="flex-1 bg-brand-button hover:bg-brand-active text-white font-medium py-3 rounded-xl transition shadow-sm">
-                                Tạo Môn Học
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-</body>
-</html>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -240,7 +240,8 @@ namespace BussinessLayer.Services
                 SubjectCode = subject.SubjectCode,
                 SubjectName = subject.SubjectName,
                 Description = subject.Description,
-                CreatedDate = subject.CreatedDate
+                CreatedDate = subject.CreatedDate,
+                AssignedLecturerNames = subject.SubjectLecturers?.Select(sl => sl.Lecturer?.Username ?? "Unknown").ToList() ?? new List<string>()
             };
         }
 
@@ -269,7 +270,8 @@ namespace BussinessLayer.Services
                         CreatedDate = c.CreatedDate,
                         IsDeleted = c.IsDeleted
                     })
-                    .ToList()
+                    .ToList(),
+                AssignedLecturerNames = subject.SubjectLecturers?.Select(sl => sl.Lecturer?.Username ?? "Unknown").ToList() ?? new List<string>()
             };
         }
     }

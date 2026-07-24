@@ -22,9 +22,19 @@ namespace BussinessLayer.Interfaces
         /// Lấy nội dung tài liệu đã được phân đoạn (chunk) để dễ dàng truyền vào AI hoặc xem trước
         /// </summary>
         /// <param name="path">Đường dẫn tuyệt đối đến tệp tài liệu</param>
-        /// <param name="maxChunkSize">Kích thước tối đa mỗi chunk</param>
+        /// <param name="maxWords">Số từ tối đa mỗi chunk</param>
+        /// <param name="overlapWords">Số từ gối đầu giữa các chunk</param>
         /// <returns>Danh sách các đoạn text của tài liệu</returns>
-        Task<IEnumerable<string>> GetDocumentTextChunksAsync(string path, int maxChunkSize = 1200);
+        Task<IEnumerable<string>> GetDocumentTextChunksAsync(string path, int maxWords = 300, int overlapWords = 50);
+
+        /// <summary>
+        /// Lấy nội dung tài liệu đã được phân đoạn, kèm theo tóm tắt ngữ cảnh tổng quát ở đầu mỗi chunk
+        /// </summary>
+        /// <param name="path">Đường dẫn tuyệt đối đến tệp tài liệu</param>
+        /// <param name="maxWords">Số từ tối đa mỗi chunk</param>
+        /// <param name="overlapWords">Số từ gối đầu giữa các chunk</param>
+        /// <returns>Danh sách các đoạn text của tài liệu đã được gắn ngữ cảnh</returns>
+        Task<IEnumerable<string>> GetContextualDocumentTextChunksAsync(string path, int maxWords = 300, int overlapWords = 50);
 
         /// <summary>
         /// Tạo embedding cho một chuỗi văn bản, để phục vụ truy vấn tìm kiếm/summarization về sau

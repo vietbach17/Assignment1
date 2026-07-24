@@ -1,505 +1,309 @@
 @model BussinessLayer.DTOs.DocumentDetailViewModel
 @using BussinessLayer.DTOs
 @{
+    Layout = "_DashboardLayout";
     ViewData["Title"] = "Chi tiết tài liệu - " + Model.Document.Title;
+    ViewBag.ActiveMenu = "Document";
     var doc = Model.Document;
-    Layout = null;
     var canManageDocument = ViewBag.CanManageDocument as bool? ?? false;
+    var textContent = ViewBag.TextContent as string ?? "";
+    var isPdfView = ViewBag.IsPdfView as bool? ?? false;
+    var pdfUrl = ViewBag.PdfUrl as string ?? "";
+    var hasContent = !string.IsNullOrWhiteSpace(textContent) && textContent != "Không có nội dung dạng text cho file này.";
+    var fileType = doc.FileType?.ToLower() ?? "";
+    var isViewable = new[] { "txt", "md", "csv", "pdf", "docx", "doc", "pptx", "log" }.Contains(fileType);
+    var isOfficeType = new[] { "docx", "doc", "pptx", "ppt" }.Contains(fileType);
+    var canViewChunks = ViewBag.CanViewChunks as bool? ?? false;
+    var simulatedChunks = ViewBag.SimulatedChunks as List<string> ?? new List<string>();
+    var hasChunks = simulatedChunks.Any();
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#1e3b31',
-                            active: '#2c5344',
-                            button: '#376b56',
-                            text: '#222222',
-                            gray: '#f4f6f8'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800">
 
-    <aside class="w-64 bg-brand-dark text-white flex flex-col">
-        <div class="p-6 flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-                <i class="fa-solid fa-book-open text-white"></i>
-            </div>
+<div class="page-content">
+    <div style="margin-bottom: 20px;">
+        <a href="javascript:history.back()" style="color: var(--black); text-decoration: none; font-weight: 800; font-size: 14px;">
+            <i class="fa-solid fa-arrow-left"></i> QUAY LẠI
+        </a>
+    </div>
+
+    <div style="background: var(--white); border: 4px solid var(--black); box-shadow: 8px 8px 0px var(--black); padding: 30px; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
             <div>
-                <h1 class="font-bold text-lg leading-tight">StudyMind</h1>
-                <p class="text-xs text-gray-300">Chi tiết tài liệu</p>
+                <h1 style="color: var(--pink); font-weight: 900; margin-bottom: 10px; font-size: 24px; text-transform: uppercase;">
+                    @doc.Title
+                    @if (doc.IsDeleted)
+                    {
+                        <span style="background: #dc2626; color: white; padding: 4px 8px; font-size: 14px; vertical-align: middle; margin-left: 10px; border: 2px solid var(--black); box-shadow: 2px 2px 0px var(--black);">
+                            <i class="fa-solid fa-trash"></i> ĐÃ XÓA TẠM
+                        </span>
+                    }
+                </h1>
+                <div style="font-weight: 700; font-size: 14px; color: #555; display: flex; gap: 20px; flex-wrap: wrap;">
+                    <span>
+                        @{
+                            var iconClass = fileType switch {
+                                "pdf"           => "fa-file-pdf",
+                                "docx" or "doc" => "fa-file-word",
+                                "pptx" or "ppt" => "fa-file-powerpoint",
+                                "txt" or "md"   => "fa-file-lines",
+                                "csv"           => "fa-file-csv",
+                                _               => "fa-file"
+                            };
+                        }
+                        <i class="fa-solid @iconClass"></i> Loại file: @fileType.ToUpper()
+                    </span>
+                    <span><i class="fa-solid fa-clock"></i> Cập nhật: @doc.UploadedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span><i class="fa-solid fa-user"></i> Người tải: @(doc.UploadedByUsername ?? "Hệ thống")</span>
+                    @if (hasChunks)
+                    {
+                        <span style="color: var(--blue); background: #e8f4fd; padding: 2px 8px; border: 2px solid var(--blue);">
+                            <i class="fa-solid fa-cubes"></i> @simulatedChunks.Count chunks
+                        </span>
+                    }
+                </div>
             </div>
-        </div>
-
-        @if (User.IsInRole("Admin"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Dashboard" asp-controller="Admin" class="flex items-center space-x-3  bg-brand-active px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-chart-line w-5"></i>
-                            <span>Bảng điều khiển</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Users" asp-controller="Admin" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-users w-5"></i>
-                            <span>Người Dùng</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Admin" asp-controller="Subscription" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                            <i class="fa-solid fa-box-open w-5"></i>
-                            <span>Gói Subscription</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-arrow-left w-5"></i>
-                            <span>Về trang chủ</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-        else if (User.IsInRole("Lecturer"))
-        {
-            <div class="px-4 py-2">
-                <p class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Menu Chính</p>
-                <ul class="space-y-1">
-                    <li>
-                        <a asp-action="Index" asp-controller="Home" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-border-all w-5"></i>
-                            <span>Tổng quan</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Subjects" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-solid fa-book w-5"></i>
-                            <span>Môn Học</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-action="Index" asp-controller="Document" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                            <i class="fa-regular fa-file-lines w-5"></i>
-                            <span>Tài liệu</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        }
-
-        <div class="px-4 py-6 border-t border-white/5 mt-auto">
-            <a asp-action="Logout" asp-controller="Auth" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-brand-active/50 hover:text-white transition">
-                <i class="fa-solid fa-sign-out-alt w-5"></i>
-                <span>Đăng xuất</span>
+            <a href="@pdfUrl" download target="_blank" class="brutal-btn" style="background-color: var(--yellow); color: var(--black); border: 3px solid var(--black); padding: 10px 20px; font-weight: 900; text-decoration: none; box-shadow: 4px 4px 0px var(--black);">
+                <i class="fa-solid fa-download"></i> TẢI XUỐNG
             </a>
         </div>
-    </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="h-16 bg-white flex items-center justify-between px-8 border-b border-gray-100">
-            <div class="relative w-96">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" placeholder="Tìm kiếm..." class="w-full bg-gray-50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-button">
+        <!-- TAB HEADERS -->
+        <div style="display: flex; border-bottom: 3px solid var(--black); margin-bottom: 20px;">
+            <div id="tab-content" onclick="switchTab('content')" style="padding: 10px 20px; font-weight: 900; cursor: pointer; background: var(--black); color: var(--white); border: 3px solid var(--black); border-bottom: none; margin-right: 10px;">
+                <i class="fa-solid fa-file-lines"></i> NỘI DUNG
             </div>
-            
-            <div class="flex items-center space-x-5">
-                @if (User.Identity?.IsAuthenticated == true)
+            @if (canViewChunks)
+            {
+                <div id="tab-chunks" onclick="switchTab('chunks')" style="padding: 10px 20px; font-weight: 900; cursor: pointer; background: var(--white); color: var(--black); border: 3px solid var(--black); border-bottom: none; margin-right: 10px;">
+                    <i class="fa-solid fa-cubes"></i> VECTOR CHUNKS @(hasChunks ? $"({simulatedChunks.Count})" : "")
+                </div>
+            }
+            @if (canManageDocument)
+            {
+                <div id="tab-info" onclick="switchTab('info')" style="padding: 10px 20px; font-weight: 900; cursor: pointer; background: var(--white); color: var(--black); border: 3px solid var(--black); border-bottom: none;">
+                    <i class="fa-solid fa-circle-info"></i> THÔNG TIN & TRẠNG THÁI
+                </div>
+            }
+        </div>
+
+        <!-- TAB: NỘI DUNG FILE -->
+        <div id="panel-content" style="display: block;">
+            @if (isPdfView)
+            {
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <p style="font-style: italic; color: #555; font-weight: 600; margin: 0;">
+                        Bản tài liệu gốc <strong>@fileType.ToUpper()</strong> hiển thị đúng định dạng như lúc tải lên.
+                    </p>
+                </div>
+                <div id="pdfViewer" data-pdf-url="@pdfUrl"
+                     style="background: #525659; border: 2px solid var(--black); padding: 16px; max-height: 760px; overflow-y: auto;">
+                    <div id="pdfStatus" style="text-align:center; color:#eee; font-weight:800; padding:40px 10px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Đang tải bản xem tài liệu…
+                    </div>
+                    <div id="pdfPages"></div>
+                </div>
+            }
+            else
+            {
+                @if (isOfficeType)
                 {
-                    <button class="text-gray-400 hover:text-gray-600 relative">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-                    <div class="flex items-center space-x-3 cursor-pointer">
-                        <div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700 leading-tight">@User.Identity.Name</p>
-                            <p class="text-xs text-gray-500">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
-                        </div>
+                    <div style="background:#e8f4fd; border:2px solid var(--blue); padding:10px 16px; font-weight:700; font-size:12.5px; margin-bottom:14px; color:#0b4f77;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        File @fileType.ToUpper() đang hiển thị nội dung dạng text được trích xuất (có thể không giữ nguyên định dạng gốc).
+                    </div>
+                }
+                @if (hasContent)
+                {
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <p style="font-style: italic; color: #555; font-weight: 600; margin: 0;">
+                            Nội dung văn bản trích xuất từ file <strong>@fileType.ToUpper()</strong>.
+                        </p>
+                        <span style="font-size: 12px; color: #888; font-weight: 700;">
+                            @textContent.Length.ToString("N0") ký tự
+                        </span>
+                    </div>
+                    <div id="docContentBox" style="background: #1e1e1e; border: 2px solid var(--black); padding: 20px; max-height: 600px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; color: #d4d4d4; white-space: pre-wrap; word-wrap: break-word;">@textContent</div>
+                }
+                else
+                {
+                    <div style="padding: 40px; text-align: center; border: 2px dashed #000; background: var(--bg);">
+                        <i class="fa-solid fa-file-circle-question" style="font-size: 48px; color: #ccc; margin-bottom: 15px; display: block;"></i>
+                        <p style="font-weight: 800; font-size: 16px; margin-bottom: 10px;">Không thể hiển thị nội dung</p>
+                        <p style="color: #777; font-size: 14px;">
+                            @if (!isViewable)
+                            {
+                                <text>File <strong>@fileType.ToUpper()</strong> chưa được hỗ trợ trích xuất text.</text>
+                            }
+                            else
+                            {
+                                <text>File chưa có nội dung hoặc không thể đọc.</text>
+                            }
+                        </p>
+                        <a href="@pdfUrl" download target="_blank" style="color: var(--blue); font-weight: 800;">
+                            <i class="fa-solid fa-external-link-alt"></i> Tải file gốc
+                        </a>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (canViewChunks)
+        {
+            <!-- TAB: VECTOR CHUNKS -->
+            <div id="panel-chunks" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <p style="font-style: italic; color: #555; font-weight: 600; margin: 0;">
+                        Các đoạn văn bản (Chunks) được phân tích bởi hệ thống AI.
+                    </p>
+                </div>
+
+                @if (hasChunks)
+                {
+                    <div style="display: flex; flex-direction: column; gap: 12px; max-height: 600px; overflow-y: auto; padding-right: 8px;">
+                        @for (int i = 0; i < simulatedChunks.Count; i++)
+                        {
+                            <div style="background: var(--white); border: 2px dashed var(--black); padding: 15px; position: relative;">
+                                <div style="position: absolute; top: -11px; left: 10px; background: var(--blue); color: white; padding: 2px 10px; font-weight: 900; font-size: 10px; border: 2px solid var(--black); letter-spacing: 1px;">
+                                    CHUNK #@(i + 1) &nbsp;|&nbsp; @simulatedChunks[i].Split(' ').Length từ
+                                </div>
+                                <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #333; line-height: 1.6; margin-top: 10px; white-space: pre-wrap;">@simulatedChunks[i]</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="padding: 40px; text-align: center; border: 2px dashed #000; background: var(--bg);">
+                        <i class="fa-solid fa-brain" style="font-size: 48px; color: #ccc; margin-bottom: 15px; display: block;"></i>
+                        <p style="font-weight: 800; font-size: 16px; margin-bottom: 10px;">Chưa có dữ liệu Vector</p>
+                        <p style="color: #777; font-size: 14px;">Tài liệu cần phải có nội dung văn bản để hệ thống tạo Vector.</p>
                     </div>
                 }
             </div>
-        </header>
+        }
 
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="mb-8 flex justify-between items-start">
-                <div class="flex items-center space-x-4">
-                    @switch (doc.FileType)
-                    {
-                        case "pdf":
-                            <div class="w-14 h-14 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-file-pdf text-2xl"></i>
-                            </div>
-                            break;
-                        case "docx":
-                            <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-file-word text-2xl"></i>
-                            </div>
-                            break;
-                        case "pptx":
-                            <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-file-powerpoint text-2xl"></i>
-                            </div>
-                            break;
-                    }
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">@doc.Title</h2>
-                        <p class="text-sm text-gray-500 mt-1">📎 @doc.FileName</p>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <a asp-action="Download" asp-route-id="@doc.Id" class="inline-flex items-center space-x-2 bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
-                        <i class="fa-solid fa-download"></i>
-                        <span>Tải về</span>
-                    </a>
-                    @if (User.IsInRole("Lecturer") || User.IsInRole("Admin"))
-                    {
-                        <a asp-action="Chunks" asp-route-id="@doc.Id" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
-                            <i class="fa-solid fa-code"></i>
-                            <span>Xem chunk / embedding</span>
-                        </a>
-                    }
-                    @if (canManageDocument)
-                    {
-                        <a asp-action="Edit" asp-route-id="@doc.Id" class="inline-flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-6 rounded-xl transition shadow-sm">
-                            <i class="fa-solid fa-pen"></i>
-                            <span>Chỉnh sửa</span>
-                        </a>
-                    }
-                    <a asp-action="Index" class="inline-flex items-center space-x-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-xl transition">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        <span>Quay lại</span>
-                    </a>
-                </div>
-            </div>
-
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                    <i class="fa-solid fa-check-circle mr-2"></i>@TempData["SuccessMessage"]
-                </div>
-            }
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                    <i class="fa-solid fa-exclamation-circle mr-2"></i>@TempData["ErrorMessage"]
-                </div>
-            }
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                @if (User.IsInRole("Admin"))
-                {
-
-
-
-
-                        <!-- Main Content -->
-                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">Thông tin tài liệu</h3>
-
-                            <div class="space-y-4">
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Tiêu đề</span>
-                                    <span class="text-sm text-gray-800 font-medium">@doc.Title</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Môn học</span>
-                                    <span class="text-sm text-gray-800">
-                                        <strong>@doc.SubjectCode</strong> — @doc.SubjectName
-                                    </span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Chương</span>
-                                    <span class="text-sm text-gray-800">
-                                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "—" : doc.ChapterTitle)
-                                    </span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Định dạng</span>
-                                    <span class="text-sm text-gray-800 font-mono uppercase">@doc.FileType</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Dung lượng</span>
-                                    <span class="text-sm text-gray-800 font-medium">@doc.FileSizeDisplay</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Ngày upload</span>
-                                    <span class="text-sm text-gray-800">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Người upload</span>
-                                    <span class="text-sm text-gray-800">
-                                        <i class="fa-solid fa-user text-xs mr-1"></i>@doc.UploadedByUsername
-                                    </span>
-                                </div>
-
-                                <div class="flex justify-between py-3">
-                                    <span class="text-sm font-medium text-gray-600">Trạng thái</span>
-                                    <span>
-                                        @switch (doc.Status)
-                                        {
-                                            case DocumentStatus.Pending:
-                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">🟡 Pending</span>
-                                                break;
-                                            case DocumentStatus.Indexed:
-                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">🟢 Indexed</span>
-                                                break;
-                                            case DocumentStatus.Failed:
-                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">🔴 Failed</span>
-                                                break;
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sidebar -->
-
-
-
-                    }
-                    else if (User.IsInRole("Lecturer"))
-                    {
-
-
-
-
-                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">Thông tin tài liệu</h3>
-
-                            <div class="space-y-4">
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Tiêu đề</span>
-                                    <span class="text-sm text-gray-800 font-medium">@doc.Title</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Môn học</span>
-                                    <span class="text-sm text-gray-800">
-                                        <strong>@doc.SubjectCode</strong> — @doc.SubjectName
-                                    </span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Chương</span>
-                                    <span class="text-sm text-gray-800">
-                                        @(string.IsNullOrEmpty(doc.ChapterTitle) ? "—" : doc.ChapterTitle)
-                                    </span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Định dạng</span>
-                                    <span class="text-sm text-gray-800 font-mono uppercase">@doc.FileType</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Dung lượng</span>
-                                    <span class="text-sm text-gray-800 font-medium">@doc.FileSizeDisplay</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Ngày upload</span>
-                                    <span class="text-sm text-gray-800">@doc.UploadedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
-                                </div>
-
-                                <div class="flex justify-between py-3 border-b border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">Người upload</span>
-                                    <span class="text-sm text-gray-800">
-                                        <i class="fa-solid fa-user text-xs mr-1"></i>@doc.UploadedByUsername
-                                    </span>
-                                </div>
-
-                                <div class="flex justify-between py-3">
-                                    <span class="text-sm font-medium text-gray-600">Trạng thái</span>
-                                    <span>
-                                        @switch (doc.Status)
-                                        {
-                                            case DocumentStatus.Pending:
-                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">🟡 Pending</span>
-                                                break;
-                                            case DocumentStatus.Indexed:
-                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">🟢 Indexed</span>
-                                                break;
-                                            case DocumentStatus.Failed:
-                                                <span class="inline-block px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">🔴 Failed</span>
-                                                break;
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        @if (canManageDocument)
-                        {
-                        <div class="space-y-6">
-                            <!-- Update Status Card -->
-                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">Cập nhật trạng thái</h3>
-
-                                <form asp-action="UpdateStatus" asp-route-id="@doc.Id" method="post" class="space-y-4">
-                                    @Html.AntiForgeryToken()
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái mới</label>
-                                        <select name="newStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-button">
-                                            @{
-                                                    var isPending = doc.Status == DocumentStatus.Pending;
-                                                    var isIndexed = doc.Status == DocumentStatus.Indexed;
-                                                    var isFailed = doc.Status == DocumentStatus.Failed;
-                                                }
-                                                <option value="0" selected="@isPending">🟡 Pending</option>
-                                    <option value="1" selected="@isIndexed">🟢 Indexed</option>
-                                    <option value="2" selected="@isFailed">🔴 Failed</option>
+        @if (canManageDocument)
+        {
+            <!-- TAB: INFO & STATUS -->
+            <div id="panel-info" style="display: none;">
+                <div style="display:grid; grid-template-columns:1fr; gap:22px;">
+                    <div class="brutal-card">
+                        <h3 class="card-title" style="margin-bottom:14px;">Cập nhật trạng thái</h3>
+                        <form asp-action="UpdateStatus" asp-route-id="@doc.Id" method="post" style="display:flex; align-items:flex-end; gap:12px;">
+                            <div style="flex:1;">
+                                <label style="font-weight:800; margin-bottom:6px; display:block;">Trạng thái xử lý AI</label>
+                                <select asp-for="NewStatus" class="brutal-input" style="padding:10px;">
+                                    <option value="Pending">Pending (Đang chờ xử lý)</option>
+                                    <option value="Indexed">Indexed (Đã xử lý xong)</option>
+                                    <option value="Failed">Failed (Lỗi xử lý)</option>
                                 </select>
                             </div>
-
-                            <button type="submit" class="w-full bg-brand-button hover:bg-brand-active text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm">
-                                <i class="fa-solid fa-floppy-disk mr-2"></i>Lưu trạng thái
-                            </button>
+                            <button type="submit" class="brutal-btn btn-black"><i class="fa-solid fa-save"></i> Cập nhật</button>
                         </form>
                     </div>
 
-                    <!-- Danger Zone -->
-                    <div class="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
-                        <h3 class="text-lg font-bold text-red-600 mb-3">⚠️ Vùng nguy hiểm</h3>
-                        <p class="text-sm text-red-700 mb-4">
-                            Xoá tài liệu sẽ xoá cả file khỏi server. Hành động này không thể khôi phục.
-                        </p>
-                        <a asp-action="Delete" asp-route-id="@doc.Id" class="block w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 px-4 rounded-xl transition text-center shadow-sm">
-                            <i class="fa-solid fa-trash mr-2"></i>Xoá tài liệu
-                        </a>
-                    </div>
-                </div>
-                        }
-                }
-            </div>
-
-            <!-- AI Chunks / Phân đoạn nội dung -->
-            <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-emerald-700"></i>
-                    <span>Phân đoạn nội dung (AI Indexed Chunks)</span>
-                </h3>
-
-                <div class="flex flex-col lg:flex-row gap-6 border border-gray-200 rounded-xl overflow-hidden min-h-[400px]">
-                    <!-- Left sidebar showing segment index list -->
-                    <div id="segmentsList" class="w-full lg:w-64 border-r border-gray-200 overflow-y-auto bg-gray-50 flex flex-col flex-shrink-0 max-h-[500px]">
-                        <div class="p-4 text-sm text-gray-500 italic text-center font-medium">Đang chuẩn bị các phân đoạn...</div>
-                    </div>
-                    <!-- Right reading panel -->
-                    <div id="segmentContent" class="flex-1 p-6 overflow-y-auto font-serif text-base leading-relaxed text-gray-800 text-justify bg-white max-h-[500px] whitespace-pre-wrap">
-                        Đang tải dữ liệu phân đoạn...
+                    <div class="brutal-card" style="border-color:#d11; background:#fff5f5;">
+                        <h3 class="card-title" style="color:#d11; margin-bottom:8px;"><i class="fa-solid fa-triangle-exclamation"></i> Xoá tài liệu</h3>
+                        <p style="font-weight:700; margin-bottom:12px;">Xoá tài liệu sẽ xoá cả file khỏi server. Hành động này không thể khôi phục.</p>
+                        <a asp-action="Delete" asp-route-id="@doc.Id" class="brutal-btn btn-red" style="width:fit-content;"><i class="fa-solid fa-trash"></i> Xoá tài liệu</a>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-
-    <!-- Viewing chunks now opens a dedicated page -->
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            loadSegments();
-        });
-
-        let segments = [];
-
-        function loadSegments() {
-            const listEl = document.getElementById('segmentsList');
-            const contentEl = document.getElementById('segmentContent');
-
-            if (!listEl || !contentEl) return;
-
-            listEl.innerHTML = '<div class="p-4 text-sm text-gray-500 italic text-center font-medium">Đang phân đoạn...</div>';
-            contentEl.textContent = 'Đang trích xuất và phân tích văn bản từ máy chủ...';
-
-            fetch(`/Document/GetDocumentSegments?id=@doc.Id`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.segments && data.segments.length > 0) {
-                        segments = data.segments;
-                        listEl.innerHTML = '';
-                        segments.forEach((seg, index) => {
-                            const item = document.createElement('button');
-                            item.type = 'button';
-                            item.className = 'segment-item w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-100 transition font-medium text-sm text-gray-700 flex items-center justify-between';
-                            
-                            const name = data.fileType.toLowerCase() === 'pptx' ? `Slide ${index + 1}` : 
-                                         (data.fileType.toLowerCase() === 'pdf' ? `Trang ${index + 1}` : `Phân đoạn ${index + 1}`);
-                            
-                            item.innerHTML = `
-                                <span>${name}</span>
-                                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-                            `;
-
-                            item.onclick = () => selectSegment(index, item);
-                            listEl.appendChild(item);
-                        });
-
-                        // Tự động chọn phân đoạn đầu tiên
-                        if (listEl.firstChild) {
-                            listEl.firstChild.click();
-                        }
-                    } else {
-                        listEl.innerHTML = '';
-                        contentEl.innerHTML = `
-                            <div class="flex flex-col items-center justify-center gap-4 py-12 text-center text-gray-500 w-full">
-                                <span class="text-4xl">🚫</span>
-                                <div class="font-bold text-lg font-sans">Không thể tải phân đoạn tài liệu</div>
-                                <p class="text-sm max-w-sm font-sans">${data.message || 'Hệ thống chưa hỗ trợ trích xuất văn bản cho định dạng này.'}</p>
-                            </div>`;
-                    }
-                })
-                .catch(err => {
-                    listEl.innerHTML = '';
-                    contentEl.textContent = `Lỗi kết nối tới máy chủ: ${err.message}`;
-                });
         }
+    </div>
+</div>
 
-        function selectSegment(index, element) {
-            // Loại bỏ active khỏi tất cả các phần tử
-            document.querySelectorAll('.segment-item').forEach(el => {
-                el.classList.remove('bg-emerald-50', 'text-emerald-800', 'border-l-4', 'border-l-emerald-600');
-                el.classList.add('text-gray-700');
-            });
+@section Scripts {
+    <script>
+        function switchTab(tab) {
+            var panelContent = document.getElementById('panel-content');
+            var panelInfo = document.getElementById('panel-info');
+            var panelChunks = document.getElementById('panel-chunks');
             
-            // Thêm active vào phần tử được chọn
-            element.classList.remove('text-gray-700');
-            element.classList.add('bg-emerald-50', 'text-emerald-800', 'border-l-4', 'border-l-emerald-600');
+            var tabContent = document.getElementById('tab-content');
+            var tabInfo = document.getElementById('tab-info');
+            var tabChunks = document.getElementById('tab-chunks');
 
-            // Hiển thị nội dung
-            const contentEl = document.getElementById('segmentContent');
-            contentEl.textContent = segments[index];
-            contentEl.scrollTop = 0;
+            // Hide all
+            if(panelContent) panelContent.style.display = 'none';
+            if(panelInfo) panelInfo.style.display = 'none';
+            if(panelChunks) panelChunks.style.display = 'none';
+
+            // Reset tabs
+            if(tabContent) { tabContent.style.background = 'var(--white)'; tabContent.style.color = 'var(--black)'; }
+            if(tabInfo) { tabInfo.style.background = 'var(--white)'; tabInfo.style.color = 'var(--black)'; }
+            if(tabChunks) { tabChunks.style.background = 'var(--white)'; tabChunks.style.color = 'var(--black)'; }
+
+            // Show active
+            if(tab === 'content') {
+                if(panelContent) panelContent.style.display = 'block';
+                if(tabContent) { tabContent.style.background = 'var(--black)'; tabContent.style.color = 'var(--white)'; }
+            } else if (tab === 'info') {
+                if(panelInfo) panelInfo.style.display = 'block';
+                if(tabInfo) { tabInfo.style.background = 'var(--black)'; tabInfo.style.color = 'var(--white)'; }
+            } else if (tab === 'chunks') {
+                if(panelChunks) panelChunks.style.display = 'block';
+                if(tabChunks) { tabChunks.style.background = 'var(--black)'; tabChunks.style.color = 'var(--white)'; }
+            }
         }
     </script>
-</body>
-</html>
+
+    @if (isPdfView)
+    {
+        <style>
+            #pdfPages .pdf-page { position: relative; margin: 0 auto 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); background: #fff; }
+            #pdfPages .pdf-page:last-child { margin-bottom: 0; }
+            #pdfPages canvas { display: block; }
+        </style>
+        <script src="/lib/pdfjs/pdf.min.js"></script>
+        <script>
+            (function () {
+                var viewerEl = document.getElementById('pdfViewer');
+                if (!viewerEl) return;
+                var url = viewerEl.getAttribute('data-pdf-url');
+                var pagesEl = document.getElementById('pdfPages');
+                var statusEl = document.getElementById('pdfStatus');
+
+                if (typeof pdfjsLib === 'undefined') {
+                    if (statusEl) statusEl.innerHTML = 'Không tải được thư viện xem PDF.';
+                    return;
+                }
+                pdfjsLib.GlobalWorkerOptions.workerSrc = '/lib/pdfjs/pdf.worker.min.js';
+
+                pdfjsLib.getDocument(url).promise.then(function (pdf) {
+                    if (statusEl) statusEl.style.display = 'none';
+                    var chain = Promise.resolve();
+                    for (var p = 1; p <= pdf.numPages; p++) {
+                        (function (pageNum) {
+                            chain = chain.then(function () { return renderPage(pdf, pageNum); });
+                        })(p);
+                    }
+                    return chain;
+                }).catch(function (err) {
+                    if (statusEl) { statusEl.style.display = 'block'; statusEl.innerHTML = 'Không tải được bản xem PDF: ' + (err && err.message ? err.message : err); }
+                });
+
+                function renderPage(pdf, pageNum) {
+                    return pdf.getPage(pageNum).then(function (page) {
+                        var scale = 1.5;
+                        var viewport = page.getViewport({ scale: scale });
+
+                        var pageContainer = document.createElement('div');
+                        pageContainer.className = 'pdf-page';
+                        pageContainer.style.width = viewport.width + 'px';
+                        pageContainer.style.height = viewport.height + 'px';
+
+                        var canvas = document.createElement('canvas');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        pageContainer.appendChild(canvas);
+
+                        pagesEl.appendChild(pageContainer);
+
+                        var renderTask = page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport });
+                        return renderTask.promise;
+                    });
+                }
+            })();
+        </script>
+    }
+}

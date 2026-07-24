@@ -27,6 +27,7 @@ namespace PresentationLayer.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGeminiService _geminiService;
+        private readonly IDocumentActivityLogService _activityLogService;
 
         public DocumentController(
             IDocumentService documentService,
@@ -34,7 +35,8 @@ namespace PresentationLayer.Controllers
             IChapterService chapterService,
             IWebHostEnvironment webHostEnvironment,
             IHttpContextAccessor httpContextAccessor,
-            IGeminiService geminiService)
+            IGeminiService geminiService,
+            IDocumentActivityLogService activityLogService)
         {
             _documentService = documentService;
             _subjectService = subjectService;
@@ -42,6 +44,7 @@ namespace PresentationLayer.Controllers
             _webHostEnvironment = webHostEnvironment;
             _httpContextAccessor = httpContextAccessor;
             _geminiService = geminiService;
+            _activityLogService = activityLogService;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -55,16 +58,10 @@ namespace PresentationLayer.Controllers
             IEnumerable<DocumentDto> documents;
             var userId = GetCurrentUserId();
 
-            if (User.IsInRole("Lecturer") && userId.HasValue)
-                documents = await _documentService.GetDocumentsByUploadedByUserAsync(userId.Value);
-            else if (subjectId.HasValue)
+            if (subjectId.HasValue)
                 documents = await _documentService.GetDocumentsBySubjectAsync(subjectId.Value);
             else
                 documents = await _documentService.GetAllDocumentsAsync(includeDeleted: false);
-
-            // Filter theo trạng thái nếu có
-            if (User.IsInRole("Lecturer") && subjectId.HasValue)
-                documents = documents.Where(d => d.SubjectId == subjectId.Value);
 
             if (status.HasValue)
                 documents = documents.Where(d => d.Status == status.Value);
@@ -107,10 +104,10 @@ namespace PresentationLayer.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Lecturer")]
-        public async Task<IActionResult> Upload()
+        public async Task<IActionResult> Upload(int? subjectId)
         {
-            await PopulateDropdowns();
-            return View(new DocumentUploadViewModel());
+            await PopulateDropdowns(subjectId);
+            return View(new DocumentUploadViewModel { SubjectId = subjectId ?? 0 });
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -147,7 +144,7 @@ namespace PresentationLayer.Controllers
 
             if (!success)
             {
-                ModelState.AddModelError(string.Empty, message);
+                ViewBag.UploadError = message;
                 await PopulateDropdowns(viewModel.SubjectId);
                 return View(viewModel);
             }
@@ -211,7 +208,7 @@ namespace PresentationLayer.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                var chunks = (await _geminiService.GetDocumentTextChunksAsync(tempFile, 1200)).ToList();
+                var chunks = (await _geminiService.GetDocumentTextChunksAsync(tempFile)).ToList();
                 if (!chunks.Any())
                 {
                     return Json(new { success = false, message = "Không thể trích xuất hoặc phân đoạn nội dung từ file này." });
@@ -322,7 +319,8 @@ namespace PresentationLayer.Controllers
                 }
             }
 
-            var (success, message, document) = await _documentService.UpdateDocumentAsync(viewModel);
+            var userId = GetCurrentUserId();
+            var (success, message, document) = await _documentService.UpdateDocumentAsync(viewModel, userId.Value);
 
             if (!success)
             {
@@ -351,10 +349,10 @@ namespace PresentationLayer.Controllers
             }
 
             var userId = GetCurrentUserId();
-            if (!userId.HasValue || !await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value))
+            bool canManage = false;
+            if (userId.HasValue)
             {
-                TempData["ErrorMessage"] = "Bạn không có quyền truy cập tài liệu này.";
-                return RedirectToAction(nameof(Index));
+                canManage = await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value);
             }
 
             var viewModel = new DocumentDetailViewModel
@@ -363,7 +361,34 @@ namespace PresentationLayer.Controllers
                 NewStatus = document.Status
             };
 
-            ViewBag.CanManageDocument = true;
+            var wwwrootPath = _webHostEnvironment.WebRootPath;
+            var fullPath = Path.Combine(wwwrootPath, document.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+            
+            string textContent = "Không thể tải nội dung file.";
+            List<string> simulatedChunks = new List<string>();
+
+            if (System.IO.File.Exists(fullPath))
+            {
+                textContent = await _geminiService.GetDocumentTextAsync(fullPath);
+                if (string.IsNullOrWhiteSpace(textContent))
+                {
+                    textContent = "Không có nội dung dạng text cho file này.";
+                }
+
+                // If user can manage (Admin or Lecturer in charge), load chunks
+                if (canManage)
+                {
+                    var chunks = await _geminiService.GetDocumentTextChunksAsync(fullPath);
+                    simulatedChunks = chunks.ToList();
+                }
+            }
+
+            ViewBag.CanManageDocument = canManage;
+            ViewBag.CanViewChunks = canManage;
+            ViewBag.SimulatedChunks = simulatedChunks;
+            ViewBag.PdfUrl = "/" + document.FilePath.Replace("\\", "/");
+            ViewBag.TextContent = textContent;
+            ViewBag.IsPdfView = document.FileType?.ToLower() == "pdf";
 
             return View(viewModel);
         }
@@ -383,7 +408,8 @@ namespace PresentationLayer.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            var (success, message) = await _documentService.UpdateDocumentStatusAsync(id, newStatus);
+            var userId = GetCurrentUserId();
+            var (success, message) = await _documentService.UpdateDocumentStatusAsync(id, newStatus, userId.Value);
 
             if (success)
                 TempData["SuccessMessage"] = message;
@@ -432,8 +458,9 @@ namespace PresentationLayer.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            var userId = GetCurrentUserId();
             var wwwrootPath = _webHostEnvironment.WebRootPath;
-            var (success, message) = await _documentService.DeleteDocumentAsync(id, wwwrootPath);
+            var (success, message) = await _documentService.DeleteDocumentAsync(id, wwwrootPath, userId.Value);
 
             if (success)
                 TempData["SuccessMessage"] = message;
@@ -459,9 +486,9 @@ namespace PresentationLayer.Controllers
             }
 
             var userId = GetCurrentUserId();
-            if (!userId.HasValue || !await CanManageSubjectDocumentsAsync(document.SubjectId, userId.Value))
+            if (!userId.HasValue)
             {
-                TempData["ErrorMessage"] = "Bạn không có quyền tải tài liệu này.";
+                TempData["ErrorMessage"] = "Vui lòng đăng nhập để tải tài liệu.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -528,7 +555,7 @@ namespace PresentationLayer.Controllers
 
             try
             {
-                var chunks = (await _geminiService.GetDocumentTextChunksAsync(fullPath, 1200)).ToList();
+                var chunks = (await _geminiService.GetDocumentTextChunksAsync(fullPath)).ToList();
                 if (!chunks.Any())
                 {
                     return Json(new { success = false, message = "Không thể trích xuất nội dung từ tài liệu này." });
@@ -595,7 +622,7 @@ namespace PresentationLayer.Controllers
 
             try
             {
-                var chunks = (await _geminiService.GetDocumentTextChunksAsync(fullPath, 1200)).ToList();
+                var chunks = (await _geminiService.GetDocumentTextChunksAsync(fullPath)).ToList();
                 var firstChunk = chunks.FirstOrDefault();
                 var embedding = firstChunk != null ? await _geminiService.CreateTextEmbeddingAsync(firstChunk) : null;
 
@@ -806,6 +833,37 @@ namespace PresentationLayer.Controllers
         }
 
         // ─────────────────────────────────────────────────────────────────────
+        // GET: /Document/ActivityLog/{subjectId}
+        // Xem lịch sử hoạt động thao tác tài liệu
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> ActivityLog(int subjectId)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue || !await CanManageSubjectDocumentsAsync(subjectId, userId.Value))
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền xem lịch sử hoạt động của môn học này.";
+                return RedirectToAction("Details", "Subjects", new { id = subjectId });
+            }
+
+            var subject = await _subjectService.GetSubjectByIdAsync(subjectId, includeDeleted: false);
+            if (subject == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy môn học.";
+                return RedirectToAction("Index", "Subjects");
+            }
+
+            var logs = await _activityLogService.GetLogsBySubjectIdAsync(subjectId);
+
+            ViewBag.SubjectName = subject.SubjectName;
+            ViewBag.SubjectCode = subject.SubjectCode;
+            ViewBag.SubjectId = subjectId;
+
+            return View(logs);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         // Private helpers
         // ─────────────────────────────────────────────────────────────────────
 
@@ -860,13 +918,7 @@ namespace PresentationLayer.Controllers
 
         private async Task<bool> CanManageSubjectDocumentsAsync(int subjectId, int userId)
         {
-            if (User.IsInRole("Admin"))
-            {
-                return true;
-            }
-
-            return User.IsInRole("Lecturer")
-                && await _subjectService.IsLecturerAssignedToSubjectAsync(subjectId, userId);
+            return await _subjectService.IsLecturerAssignedToSubjectAsync(subjectId, userId);
         }
 
         private async Task PopulateEditDropdowns(int selectedSubjectId, int? selectedChapterId = null)

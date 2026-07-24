@@ -16,12 +16,14 @@ namespace PresentationLayer.Controllers
         private readonly ISubscriptionService _subscriptionService;
         private readonly BussinessLayer.Services.IEmailService _emailService;
         private readonly ISubjectService _subjectService;
+        private readonly IChunkSettingsService _chunkSettingsService;
         public AdminController(
             IDocumentService documentService,
             IRoleService roleService,
             IUserService userService,
             ISubscriptionService subscriptionService,
             ISubjectService subjectService,
+            IChunkSettingsService chunkSettingsService,
             BussinessLayer.Services.IEmailService emailService)
         {
             _documentService = documentService;
@@ -30,6 +32,7 @@ namespace PresentationLayer.Controllers
             _subscriptionService = subscriptionService;
             _emailService = emailService;
             _subjectService = subjectService;
+            _chunkSettingsService = chunkSettingsService;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -339,6 +342,28 @@ namespace PresentationLayer.Controllers
 
             TempData["SuccessMsg"] = $"Đã gửi thông báo đến {sent} sinh viên.";
             return RedirectToAction("Dashboard");
+        }
+
+        // --- Chunk Settings ---
+        [HttpGet]
+        public IActionResult ChunkSettings()
+        {
+            var settings = _chunkSettingsService.GetSettings();
+            return View(settings);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChunkSettings(ChunkSettingsDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(dto);
+            }
+
+            await _chunkSettingsService.SaveSettingsAsync(dto);
+            TempData["SuccessMsg"] = "Cập nhật cấu hình Chunk AI thành công!";
+            return RedirectToAction("ChunkSettings");
         }
     }
 }

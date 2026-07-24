@@ -37,13 +37,14 @@ namespace BussinessLayer.Services
         /// </summary>
         /// <param name="id">Id của tài liệu</param>
         /// <param name="wwwrootPath">Đường dẫn tuyệt đối đến thư mục wwwroot</param>
+        /// <param name="userId">Id của user thực hiện xoá</param>
         /// <returns>(success, message)</returns>
-        Task<(bool Success, string Message)> DeleteDocumentAsync(int id, string wwwrootPath);
+        Task<(bool Success, string Message)> DeleteDocumentAsync(int id, string wwwrootPath, int userId);
 
         /// <summary>
         /// Cập nhật trạng thái xử lý của tài liệu: Pending / Indexed / Failed
         /// </summary>
-        Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatus newStatus);
+        Task<(bool Success, string Message)> UpdateDocumentStatusAsync(int id, DocumentStatus newStatus, int userId);
 
         /// <summary>Tìm tài liệu theo mã băm SHA-256 nội dung</summary>
         Task<DocumentDto?> GetDocumentByHashAsync(string fileHash);
@@ -53,7 +54,7 @@ namespace BussinessLayer.Services
         /// </summary>
         /// <param name="viewModel">Dữ liệu chỉnh sửa từ form</param>
         /// <returns>(success, message, documentDto)</returns>
-        Task<(bool Success, string Message, DocumentDto? Document)> UpdateDocumentAsync(DocumentEditViewModel viewModel);
+        Task<(bool Success, string Message, DocumentDto? Document)> UpdateDocumentAsync(DocumentEditViewModel viewModel, int userId);
 
         /// <summary>Xử lý upload phân đoạn (Chunk Upload)</summary>
         Task<(bool Success, string Message, DocumentDto? Document)> ProcessChunkAsync(

@@ -1,0 +1,97 @@
+@model IEnumerable<BussinessLayer.DTOs.DocumentActivityLogDto>
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Hoạt động thao tác tài liệu";
+    ViewBag.ActiveMenu = "Subjects";
+}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle"><a asp-controller="Subjects" asp-action="Details" asp-route-id="@ViewBag.SubjectId" class="text-pink">Chi tiết môn học</a> › Hoạt động</div>
+            <h1 class="page-title">Hoạt động tài liệu</h1>
+            <p class="page-subtitle">Môn học: <span style="font-weight:900;">@ViewBag.SubjectName</span> (@ViewBag.SubjectCode)</p>
+        </div>
+        <a asp-controller="Subjects" asp-action="Details" asp-route-id="@ViewBag.SubjectId" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại môn học</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="brutal-card" style="text-align:center; padding:48px;">
+            <i class="fa-solid fa-clock-rotate-left" style="font-size:40px; color:#ccc;"></i>
+            <h3 class="card-title" style="margin:12px 0 6px;">Chưa có hoạt động nào</h3>
+            <p class="text-muted" style="font-weight:700;">Hiện tại chưa có ghi nhận thao tác nào với tài liệu của môn học này.</p>
+        </div>
+    }
+    else
+    {
+        <div class="brutal-card pad0">
+            <div style="padding:15px 20px; overflow-x:auto;">
+                <table class="brutal-table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Tài liệu</th>
+                            <th>Thao tác</th>
+                            <th>Người thực hiện</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model.OrderByDescending(l => l.Timestamp))
+                        {
+                            <tr>
+                                <td style="white-space:nowrap;">
+                                    <div style="font-weight:900;">@log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted" style="font-size:12px;">@log.Timestamp.ToLocalTime().ToString("HH:mm:ss")</div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(log.DocumentTitle))
+                                    {
+                                        <span style="font-weight:800;">@log.DocumentTitle</span>
+                                    }
+                                    else if (log.DocumentId.HasValue)
+                                    {
+                                        <span class="text-muted">Tài liệu #@log.DocumentId</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted" style="font-style:italic;">Không xác định</span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var badgeColor = log.Action switch
+                                        {
+                                            "Upload" => "badge-green",
+                                            "Update" => "badge-yellow",
+                                            "Delete" => "badge-red",
+                                            "ChangeStatus" => "badge-blue",
+                                            _ => "badge-gray"
+                                        };
+                                        var actionText = log.Action switch
+                                        {
+                                            "Upload" => "Tải lên",
+                                            "Update" => "Cập nhật",
+                                            "Delete" => "Xoá",
+                                            "ChangeStatus" => "Đổi trạng thái",
+                                            _ => log.Action
+                                        };
+                                    }
+                                    <span class="badge @badgeColor">@actionText</span>
+                                </td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div style="width:28px; height:28px; border-radius:50%; background:var(--pink); border:2px solid var(--black); display:flex; align-items:center; justify-content:center; color:white; font-weight:900; font-size:12px;">
+                                            @(log.Username?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <div style="font-weight:800;">@log.Username</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

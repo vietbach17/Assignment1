@@ -70,7 +70,7 @@ namespace BussinessLayer.Services
 
                         var ext = Path.GetExtension(path).ToLower();
                         var fileName = Path.GetFileName(path);
-                        var chunks = await GetDocumentTextChunksAsync(path, maxChunkSize: 1200);
+                        var chunks = await GetDocumentTextChunksAsync(path);
                         var chunkList = chunks.ToList();
 
                         if (chunkList.Any())
@@ -192,7 +192,7 @@ namespace BussinessLayer.Services
             }
         }
 
-        public async Task<IEnumerable<string>> GetDocumentTextChunksAsync(string path, int maxChunkSize = 1200)
+        public async Task<IEnumerable<string>> GetDocumentTextChunksAsync(string path, int maxWords = 300, int overlapWords = 50)
         {
             if (!File.Exists(path)) return Array.Empty<string>();
 
@@ -203,7 +203,87 @@ namespace BussinessLayer.Services
                 return Array.Empty<string>();
             }
 
-            return ChunkText(rawText, maxChunkSize);
+            return SplitTextByContext(rawText, maxWords, overlapWords);
+        }
+
+        public async Task<IEnumerable<string>> GetContextualDocumentTextChunksAsync(string path, int maxWords = 300, int overlapWords = 50)
+        {
+            if (!File.Exists(path)) return Array.Empty<string>();
+
+            var rawText = await GetDocumentTextAsync(path);
+            if (string.IsNullOrWhiteSpace(rawText)) return Array.Empty<string>();
+            if (rawText.StartsWith("[Lỗi") || rawText.Contains("không chứa văn bản dạng ký tự"))
+            {
+                return Array.Empty<string>();
+            }
+
+            // 1. Lấy tóm tắt ngữ cảnh
+            string summary = "Tài liệu học tập.";
+            if (!string.IsNullOrWhiteSpace(_apiKey))
+            {
+                try
+                {
+                    // Lấy khoảng 8000 ký tự đầu để tóm tắt tránh lỗi payload quá lớn
+                    var textForSummary = rawText.Length > 8000 ? rawText.Substring(0, 8000) : rawText;
+                    
+                    var requestBody = new
+                    {
+                        contents = new[]
+                        {
+                            new
+                            {
+                                role = "user",
+                                parts = new[]
+                                {
+                                    new { text = $"Hãy tóm tắt nội dung chính của tài liệu sau trong 2-3 câu để làm ngữ cảnh chung:\n\n{textForSummary}" }
+                                }
+                            }
+                        }
+                    };
+
+                    var url = $"{_apiUrl.TrimEnd('/')}/{_model}:generateContent?key={_apiKey}";
+                    var jsonPayload = JsonSerializer.Serialize(requestBody);
+                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                    var response = await _httpClient.PostAsync(url, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(responseString);
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+                        {
+                            var firstCandidate = candidates[0];
+                            if (firstCandidate.TryGetProperty("content", out var contentObj) &&
+                                contentObj.TryGetProperty("parts", out var responseParts) &&
+                                responseParts.GetArrayLength() > 0)
+                            {
+                                var aiSummary = responseParts[0].GetProperty("text").GetString();
+                                if (!string.IsNullOrWhiteSpace(aiSummary))
+                                {
+                                    summary = aiSummary.Trim();
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fallback nếu có lỗi
+                }
+            }
+
+            // 2. Chunks raw text
+            var rawChunks = SplitTextByContext(rawText, maxWords, overlapWords).ToList();
+
+            // 3. Gắn ngữ cảnh vào từng chunk
+            var contextualChunks = new List<string>();
+            foreach (var chunk in rawChunks)
+            {
+                contextualChunks.Add($"[Ngữ cảnh: {summary}]\n\n{chunk}");
+            }
+
+            return contextualChunks;
         }
 
         public async Task<IEnumerable<float>?> CreateTextEmbeddingAsync(string input)
@@ -251,56 +331,78 @@ namespace BussinessLayer.Services
             }
         }
 
-        private static List<string> ChunkText(string text, int maxChunkSize)
+        private static List<string> SplitTextByContext(string content, int maxWords = 300, int overlapWords = 50)
         {
-            var normalized = Regex.Replace(text, "\r\n|\r", "\n");
-            var segments = normalized.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .ToList();
-
             var chunks = new List<string>();
-            var currentChunk = new StringBuilder();
+            if (string.IsNullOrWhiteSpace(content)) return chunks;
 
-            foreach (var segment in segments)
+            // Bước 1: Tách đoạn văn
+            var paragraphs = System.Text.RegularExpressions.Regex.Split(content, @"\n\s*\n");
+            
+            var currentChunkWords = new List<string>();
+            
+            foreach (var para in paragraphs)
             {
-                if (segment.Length > maxChunkSize)
+                if (string.IsNullOrWhiteSpace(para)) continue;
+
+                var paraWords = para.Split(new[] { ' ', '\r', '\n', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
+                
+                // Nếu đoạn văn dài hơn giới hạn, ta chia nhỏ nó thành các câu
+                if (paraWords.Length > maxWords)
                 {
-                    if (currentChunk.Length > 0)
+                    // Tách câu giữ nguyên dấu kết thúc câu
+                    var sentences = System.Text.RegularExpressions.Regex.Split(para, @"(?<=[.!?])\s+");
+                    
+                    foreach (var sentence in sentences)
                     {
-                        chunks.Add(currentChunk.ToString().Trim());
-                        currentChunk.Clear();
+                        if (string.IsNullOrWhiteSpace(sentence)) continue;
+                        
+                        var sentenceWords = sentence.Split(new[] { ' ', '\r', '\n', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
+                        
+                        // Nếu 1 câu dài hơn maxWords (hiếm nhưng có thể xảy ra ở PDF lỗi), tách ép theo số từ
+                        if (sentenceWords.Length > maxWords)
+                        {
+                            foreach (var word in sentenceWords)
+                            {
+                                currentChunkWords.Add(word);
+                                if (currentChunkWords.Count >= maxWords)
+                                {
+                                    chunks.Add(string.Join(" ", currentChunkWords));
+                                    var overlap = currentChunkWords.Skip(currentChunkWords.Count - overlapWords).ToList();
+                                    currentChunkWords.Clear();
+                                    currentChunkWords.AddRange(overlap);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (currentChunkWords.Count + sentenceWords.Length > maxWords && currentChunkWords.Count > 0)
+                            {
+                                chunks.Add(string.Join(" ", currentChunkWords));
+                                var overlap = currentChunkWords.Skip(currentChunkWords.Count - overlapWords).ToList();
+                                currentChunkWords.Clear();
+                                currentChunkWords.AddRange(overlap);
+                            }
+                            currentChunkWords.AddRange(sentenceWords);
+                        }
                     }
-
-                    for (int i = 0; i < segment.Length; i += maxChunkSize)
+                }
+                else
+                {
+                    if (currentChunkWords.Count + paraWords.Length > maxWords && currentChunkWords.Count > 0)
                     {
-                        var length = Math.Min(maxChunkSize, segment.Length - i);
-                        chunks.Add(segment.Substring(i, length).Trim());
+                        chunks.Add(string.Join(" ", currentChunkWords));
+                        var overlap = currentChunkWords.Skip(currentChunkWords.Count - overlapWords).ToList();
+                        currentChunkWords.Clear();
+                        currentChunkWords.AddRange(overlap);
                     }
-                    continue;
+                    currentChunkWords.AddRange(paraWords);
                 }
-
-                if (currentChunk.Length + segment.Length + 2 > maxChunkSize)
-                {
-                    chunks.Add(currentChunk.ToString().Trim());
-                    currentChunk.Clear();
-                }
-
-                if (currentChunk.Length > 0)
-                {
-                    currentChunk.Append("\n\n");
-                }
-                currentChunk.Append(segment);
             }
 
-            if (currentChunk.Length > 0)
+            if (currentChunkWords.Count > 0)
             {
-                chunks.Add(currentChunk.ToString().Trim());
-            }
-
-            if (!chunks.Any() && !string.IsNullOrWhiteSpace(text))
-            {
-                chunks.Add(text.Trim());
+                chunks.Add(string.Join(" ", currentChunkWords));
             }
 
             return chunks;

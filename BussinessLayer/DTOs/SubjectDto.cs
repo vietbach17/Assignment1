@@ -18,6 +18,8 @@ namespace BussinessLayer.DTOs
         public DateTime CreatedDate { get; set; }
         
         public List<ChapterDto>? Chapters { get; set; }
+        
+        public List<string> AssignedLecturerNames { get; set; } = new List<string>();
     }
 
     /// <summary>

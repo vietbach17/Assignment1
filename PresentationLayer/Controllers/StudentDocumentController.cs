@@ -152,13 +152,27 @@ namespace PresentationLayer.Controllers
             {
                 TempData["ErrorMessage"] = "Không tìm thấy tài liệu hoặc tài liệu chưa sẵn sàng.";
                 return RedirectToAction(nameof(Documents));
-               
             }
 
-            // Tạo URL để xem file
             var fileUrl = Url.Content($"~/{document.FilePath}");
             ViewBag.FileUrl = fileUrl;
             ViewBag.FileType = document.FileType;
+
+            var wwwrootPath = _webHostEnvironment.WebRootPath;
+            var fullPath = Path.Combine(wwwrootPath, document.FilePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+            
+            string textContent = "Không thể tải nội dung file.";
+            if (System.IO.File.Exists(fullPath))
+            {
+                textContent = await _geminiService.GetDocumentTextAsync(fullPath);
+                if (string.IsNullOrWhiteSpace(textContent))
+                {
+                    textContent = "Không có nội dung dạng text cho file này.";
+                }
+            }
+
+            ViewBag.TextContent = textContent;
+            ViewBag.IsPdfView = document.FileType?.ToLower() == "pdf";
 
             return View(document);
         }
