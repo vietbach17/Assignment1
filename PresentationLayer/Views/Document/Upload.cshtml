@@ -351,7 +351,24 @@
                                 logToTerminal(`[Cơ sở dữ liệu] Ghi nhận metadata thành công. Document ID: ${result.document.id}`, 'success');
                                 progressStatusText.textContent = 'Đang xử lý AI ngầm...';
                                 logToTerminal('Tải lên thành công! Hệ thống đang xử lý phân đoạn ngữ cảnh AI ngầm. Bạn có thể chuyển hướng...', 'system');
-                                setTimeout(() => { window.location.href = `/Document/Details/${result.document.id}`; }, 2500);
+                                
+                                // Show success modal instead of auto redirect
+                                const successMsg = 'Tải lên thành công! Sẽ chuyển hướng đến tài liệu trong giây lát...';
+                                if (typeof brutalAlert !== 'undefined') {
+                                    brutalAlert(successMsg);
+                                    const closeBtn = document.querySelector('#brutalAlertModal .btn-dark');
+                                    if(closeBtn) {
+                                        closeBtn.innerText = "ĐI TỚI TÀI LIỆU";
+                                        closeBtn.classList.remove('btn-dark');
+                                        closeBtn.classList.add('btn-pink');
+                                        closeBtn.onclick = function() {
+                                            window.location.href = `/Document/Details/${result.document.id}`;
+                                        };
+                                    }
+                                } else {
+                                    alert(successMsg);
+                                }
+                                setTimeout(() => { window.location.href = `/Document/Details/${result.document.id}`; }, 2000);
                             } else {
                                 logToTerminal(`[Lỗi] Phản hồi thành công nhưng thiếu thông tin tài liệu.`, 'error');
                                 submitBtn.disabled = false;
@@ -360,7 +377,21 @@
                         }
                     } else {
                         console.error(`[Thất bại] Lỗi từ máy chủ: ${result.message}`);
-                        showErrorModal(result.message);
+                        if (typeof brutalAlert !== 'undefined') {
+                            brutalAlert('Tải lên thất bại: ' + result.message);
+                            // reset button state
+                            const closeBtn = document.querySelector('#brutalAlertModal .btn-pink');
+                            if(closeBtn) {
+                                closeBtn.innerText = "ĐÓNG";
+                                closeBtn.classList.remove('btn-pink');
+                                closeBtn.classList.add('btn-dark');
+                                closeBtn.onclick = function() {
+                                    document.getElementById('brutalAlertModal').style.display='none';
+                                };
+                            }
+                        } else {
+                            showErrorModal(result.message);
+                        }
                         progressStatusText.textContent = 'Tải lên thất bại.';
                         submitBtn.disabled = false;
                         if (cancelBtn) { cancelBtn.style.pointerEvents = ''; cancelBtn.style.opacity = ''; }
@@ -368,7 +399,11 @@
                     }
                 } catch (error) {
                     console.error(`[Lỗi mạng] Lỗi truyền tải phân đoạn ${i + 1}. Lỗi: ${error.message}`);
-                    showErrorModal(`Lỗi truyền tải phân đoạn. Chi tiết: ${error.message}`);
+                    if (typeof brutalAlert !== 'undefined') {
+                        brutalAlert(`Lỗi truyền tải phân đoạn. Chi tiết: ${error.message}`);
+                    } else {
+                        showErrorModal(`Lỗi truyền tải phân đoạn. Chi tiết: ${error.message}`);
+                    }
                     progressStatusText.textContent = 'Lỗi kết nối mạng.';
                     submitBtn.disabled = false;
                     if (cancelBtn) { cancelBtn.style.pointerEvents = ''; cancelBtn.style.opacity = ''; }
