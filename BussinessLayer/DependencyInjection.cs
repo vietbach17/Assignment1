@@ -1,11 +1,13 @@
 using BussinessLayer.IServices;
 using DataAccessLayer.IRepositories;
 using BussinessLayer.Services;
+using BussinessLayer.Services.Indexing;
 using DataAccessLayer.DbContexts;
 using DataAccessLayer.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using VNPAY.Extensions;
 
 namespace BussinessLayer
@@ -58,6 +60,11 @@ namespace BussinessLayer
             services.AddScoped<IChunkSettingsService, ChunkSettingsService>();
             services.AddScoped<IDocumentActivityLogService, DocumentActivityLogService>();
             services.AddScoped<IGeminiService, GeminiService>();
+
+            // ------- Document indexing (chunk + embed) chạy nền -------
+            services.AddSingleton<IDocumentIndexQueue, DocumentIndexQueue>();
+            services.AddScoped<IDocumentIndexer, DocumentIndexer>();
+            services.AddHostedService<DocumentIndexingHostedService>();
 
             return services;
         }

@@ -22,6 +22,7 @@ namespace BussinessLayer.Services
         private readonly IDocumentRepository _documentRepository;
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
         private readonly BussinessLayer.IServices.IDocumentActivityLogService _activityLogService;
+        private readonly BussinessLayer.Services.Indexing.IDocumentIndexQueue _indexQueue;
 
         // Các định dạng file được phép upload
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -33,13 +34,15 @@ namespace BussinessLayer.Services
         private const long MaxFileSizeBytes = 50L * 1024 * 1024;
 
         public DocumentService(
-            IDocumentRepository documentRepository, 
+            IDocumentRepository documentRepository,
             Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory,
-            BussinessLayer.IServices.IDocumentActivityLogService activityLogService)
+            BussinessLayer.IServices.IDocumentActivityLogService activityLogService,
+            BussinessLayer.Services.Indexing.IDocumentIndexQueue indexQueue)
         {
             _documentRepository = documentRepository;
             _scopeFactory = scopeFactory;
             _activityLogService = activityLogService;
+            _indexQueue = indexQueue;
         }
 
         /// <summary>
@@ -436,54 +439,12 @@ namespace BussinessLayer.Services
             }
         }
 
+        // Đưa tài liệu vào hàng đợi index nền (chunk + embed tất cả chunk) — được xử lý bởi
+        // DocumentIndexingHostedService, thay cho fire-and-forget Task.Run trước đây.
         private void TriggerBackgroundProcessing(int documentId, string fullFilePath, int userId, string wwwrootPath)
         {
-            Task.Run(async () =>
-            {
-                using var scope = _scopeFactory.CreateScope();
-                var geminiService = scope.ServiceProvider.GetRequiredService<BussinessLayer.IServices.IGeminiService>();
-                var chunkSettingsService = scope.ServiceProvider.GetRequiredService<BussinessLayer.IServices.IChunkSettingsService>();
-                var docRepo = scope.ServiceProvider.GetRequiredService<DataAccessLayer.IRepositories.IDocumentRepository>();
-
-                try
-                {
-                    // Lấy cấu hình Chunk của Admin
-                    var settings = chunkSettingsService.GetSettings();
-
-                    // 1. Lấy chunks theo ngữ cảnh
-                    var chunks = (await geminiService.GetContextualDocumentTextChunksAsync(fullFilePath, settings.MaxWords, settings.OverlapWords)).ToList();
-
-                    // 2. Embeddings (tùy chọn, để tiết kiệm thời gian/API thì có thể chỉ lấy embedding cho chunk đầu tiên, hoặc map hết)
-                    // Ở đây làm giống logic cũ là chỉ lấy chunk đầu, hoặc loop lấy hết. Lấy chunk đầu để tránh rate limit:
-                    var firstChunk = chunks.FirstOrDefault();
-                    var embedding = firstChunk != null ? await geminiService.CreateTextEmbeddingAsync(firstChunk) : null;
-
-                    var uploadsDir = Path.Combine(wwwrootPath, "uploads");
-                    var document = await docRepo.GetByIdAsync(documentId, false);
-                    if (document != null)
-                    {
-                        var savePath = Path.Combine(uploadsDir, $"chunks_{document.StoredFileName}.json");
-                        var payload = new
-                        {
-                            documentId = document.Id,
-                            savedAt = DateTime.UtcNow,
-                            savedBy = userId,
-                            chunks = chunks,
-                            embedding = embedding?.ToList()
-                        };
-
-                        var json = System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                        await System.IO.File.WriteAllTextAsync(savePath, json);
-
-                        // 3. Update status to Indexed
-                        await docRepo.UpdateStatusAsync(document.Id, DocumentStatusEntity.Indexed);
-                    }
-                }
-                catch (Exception)
-                {
-                    await docRepo.UpdateStatusAsync(documentId, DocumentStatusEntity.Failed);
-                }
-            });
+            _ = _indexQueue.EnqueueAsync(
+                new BussinessLayer.Services.Indexing.DocumentIndexRequest(documentId, fullFilePath, userId, wwwrootPath));
         }
 
         // ─────────────────────────────────────────────────────────────────────

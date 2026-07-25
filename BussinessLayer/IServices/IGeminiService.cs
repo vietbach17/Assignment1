@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using BussinessLayer.DTOs;
 
 namespace BussinessLayer.IServices
 {
@@ -35,6 +36,17 @@ namespace BussinessLayer.IServices
         /// <param name="overlapWords">Số từ gối đầu giữa các chunk</param>
         /// <returns>Danh sách các đoạn text của tài liệu đã được gắn ngữ cảnh</returns>
         Task<IEnumerable<string>> GetContextualDocumentTextChunksAsync(string path, int maxWords = 300, int overlapWords = 50);
+
+        /// <summary>
+        /// Phân đoạn tài liệu thành các chunk có metadata (số trang) nhưng CHƯA tạo embedding.
+        /// </summary>
+        Task<IReadOnlyList<DocChunk>> BuildChunksAsync(string path, int maxWords = 300, int overlapWords = 50);
+
+        /// <summary>
+        /// Tạo embedding cho toàn bộ chunk (theo lô). Gán trực tiếp vào <see cref="DocChunk.Embedding"/>.
+        /// </summary>
+        /// <returns>Số chunk đã tạo được embedding.</returns>
+        Task<int> EmbedChunksAsync(IList<DocChunk> chunks);
 
         /// <summary>
         /// Tạo embedding cho một chuỗi văn bản, để phục vụ truy vấn tìm kiếm/summarization về sau

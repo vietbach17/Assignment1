@@ -707,19 +707,35 @@ namespace PresentationLayer.Controllers
                 if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
 
                 var savePath = Path.Combine(uploadsDir, $"chunks_{document.StoredFileName}.json");
+
+                // Dựng lại danh sách chunk từ nội dung đã chỉnh sửa và tạo lại embedding cho từng chunk
+                // để chức năng tìm kiếm ngữ nghĩa (RAG) vẫn khớp với nội dung mới.
+                var editedTexts = (model?.Chunks ?? new List<string>())
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList();
+                var chunkList = editedTexts
+                    .Select((t, i) => new BussinessLayer.DTOs.DocChunk { Index = i, Text = t })
+                    .ToList();
+                var embeddedCount = await _geminiService.EmbedChunksAsync(chunkList);
+
                 var payload = new
                 {
                     documentId = document.Id,
                     savedAt = DateTime.UtcNow,
                     savedBy = userId,
-                    chunks = model?.Chunks ?? new List<string>(),
-                    embedding = model?.Embedding ?? null
+                    embeddingModel = "gemini-embedding-001",
+                    dim = chunkList.FirstOrDefault(c => c.Embedding != null)?.Embedding?.Length ?? 0,
+                    chunkCount = chunkList.Count,
+                    embeddedCount,
+                    chunks = chunkList.Select(c => c.Text).ToList(),
+                    embedding = chunkList.FirstOrDefault()?.Embedding?.ToList(),
+                    chunkData = chunkList
                 };
 
                 var json = System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
                 await System.IO.File.WriteAllTextAsync(savePath, json);
 
-                return Json(new { success = true, message = "Lưu thành công." });
+                return Json(new { success = true, message = $"Đã lưu {chunkList.Count} chunk, tạo embedding cho {embeddedCount} chunk." });
             }
             catch (Exception ex)
             {
