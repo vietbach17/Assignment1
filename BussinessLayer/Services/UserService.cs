@@ -1,3 +1,5 @@
+using BussinessLayer.IServices;
+using DataAccessLayer.IRepositories;
 using BussinessLayer.DTOs;
 using DataAccessLayer.Repositories;
 

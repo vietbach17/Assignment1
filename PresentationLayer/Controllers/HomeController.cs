@@ -1,4 +1,4 @@
-using BussinessLayer.Interfaces;
+using BussinessLayer.IServices;
 using BussinessLayer.Services;
 using BussinessLayer.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -119,7 +119,7 @@ namespace PresentationLayer.Controllers
             }
 
             // 3. Kiểm tra & thực hiện Daily Reset nếu đã qua 24h
-            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold
+            if (planDto.QuestionLimit < BussinessLayer.DTOs.SubscriptionPlanDTO.UnlimitedThreshold
                 && currentSubDto.DailyResetTime.HasValue
                 && DateTime.UtcNow >= currentSubDto.DailyResetTime.Value.AddHours(24))
             {
@@ -130,7 +130,7 @@ namespace PresentationLayer.Controllers
             }
 
             // 4. Kiểm tra còn lượt không
-            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold && currentSubDto.RemainingQuestions <= 0)
+            if (planDto.QuestionLimit < BussinessLayer.DTOs.SubscriptionPlanDTO.UnlimitedThreshold && currentSubDto.RemainingQuestions <= 0)
             {
                 // Tính thời gian còn lại trước khi reset
                 string resetTimeIso = "";
@@ -149,7 +149,7 @@ namespace PresentationLayer.Controllers
             }
 
             // 5. Nếu gói không phải Vô hạn (Pro), tiến hành trừ 1 lượt hỏi
-            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold)
+            if (planDto.QuestionLimit < BussinessLayer.DTOs.SubscriptionPlanDTO.UnlimitedThreshold)
             {
                 // Nếu chưa có DailyResetTime → đây là câu hỏi đầu tiên trong chu kỳ
                 DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
@@ -218,7 +218,7 @@ namespace PresentationLayer.Controllers
             }
 
             // Kiểm tra & thực hiện Daily Reset nếu đã qua 24h
-            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold
+            if (planDto.QuestionLimit < BussinessLayer.DTOs.SubscriptionPlanDTO.UnlimitedThreshold
                 && currentSubDto.DailyResetTime.HasValue
                 && DateTime.UtcNow >= currentSubDto.DailyResetTime.Value.AddHours(24))
             {
@@ -228,7 +228,7 @@ namespace PresentationLayer.Controllers
             }
 
             // Kiểm tra xem học sinh còn lượt đặt câu hỏi không
-            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold && currentSubDto.RemainingQuestions <= 0)
+            if (planDto.QuestionLimit < BussinessLayer.DTOs.SubscriptionPlanDTO.UnlimitedThreshold && currentSubDto.RemainingQuestions <= 0)
             {
                 string resetTimeIso = "";
                 if (currentSubDto.DailyResetTime.HasValue)
@@ -283,7 +283,7 @@ namespace PresentationLayer.Controllers
             }
 
             // Tiến hành trừ 1 lượt hỏi (nếu không phải gói vô hạn)
-            if (planDto.QuestionLimit < BussinessLayer.Constants.SubscriptionConstants.UnlimitedThreshold)
+            if (planDto.QuestionLimit < BussinessLayer.DTOs.SubscriptionPlanDTO.UnlimitedThreshold)
             {
                 DateTime? newDailyResetTime = currentSubDto.DailyResetTime ?? DateTime.UtcNow;
 

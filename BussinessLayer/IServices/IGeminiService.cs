@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BussinessLayer.Interfaces
+namespace BussinessLayer.IServices
 {
     /// <summary>
     /// Giao diện dịch vụ kết nối với Gemini AI API

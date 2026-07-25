@@ -23,7 +23,7 @@
         <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> @TempData["SuccessMsg"]</div>
     }
 
-    <div class="brutal-card" style="max-width:620px;">
+    <div class="brutal-card" style="max-width:620px; margin:0 auto;">
         <form asp-action="SendNotification" asp-controller="Admin" method="post">
             @Html.AntiForgeryToken()
             <div class="form-group">

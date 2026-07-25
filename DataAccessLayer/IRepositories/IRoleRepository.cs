@@ -1,6 +1,6 @@
 using DataAccessLayer.Models;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.IRepositories
 {
     // Giao diện Repository để truy xuất dữ liệu Role
     public interface IRoleRepository

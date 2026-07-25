@@ -2,7 +2,7 @@ using BussinessLayer.DTOs;
 using DataAccessLayer.Models;
 using Microsoft.AspNetCore.Http; // Thêm để dùng HttpContext
 
-namespace BussinessLayer.Interfaces
+namespace BussinessLayer.IServices
 {
     public interface ISubscriptionService
     {

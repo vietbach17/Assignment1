@@ -1,3 +1,5 @@
+using BussinessLayer.IServices;
+using DataAccessLayer.IRepositories;
 using BussinessLayer.DTOs;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
@@ -19,7 +21,7 @@ namespace BussinessLayer.Services
     {
         private readonly IDocumentRepository _documentRepository;
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
-        private readonly BussinessLayer.Interfaces.IDocumentActivityLogService _activityLogService;
+        private readonly BussinessLayer.IServices.IDocumentActivityLogService _activityLogService;
 
         // Các định dạng file được phép upload
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -33,7 +35,7 @@ namespace BussinessLayer.Services
         public DocumentService(
             IDocumentRepository documentRepository, 
             Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory,
-            BussinessLayer.Interfaces.IDocumentActivityLogService activityLogService)
+            BussinessLayer.IServices.IDocumentActivityLogService activityLogService)
         {
             _documentRepository = documentRepository;
             _scopeFactory = scopeFactory;
@@ -439,9 +441,9 @@ namespace BussinessLayer.Services
             Task.Run(async () =>
             {
                 using var scope = _scopeFactory.CreateScope();
-                var geminiService = scope.ServiceProvider.GetRequiredService<BussinessLayer.Interfaces.IGeminiService>();
-                var chunkSettingsService = scope.ServiceProvider.GetRequiredService<BussinessLayer.Interfaces.IChunkSettingsService>();
-                var docRepo = scope.ServiceProvider.GetRequiredService<DataAccessLayer.Repositories.IDocumentRepository>();
+                var geminiService = scope.ServiceProvider.GetRequiredService<BussinessLayer.IServices.IGeminiService>();
+                var chunkSettingsService = scope.ServiceProvider.GetRequiredService<BussinessLayer.IServices.IChunkSettingsService>();
+                var docRepo = scope.ServiceProvider.GetRequiredService<DataAccessLayer.IRepositories.IDocumentRepository>();
 
                 try
                 {

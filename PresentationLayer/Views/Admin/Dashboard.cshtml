@@ -13,7 +13,7 @@
             <h1 class="page-title">Bảng điều khiển</h1>
             <p class="page-subtitle">Chào mừng Admin! Nơi cấu hình, kiểm soát hệ thống và phân quyền.</p>
         </div>
-        <a asp-controller="Auth" asp-action="Register" class="brutal-btn btn-pink"><i class="fa-solid fa-user-plus"></i> Cấp tài khoản mới</a>
+        <a asp-controller="Admin" asp-action="CreateAccount" class="brutal-btn btn-pink"><i class="fa-solid fa-user-plus"></i> Cấp tài khoản mới</a>
     </div>
 
     @if (TempData["SuccessMsg"] != null)
@@ -122,7 +122,7 @@
         <!-- Quick Actions -->
         <div class="brutal-card" style="display:flex; flex-direction:column; gap:14px;">
             <h3 class="card-title">Tác vụ nhanh</h3>
-            <a asp-controller="Auth" asp-action="Register" class="brutal-btn btn-pink" style="justify-content:flex-start;"><i class="fa-solid fa-user-plus"></i> Thêm tài khoản</a>
+            <a asp-controller="Admin" asp-action="CreateAccount" class="brutal-btn btn-pink" style="justify-content:flex-start;"><i class="fa-solid fa-user-plus"></i> Thêm tài khoản</a>
             <a asp-controller="Subjects" asp-action="Create" class="brutal-btn btn-blue" style="justify-content:flex-start;"><i class="fa-solid fa-book-medical"></i> Thêm môn học</a>
             <a asp-controller="Admin" asp-action="SubscriptionPlans" class="brutal-btn btn-yellow" style="justify-content:flex-start;"><i class="fa-solid fa-box-open"></i> Gói subscription</a>
             <a asp-controller="Admin" asp-action="Notify" class="brutal-btn" style="justify-content:flex-start;"><i class="fa-solid fa-bell"></i> Gửi thông báo</a>

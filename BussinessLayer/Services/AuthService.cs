@@ -1,8 +1,9 @@
+using BussinessLayer.IServices;
+using DataAccessLayer.IRepositories;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
 using BussinessLayer.DTOs;
 using BCryptNet = BCrypt.Net.BCrypt;
-using BussinessLayer.Interfaces;
 
 namespace BussinessLayer.Services
 {

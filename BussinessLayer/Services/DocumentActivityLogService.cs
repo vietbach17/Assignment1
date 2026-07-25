@@ -1,9 +1,10 @@
+using BussinessLayer.IServices;
+using DataAccessLayer.IRepositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BussinessLayer.DTOs;
-using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
 

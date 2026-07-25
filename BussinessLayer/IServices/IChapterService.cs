@@ -1,6 +1,6 @@
 using BussinessLayer.DTOs;
 
-namespace BussinessLayer.Services
+namespace BussinessLayer.IServices
 {
     /// <summary>
     /// Interface định nghĩa các phương thức business logic cho Chapter management

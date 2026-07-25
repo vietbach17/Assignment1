@@ -1,6 +1,6 @@
 using DataAccessLayer.Models;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.IRepositories
 {
     /// <summary>
     /// Interface định nghĩa các thao tác dữ liệu cho Document

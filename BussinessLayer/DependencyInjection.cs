@@ -1,4 +1,5 @@
-using BussinessLayer.Interfaces;
+using BussinessLayer.IServices;
+using DataAccessLayer.IRepositories;
 using BussinessLayer.Services;
 using DataAccessLayer.DbContexts;
 using DataAccessLayer.Repositories;

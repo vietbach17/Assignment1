@@ -1,6 +1,6 @@
 using BussinessLayer.DTOs;
 
-namespace BussinessLayer.Services
+namespace BussinessLayer.IServices
 {
     /// <summary>
     /// Interface định nghĩa business logic cho Document

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BussinessLayer.DTOs;
 
-namespace BussinessLayer.Interfaces
+namespace BussinessLayer.IServices
 {
     public interface IDocumentActivityLogService
     {

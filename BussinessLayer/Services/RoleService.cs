@@ -1,3 +1,6 @@
+using BussinessLayer.IServices;
+using DataAccessLayer.IRepositories;
+using BussinessLayer.DTOs;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
 
@@ -14,15 +17,23 @@ namespace BussinessLayer.Services
             _roleRepository = roleRepository;
         }
 
-        public async Task<IEnumerable<Role>> GetAllRolesAsync()
+        public async Task<IEnumerable<RoleDto>> GetAllRolesAsync()
         {
-            return await _roleRepository.GetAllAsync();
+            var roles = await _roleRepository.GetAllAsync();
+            return roles.Select(MapToDto).ToList();
         }
 
-        public async Task<Role?> GetRoleByIdAsync(int id)
+        public async Task<RoleDto?> GetRoleByIdAsync(int id)
         {
-            return await _roleRepository.GetByIdAsync(id);
+            var role = await _roleRepository.GetByIdAsync(id);
+            return role == null ? null : MapToDto(role);
         }
+
+        private static RoleDto MapToDto(Role role) => new()
+        {
+            Id = role.Id,
+            RoleName = role.RoleName
+        };
 
         public async Task<bool> CreateRoleAsync(string roleName)
         {

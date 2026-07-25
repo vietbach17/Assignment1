@@ -37,7 +37,7 @@
         <div class="alert alert-error"><i class="fa-solid fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
     }
 
-    <div class="brutal-card" style="max-width:720px;">
+    <div class="brutal-card" style="max-width:720px; margin: 0 auto;">
         <form asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm" novalidate>
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="alert alert-error" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
@@ -171,6 +171,12 @@
             submitBtn.disabled = false;
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('fileSize').textContent = formatSize(file.size);
+
+            const titleInput = document.getElementById('Title');
+            if (titleInput && !titleInput.value.trim()) {
+                const fileNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                titleInput.value = fileNameWithoutExt;
+            }
             const badge = document.getElementById('fileIcon');
             switch (ext) {
                 case 'pdf': badge.className = 'fa-solid fa-file-pdf'; break;

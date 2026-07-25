@@ -24,7 +24,9 @@ namespace BussinessLayer.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Giới hạn câu hỏi phải lớn hơn 0")]
         public int QuestionLimit { get; set; }
 
+        public const int UnlimitedThreshold = 9999;
+
         /// <summary>Tiện ích hiển thị — không lưu DB</summary>
-        public bool IsUnlimited => QuestionLimit >= Constants.SubscriptionConstants.UnlimitedThreshold;
+        public bool IsUnlimited => QuestionLimit >= UnlimitedThreshold;
     }
 }

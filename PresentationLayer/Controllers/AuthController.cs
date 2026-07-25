@@ -1,5 +1,5 @@
+using BussinessLayer.IServices;
 using System.Security.Claims;
-using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -12,14 +12,14 @@ namespace PresentationLayer.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
-        private readonly BussinessLayer.Services.IEmailService _emailService;
-        private readonly BussinessLayer.Services.IRoleService _roleService;
+        private readonly BussinessLayer.IServices.IEmailService _emailService;
+        private readonly BussinessLayer.IServices.IRoleService _roleService;
 
         // Dependency Injection tiêm IAuthService, IEmailService & IRoleService
         public AuthController(
             IAuthService authService, 
-            BussinessLayer.Services.IEmailService emailService,
-            BussinessLayer.Services.IRoleService roleService)
+            BussinessLayer.IServices.IEmailService emailService,
+            BussinessLayer.IServices.IRoleService roleService)
         {
             _authService = authService;
             _emailService = emailService;

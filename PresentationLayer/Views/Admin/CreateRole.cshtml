@@ -14,7 +14,7 @@
         <a asp-action="Dashboard" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
     </div>
 
-    <div class="brutal-card" style="max-width:560px;">
+    <div class="brutal-card" style="max-width:560px; margin:0 auto;">
         <form asp-action="CreateRole" method="post">
             <div asp-validation-summary="ModelOnly" class="alert alert-error @(ViewData.ModelState.IsValid ? "" : "")" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
             <div class="form-group">

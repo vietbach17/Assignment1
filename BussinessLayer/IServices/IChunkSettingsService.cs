@@ -1,7 +1,7 @@
 using BussinessLayer.DTOs;
 using System.Threading.Tasks;
 
-namespace BussinessLayer.Interfaces
+namespace BussinessLayer.IServices
 {
     public interface IChunkSettingsService
     {

@@ -1,6 +1,6 @@
 using DataAccessLayer.Models;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.IRepositories
 {
     public interface ISubscriptionRepository
     {

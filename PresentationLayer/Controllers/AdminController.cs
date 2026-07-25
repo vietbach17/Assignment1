@@ -1,8 +1,9 @@
+using BussinessLayer.IServices;
 using BussinessLayer.DTOs;
 using BussinessLayer.Services;
-using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PresentationLayer.ViewModels;
 
 namespace PresentationLayer.Controllers
 {
@@ -14,9 +15,10 @@ namespace PresentationLayer.Controllers
         private readonly IRoleService _roleService;
         private readonly IUserService _userService;
         private readonly ISubscriptionService _subscriptionService;
-        private readonly BussinessLayer.Services.IEmailService _emailService;
+        private readonly BussinessLayer.IServices.IEmailService _emailService;
         private readonly ISubjectService _subjectService;
         private readonly IChunkSettingsService _chunkSettingsService;
+        private readonly IAuthService _authService;
         public AdminController(
             IDocumentService documentService,
             IRoleService roleService,
@@ -24,7 +26,8 @@ namespace PresentationLayer.Controllers
             ISubscriptionService subscriptionService,
             ISubjectService subjectService,
             IChunkSettingsService chunkSettingsService,
-            BussinessLayer.Services.IEmailService emailService)
+            BussinessLayer.IServices.IEmailService emailService,
+            IAuthService authService)
         {
             _documentService = documentService;
             _roleService = roleService;
@@ -33,6 +36,7 @@ namespace PresentationLayer.Controllers
             _emailService = emailService;
             _subjectService = subjectService;
             _chunkSettingsService = chunkSettingsService;
+            _authService = authService;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -68,6 +72,106 @@ namespace PresentationLayer.Controllers
             ViewBag.SuccessTransactionCount  = successTransactions.Count;
 
             return View(documents);
+        }
+
+        // --- Account Provisioning (Admin cấp tài khoản trực tiếp) ---
+
+        [HttpGet]
+        public async Task<IActionResult> CreateAccount()
+        {
+            var roles = await _roleService.GetAllRolesAsync();
+            ViewBag.Roles = roles.Where(r => !string.Equals(r.RoleName, "Admin", StringComparison.OrdinalIgnoreCase));
+            return View(new CreateAccountViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAccount(CreateAccountViewModel model)
+        {
+            var roles = await _roleService.GetAllRolesAsync();
+            var selectableRoles = roles.Where(r => !string.Equals(r.RoleName, "Admin", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Roles = selectableRoles;
+                return View(model);
+            }
+
+            var role = selectableRoles.FirstOrDefault(r => r.Id == model.RoleId);
+            if (role == null)
+            {
+                ModelState.AddModelError("RoleId", "Vai trò không hợp lệ.");
+                ViewBag.Roles = selectableRoles;
+                return View(model);
+            }
+
+            try
+            {
+                bool created = await _authService.RegisterAsync(model.Username, model.Password, model.Email, model.RoleId);
+                if (!created)
+                {
+                    ModelState.AddModelError("Username", "Tên đăng nhập này đã tồn tại trên hệ thống.");
+                    ViewBag.Roles = selectableRoles;
+                    return View(model);
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                if (ex.Message.Contains("Username"))
+                {
+                    ModelState.AddModelError("Username", "Tên đăng nhập này đã tồn tại trên hệ thống.");
+                }
+                else if (ex.Message.Contains("Email"))
+                {
+                    ModelState.AddModelError("Email", "Email này đã được sử dụng trên hệ thống.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
+                ViewBag.Roles = selectableRoles;
+                return View(model);
+            }
+
+            // Gửi email thông báo tài khoản mới cho người dùng được cấp
+            var emailSubject = $"Tài khoản {role.RoleName} StudyMind của bạn đã được tạo!";
+            var emailBody = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                    <h2 style='color: #1e3b31;'>Chào mừng bạn đến với StudyMind!</h2>
+                    <p>Quản trị viên đã khởi tạo tài khoản {role.RoleName} cho bạn.</p>
+                    <p>Dưới đây là thông tin tài khoản đăng nhập của bạn:</p>
+                    <table style='border-collapse: collapse; width: 100%; max-width: 400px;'>
+                        <tr style='background-color: #f4f6f8;'>
+                            <td style='padding: 10px; border: 1px solid #ddd; font-weight: bold;'>Tên đăng nhập:</td>
+                            <td style='padding: 10px; border: 1px solid #ddd;'>{model.Username}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 10px; border: 1px solid #ddd; font-weight: bold;'>Mật khẩu:</td>
+                            <td style='padding: 10px; border: 1px solid #ddd;'>{model.Password}</td>
+                        </tr>
+                        <tr style='background-color: #f4f6f8;'>
+                            <td style='padding: 10px; border: 1px solid #ddd; font-weight: bold;'>Vai trò:</td>
+                            <td style='padding: 10px; border: 1px solid #ddd;'>{role.RoleName}</td>
+                        </tr>
+                    </table>
+                    <p>Vui lòng đăng nhập hệ thống và đổi mật khẩu để bảo mật tài khoản.</p>
+                    <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'/>
+                    <p style='font-size: 12px; color: #777;'>Đây là email tự động từ hệ thống StudyMind, vui lòng không trả lời trực tiếp email này.</p>
+                </body>
+                </html>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(model.Email, emailSubject, emailBody);
+            }
+            catch
+            {
+                // Không chặn luồng tạo tài khoản nếu gửi email thất bại
+            }
+
+            TempData["SuccessMsg"] = $"Đã cấp tài khoản {role.RoleName} \"{model.Username}\" thành công!";
+            return RedirectToAction(nameof(Dashboard));
         }
 
         // --- Role Management Actions ---

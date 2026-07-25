@@ -15,7 +15,7 @@
         <a asp-action="Dashboard" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
     </div>
 
-    <div class="brutal-card" style="max-width:560px;">
+    <div class="brutal-card" style="max-width:560px; margin:0 auto;">
         <form asp-action="EditRole" method="post">
             <input type="hidden" name="id" value="@Model.Id" />
             <div asp-validation-summary="ModelOnly" class="alert alert-error" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>

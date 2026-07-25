@@ -1,0 +1,63 @@
+@using PresentationLayer.ViewModels
+@model CreateAccountViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Cấp tài khoản mới";
+    ViewBag.ActiveMenu = "AdminDashboard";
+}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <div class="page-subtitle">HỆ THỐNG</div>
+            <h1 class="page-title"><i class="fa-solid fa-user-plus"></i> Cấp tài khoản mới</h1>
+            <p class="page-subtitle">Tạo trực tiếp tài khoản Giảng viên hoặc Sinh viên, không cần qua trang đăng ký.</p>
+        </div>
+        <a asp-action="Dashboard" class="brutal-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+    </div>
+
+    <div class="brutal-card" style="max-width:640px; margin:0 auto;">
+        <form asp-action="CreateAccount" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-error" style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
+            <div class="form-group">
+                <label asp-for="Username">Tên đăng nhập *</label>
+                <input asp-for="Username" placeholder="Nhập tên đăng nhập..." autocomplete="username" />
+                <span asp-validation-for="Username" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email">Email *</label>
+                <input asp-for="Email" type="email" placeholder="Nhập email..." autocomplete="email" />
+                <span asp-validation-for="Email" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password">Mật khẩu *</label>
+                <input asp-for="Password" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ConfirmPassword">Xác nhận mật khẩu *</label>
+                <input asp-for="ConfirmPassword" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RoleId">Vai trò *</label>
+                <select asp-for="RoleId">
+                    <option value="">-- Chọn vai trò --</option>
+                    @foreach (var role in ViewBag.Roles)
+                    {
+                        <option value="@role.Id">@role.RoleName</option>
+                    }
+                </select>
+                <span asp-validation-for="RoleId" class="text-pink" style="font-size:12px;"></span>
+            </div>
+            <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+                <a asp-action="Dashboard" class="brutal-btn">Hủy bỏ</a>
+                <button type="submit" class="brutal-btn btn-pink"><i class="fa-solid fa-user-plus"></i> Cấp tài khoản</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,6 +1,6 @@
 using BussinessLayer.DTOs;
 
-namespace BussinessLayer.Services
+namespace BussinessLayer.IServices
 {
     public interface IUserService
     {

@@ -1,6 +1,6 @@
 using BussinessLayer.DTOs;
 
-namespace BussinessLayer.Interfaces
+namespace BussinessLayer.IServices
 {
     // Giao diện Service cung cấp các tính năng xác thực cốt lõi
     public interface IAuthService

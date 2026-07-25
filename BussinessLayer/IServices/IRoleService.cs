@@ -1,11 +1,11 @@
-using DataAccessLayer.Models;
+using BussinessLayer.DTOs;
 
-namespace BussinessLayer.Services
+namespace BussinessLayer.IServices
 {
     public interface IRoleService
     {
-        Task<IEnumerable<Role>> GetAllRolesAsync();
-        Task<Role?> GetRoleByIdAsync(int id);
+        Task<IEnumerable<RoleDto>> GetAllRolesAsync();
+        Task<RoleDto?> GetRoleByIdAsync(int id);
         Task<bool> CreateRoleAsync(string roleName);
         Task<bool> UpdateRoleAsync(int id, string newRoleName);
         Task<bool> DeleteRoleAsync(int id);
